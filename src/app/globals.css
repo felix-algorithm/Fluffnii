@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Stagheiz";
+  src: url("/fonts/Stagheiz.woff") format("woff");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  --bg-cream: #f5f8fc;
+  --bg-butter: #fff0a6;
+  --bg-taupe: #dce8f5;
+  --bg-espresso: #1e3557;
+  --ink: #111622;
+  --ink-muted: rgba(17, 22, 34, 0.62);
+  --border-light: rgba(17, 22, 34, 0.16);
+  --cream-muted: rgba(245, 248, 252, 0.7);
+  --cream-border: rgba(245, 248, 252, 0.2);
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #f5f8fc;
+  color: #111622;
+}
+
+body {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  background-color: #f5f8fc;
+  color: #111622;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-stagheiz {
+  font-family: "Stagheiz", sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+
+/* Hide scrollbar for horizontal carousels */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes marqueeLeft {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes marqueeRight {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-marquee-left {
+  display: flex;
+  width: max-content;
+  animation: marqueeLeft 42s linear infinite;
+}
+
+.animate-marquee-right {
+  display: flex;
+  width: max-content;
+  animation: marqueeRight 42s linear infinite;
+}
+
+.animate-marquee-text {
+  display: flex;
+  width: max-content;
+  animation: marqueeLeft 28s linear infinite;
+}
+
+/* Keep browser autofill styling dark and readable in the #contact form */
+#contact input,
+#contact textarea {
+  color-scheme: dark;
+}
+
+#contact input:-webkit-autofill,
+#contact input:-webkit-autofill:hover,
+#contact input:-webkit-autofill:focus,
+#contact input:-webkit-autofill:active,
+#contact textarea:-webkit-autofill,
+#contact textarea:-webkit-autofill:hover,
+#contact textarea:-webkit-autofill:focus,
+#contact textarea:-webkit-autofill:active {
+  -webkit-text-fill-color: #f5f8fc;
+  -webkit-box-shadow: 0 0 0 1000px #232833 inset;
+  box-shadow: 0 0 0 1000px #232833 inset;
+  caret-color: #f5f8fc;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+#contact input:autofill,
+#contact textarea:autofill {
+  background-color: #232833;
+  color: #f5f8fc;
+  box-shadow: 0 0 0 1000px #232833 inset;
+}

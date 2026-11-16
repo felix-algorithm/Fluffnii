@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Next.js & Cloudflare build outputs
+.next/
+.next-dev/
+.open-next/
+.wrangler/
+out/
+
+# Local environment & secrets
+.env
+.env.*
+!.env.example
+.dev.vars*
+!.dev.vars.example
+
+# Debug / TypeScript / Tool caches
+npm-debug.log*
+*.tsbuildinfo
+graphify-out/
+.DS_Store
+Thumbs.db
