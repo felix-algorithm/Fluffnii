@@ -29,7 +29,6 @@ export default function Footer() {
   return (
     <footer className="w-full bg-[#111622] text-[#f5f8fc] px-5 md:px-[56px] pt-[48px] pb-[36px] border-t border-[#f5f8fc]/16">
       <div className="max-w-[1328px] mx-auto flex flex-col gap-[32px] md:gap-[28px]">
-        {/* Top Row: Navigation Links + Back to Top */}
         <div className="flex flex-wrap items-center justify-between gap-6">
           <nav className="flex flex-wrap items-center gap-x-7 gap-y-3">
             {FOOTER_LINKS.map((link) => (
@@ -53,7 +52,6 @@ export default function Footer() {
           </motion.a>
         </div>
 
-        {/* Giant FluffNii Studio Logotype */}
         <motion.div
           initial={{ opacity: 0, y: 60 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -68,7 +66,6 @@ export default function Footer() {
           />
         </motion.div>
 
-        {/* Bottom Bar */}
         <div className="pt-6 border-t border-[#f5f8fc]/16 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-sans text-[14px] text-[#f5f8fc]/65">
           <div>
             © 2026 FluffNii Studio — Custom Fursuit Maker &amp; Character Workshop

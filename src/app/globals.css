@@ -44,7 +44,6 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* Hide scrollbar for horizontal carousels */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -89,7 +88,6 @@ body {
   animation: marqueeLeft 28s linear infinite;
 }
 
-/* Keep browser autofill styling dark and readable in the #contact form */
 #contact input,
 #contact textarea {
   color-scheme: dark;

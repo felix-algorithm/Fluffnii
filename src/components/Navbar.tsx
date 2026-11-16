@@ -49,7 +49,6 @@ export default function Navbar() {
         }`}
       >
         <div className="flex items-center justify-between h-[70px] md:h-[78px] px-4 md:px-6">
-          {/* Left Logo */}
           <div className="flex items-center flex-1">
             <Link
               href="/#hero"
@@ -64,7 +63,6 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Center Links (Desktop) */}
           <div className="hidden lg:flex items-center gap-8">
             {NAV_LINKS.map((item) => (
               <Link
@@ -87,7 +85,6 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Right CTA / Mobile Burger */}
           <div className="flex items-center justify-end flex-1">
             <div className="hidden lg:block">
               <Bouton title="Contact" href="/#contact" variant="primary" />
@@ -104,7 +101,6 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Drawer */}
         <AnimatePresence>
           {mobileOpen && (
             <motion.div

@@ -97,7 +97,6 @@ function StepItem({
         zIndex: 1,
       }}
     >
-      {/* Left 56x56 Circle Node */}
       <div
         style={{
           width: NODE,
@@ -152,7 +151,6 @@ function StepItem({
         </motion.div>
       </div>
 
-      {/* Right Text Block */}
       <motion.div
         style={{
           opacity: textOpacity,
@@ -245,7 +243,6 @@ export default function Deroule({
         boxSizing: "border-box",
       }}
     >
-      {/* Background Rail */}
       <div
         style={{
           position: "absolute",
@@ -258,7 +255,6 @@ export default function Deroule({
         }}
       />
 
-      {/* Active Filling Line */}
       <motion.div
         style={{
           position: "absolute",
@@ -273,7 +269,6 @@ export default function Deroule({
         }}
       />
 
-      {/* Timeline Steps */}
       <div
         style={{
           display: "flex",

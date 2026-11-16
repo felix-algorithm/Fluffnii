@@ -189,7 +189,6 @@ async function sendViaSmtp({
   text: string;
   html: string;
 }) {
-  // Dynamic import keeps local Node Gmail SMTP fallback out of Resend-only edge runs
   const { default: nodemailer } = await import("nodemailer");
   const transporter = nodemailer.createTransport({
     host,
@@ -208,7 +207,6 @@ async function sendViaSmtp({
   });
 }
 
-/** Handles commission form submissions via Resend HTTP API (Cloudflare/prod) or Gmail SMTP (local). */
 export async function POST(request: Request) {
   let rawBody: unknown;
   try {

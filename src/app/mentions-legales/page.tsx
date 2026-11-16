@@ -62,7 +62,6 @@ export default function MentionsLegalesPage() {
       <Navbar />
 
       <main className="flex-1 w-full max-w-[1120px] mx-auto px-5 md:px-10 pt-[136px] md:pt-[156px] pb-[96px] md:pb-[132px]">
-        {/* Header */}
         <div className="flex flex-col gap-5 pb-12 md:pb-16">
           <span className="font-mono text-[12px] uppercase tracking-[0.06em] text-[#111622]/62">
             [Legal information]
@@ -75,7 +74,6 @@ export default function MentionsLegalesPage() {
           </p>
         </div>
 
-        {/* 6 Legal Sections */}
         <div className="flex flex-col border-t border-[#111622]/16">
           {LEGAL_SECTIONS.map((sec) => (
             <section

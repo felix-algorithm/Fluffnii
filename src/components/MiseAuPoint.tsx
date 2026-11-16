@@ -20,7 +20,7 @@ const MONO = 'var(--font-space-mono), "Space Mono", ui-monospace, monospace';
 const SANS = 'var(--font-dm-sans), "DM Sans", system-ui, sans-serif';
 const DISPLAY = '"Stagheiz", sans-serif';
 
-const HOLD = 500; // ms of stillness after "It's sharp!" to trigger the shutter
+const HOLD = 500;
 const ZONE = 0.035;
 const MARKS = ["0.3 m", "0.5", "0.8", "1.2", "2", "5", "∞"];
 
@@ -50,11 +50,9 @@ export default function MiseAuPoint({
   const target = useRef(0.63);
 
   useEffect(() => {
-    // Focus sweet spot changes on each visit
     target.current = 0.22 + Math.random() * 0.6;
   }, []);
 
-  // Keep full-viewport viewfinder aligned flush when wheel-scrolling into #bonus
   useEffect(() => {
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
@@ -81,13 +79,11 @@ export default function MiseAuPoint({
       const vh = window.innerHeight;
       if (vh <= 0) return;
 
-      // Already cleanly locked inside the sticky runway (0..100vh)
       if (r.top <= 2 && r.bottom >= vh - 2) return;
 
       const edgeThreshold = Math.min(180, vh * 0.22);
       let delta = 0;
 
-      // Entering from above (#faq): trailing section padding left at top
       if (dir > 0 && r.top > 2 && r.top <= edgeThreshold) {
         delta = r.top;
       }
@@ -167,7 +163,6 @@ export default function MiseAuPoint({
     if (ok !== inZone) startTransition(() => setInZone(ok));
   });
 
-  // Must remain still once sharp: hold bar fills over 500ms, then shutter clicks
   useAnimationFrame((_, delta) => {
     if (sharp) return;
     const still = performance.now() - lastMove.current > 120;
@@ -187,7 +182,6 @@ export default function MiseAuPoint({
     }
   });
 
-  // Ignore synthetic zero-delta mousemove events triggered by scrolling
   const move = (e: React.PointerEvent<HTMLDivElement>) => {
     if (sharp) return;
     if (e.pointerType === "mouse" && !e.movementX && !e.movementY) return;
@@ -237,7 +231,6 @@ export default function MiseAuPoint({
           userSelect: "none",
         }}
       >
-      {/* Dynamic Blur & Scale Background Photo */}
       <motion.div
         style={{
           position: "absolute",
@@ -250,7 +243,6 @@ export default function MiseAuPoint({
         }}
       />
 
-      {/* Subtle Darkening Overlay */}
       <div
         style={{
           position: "absolute",
@@ -261,7 +253,6 @@ export default function MiseAuPoint({
         }}
       />
 
-      {/* 4 Outer Viewfinder Corner Brackets */}
       {[
         { left: 32, top: 32, rot: 0 },
         { right: 32, top: 32, rot: 90 },
@@ -283,7 +274,6 @@ export default function MiseAuPoint({
         />
       ))}
 
-      {/* Center AF Focus Box */}
       <motion.div
         animate={{
           borderColor: sharp || inZone ? BEURRE : "rgba(245,248,252,0.8)",
@@ -304,7 +294,6 @@ export default function MiseAuPoint({
         }}
       />
 
-      {/* Top Viewfinder Status Bar */}
       <div
         style={{
           position: "absolute",
@@ -342,7 +331,6 @@ export default function MiseAuPoint({
         </span>
       </div>
 
-      {/* Center Title / Hold Progress / Win CTA */}
       <div
         style={{
           position: "absolute",
@@ -526,7 +514,6 @@ export default function MiseAuPoint({
         </AnimatePresence>
       </div>
 
-      {/* Bottom Sliding Lens Focus Ring Ruler */}
       <div
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId);
@@ -588,7 +575,6 @@ export default function MiseAuPoint({
             </div>
           ))}
         </motion.div>
-        {/* Fixed Center Needle */}
         <span
           style={{
             position: "absolute",
@@ -604,7 +590,6 @@ export default function MiseAuPoint({
         />
       </div>
 
-      {/* Camera Flash Effect */}
       <AnimatePresence>
         {flash > 0 && sharp && (
           <motion.div

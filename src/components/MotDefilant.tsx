@@ -191,7 +191,6 @@ export default function MotDefilant({
           color: "#F5F8FC",
         }}
       >
-        {/* Background Crossfading & Zooming Photos */}
         <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
           {items.map((item, i) => {
             const isActif = i === actif;
@@ -248,7 +247,6 @@ export default function MotDefilant({
           />
         </div>
 
-        {/* Viewfinder Corner Brackets */}
         {(["tl", "tr", "bl", "br"] as const).map((pos) => (
           <div
             key={pos}
@@ -291,7 +289,6 @@ export default function MotDefilant({
           />
         ))}
 
-        {/* Top Bar: Label + Counter */}
         <div
           style={{
             position: "relative",
@@ -314,7 +311,6 @@ export default function MotDefilant({
           </span>
         </div>
 
-        {/* Center Typography */}
         <div
           style={{
             position: "relative",
@@ -360,7 +356,6 @@ export default function MotDefilant({
           </div>
         </div>
 
-        {/* Bottom Progress & Pill Indicators */}
         <div
           style={{
             position: "relative",

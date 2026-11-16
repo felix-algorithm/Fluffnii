@@ -19,5 +19,6 @@ out/
 npm-debug.log*
 *.tsbuildinfo
 graphify-out/
+GEMINI.md
 .DS_Store
 Thumbs.db

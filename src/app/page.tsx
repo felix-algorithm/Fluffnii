@@ -709,19 +709,13 @@ export default function HomePage() {
 
   return (
     <div id="top" className="min-h-screen flex flex-col bg-[#f5f8fc] text-[#111622]">
-      {/* Camera Viewfinder + Shutter Intro */}
       <Obturateur />
 
-      {/* Shrinking Pill Navbar */}
       <Navbar />
 
       <main className="flex-1">
-        {/* =========================================================
-            HERO SECTION
-           ========================================================= */}
         <section className="w-full max-w-[1440px] mx-auto px-5 md:px-[56px] pt-[124px] md:pt-[148px] pb-[72px] md:pb-[108px]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-[56px] lg:gap-8 items-center">
-            {/* Left Copy (withApresClic) */}
             <div
               style={{
                 opacity: heroReady ? 1 : 0,
@@ -756,21 +750,16 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Polaroid Stack */}
             <div className="lg:col-span-6 w-full h-[380px] sm:h-[460px] lg:h-[540px]">
               <PolaroidsDefile mode="pile" delay={1.8} speed={1} />
             </div>
           </div>
         </section>
 
-        {/* =========================================================
-            SECTION 01 — THE STUDIO + FORMULA + 3 PILLARS (#studio)
-           ========================================================= */}
         <section
           id="studio"
           className="w-full max-w-[1440px] mx-auto px-5 md:px-[56px] py-[88px] md:py-[140px] border-t border-[#111622]/16"
         >
-          {/* Section Label Bar */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -786,7 +775,6 @@ export default function HomePage() {
             </span>
           </motion.div>
 
-          {/* Scroll-Scrubbed Word Reveal */}
           <div className="mb-16 md:mb-24 max-w-[1180px]">
             <PhraseScroll
               texte="FluffNii builds custom fursuits you can actually breathe and move in. We pattern every marking by hand, trim the pile to show the sculpt, and line the inside for long days on the convention floor."
@@ -798,10 +786,8 @@ export default function HomePage() {
             />
           </div>
 
-          {/* The Formula Block */}
           <div className="mb-20 md:mb-28">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-[72px] items-center">
-              {/* Formula Photo */}
               <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -816,7 +802,6 @@ export default function HomePage() {
                 />
               </motion.div>
 
-              {/* Formula Text + 3 Counters */}
               <div className="lg:col-span-6 flex flex-col justify-center gap-7">
                 <div className="flex flex-col gap-4">
                   <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
@@ -843,7 +828,6 @@ export default function HomePage() {
                   </p>
                 </div>
 
-                {/* 3 Animated Counters */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 pt-6 border-t border-[#111622]/12">
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -886,7 +870,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* 3 Pillars in the Same Frame */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -928,9 +911,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* =========================================================
-            SECTION 02 — WHO IT'S FOR (5 FAN CARDS)
-           ========================================================= */}
         <section
           id="pour-qui"
           className="w-full bg-[#dce8f5]/45 border-t border-[#111622]/16 py-[96px] md:py-[140px] overflow-hidden"
@@ -963,7 +943,6 @@ export default function HomePage() {
               </motion.p>
             </div>
 
-            {/* 5 Fan Cards (Desktop — 1:1 original Éventail) */}
             <div className="hidden lg:flex justify-center w-full h-[700px] overflow-visible relative">
               <div className="relative w-[1210px] h-[660px] shrink-0">
                 {FAN_CARDS.map((card, i) => {
@@ -1039,7 +1018,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* 5 Fan Cards (Mobile / Tablet) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:hidden pt-4 pb-8">
               {FAN_CARDS.map((card, i) => (
                 <motion.div
@@ -1091,16 +1069,10 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* =========================================================
-            SECTION 03 — WHY DESIRABILITY (MOT DEFILANT 320VH)
-           ========================================================= */}
         <section id="pourquoi">
           <MotDefilant />
         </section>
 
-        {/* =========================================================
-            SECTION 04 — THE RESULT (8-CELL CHECKERBOARD)
-           ========================================================= */}
         <section className="w-full max-w-[1440px] mx-auto px-5 md:px-[56px] py-[96px] md:py-[140px]">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -1134,9 +1106,7 @@ export default function HomePage() {
             </motion.p>
           </div>
 
-          {/* 4x2 Checkerboard Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {/* Cell 1: Photo 1 */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1157,7 +1127,6 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
 
-            {/* Cell 2: Card (001) */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1185,7 +1154,6 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
 
-            {/* Cell 3: Photo 2 */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1206,7 +1174,6 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
 
-            {/* Cell 4: Card (002) */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1234,7 +1201,6 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
 
-            {/* Row 2 - Cell 5: Card (003) Espresso */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1262,7 +1228,6 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
 
-            {/* Row 2 - Cell 6: Photo 3 */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1283,7 +1248,6 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
 
-            {/* Row 2 - Cell 7: Card (004) White */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1311,7 +1275,6 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
 
-            {/* Row 2 - Cell 8: Photo 4 */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1334,9 +1297,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* =========================================================
-            SECTION 05 — HOW WE DO IT (#methode - 3 STICKY CARDS)
-           ========================================================= */}
         <section
           id="methode"
           className="w-full max-w-[1440px] mx-auto px-5 md:px-[56px] py-[96px] md:py-[140px] border-t border-[#111622]/16"
@@ -1373,7 +1333,6 @@ export default function HomePage() {
             </motion.p>
           </div>
 
-          {/* Sticky Stacking Cards */}
           <div className="flex flex-col gap-10">
             {METHOD_STEPS.map((step) => (
               <div
@@ -1451,9 +1410,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* =========================================================
-            SECTION 06 — SELECTED PROJECTS CAROUSEL (#projets)
-           ========================================================= */}
         <section
           id="projets"
           className="w-full bg-[#dce8f5] py-[96px] md:py-[140px] border-t border-[#111622]/16 overflow-hidden"
@@ -1500,7 +1456,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Horizontal Scroll Track */}
           <div
             ref={carouselRef}
             className="flex gap-6 overflow-x-auto no-scrollbar px-5 md:px-[56px] pb-6 scroll-smooth"
@@ -1523,7 +1478,6 @@ export default function HomePage() {
                 style={{ willChange: "transform, opacity" }}
                 className="w-[340px] sm:w-[420px] md:w-[460px] shrink-0 rounded-[28px] bg-[#f5f8fc] border border-[#111622]/16 p-6 flex flex-col justify-between gap-6"
               >
-                {/* Image + Optional Pinned Testimonial Note */}
                 <motion.div
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.7, ease: EASE }}
@@ -1554,7 +1508,6 @@ export default function HomePage() {
                   )}
                 </motion.div>
 
-                {/* Card Footer Meta */}
                 <div className="flex flex-col gap-2">
                   <h3 className="font-stagheiz text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em] text-[#111622]">
                     {proj.client}
@@ -1568,9 +1521,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* =========================================================
-            SECTION 07 — GALLERY MARQUEES (#galerie)
-           ========================================================= */}
         <section
           id="galerie"
           className="w-full py-[96px] md:py-[140px] border-t border-[#111622]/16 overflow-hidden"
@@ -1613,7 +1563,6 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-col gap-4">
-            {/* Row 1 Ticker (Left, 40px/s, slows to 20% on hover) */}
             <SmoothTicker
               velocity={40}
               direction="left"
@@ -1639,7 +1588,6 @@ export default function HomePage() {
               ))}
             </SmoothTicker>
 
-            {/* Middle Text Ticker (Right, 70px/s, transparent, 14px circle dots) */}
             <SmoothTicker
               velocity={70}
               direction="right"
@@ -1657,7 +1605,6 @@ export default function HomePage() {
               ))}
             </SmoothTicker>
 
-            {/* Row 2 Ticker (Right, 40px/s, slows to 20% on hover) */}
             <SmoothTicker
               velocity={40}
               direction="right"
@@ -1685,9 +1632,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* =========================================================
-            SECTION 08 — OFFERS & LAB-SLEEVE PACKAGES (#offres)
-           ========================================================= */}
         <section
           id="offres"
           className="w-full bg-[#1e3557] text-[#f5f8fc] py-[96px] md:py-[140px]"
@@ -1725,9 +1669,7 @@ export default function HomePage() {
               </motion.p>
             </div>
 
-            {/* 2 Main Offer Cards Joined by + Badge */}
             <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch mb-8">
-              {/* Offer 01 — Custom Fursuit Head */}
               <motion.div
                 initial={{ opacity: 0, y: 48 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -1789,12 +1731,10 @@ export default function HomePage() {
                 </div>
               </motion.div>
 
-              {/* Center + Circle Badge on Desktop */}
               <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[68px] h-[68px] rounded-full bg-[#111622] text-[#f5f8fc] border-4 border-[#1e3557] items-center justify-center font-stagheiz text-[32px]">
                 +
               </div>
 
-              {/* Offer 02 — Head + Matching Parts */}
               <motion.div
                 initial={{ opacity: 0, y: 48 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -1865,7 +1805,6 @@ export default function HomePage() {
               All base prices cover 1 primary fur color. Extra colors and add-ons like teeth are priced cleanly below.
             </p>
 
-            {/* 3 Lab-Sleeve Package Cards */}
             <div id="constitue-ton-offre" className="pt-4">
               <motion.div
                 initial={{ opacity: 0, y: 32 }}
@@ -1895,7 +1834,6 @@ export default function HomePage() {
                       style={{ backgroundColor: pkg.bg }}
                       className="relative h-full rounded-[28px] text-[#111622] px-[28px] pb-[28px] pt-[152px] flex flex-col justify-between gap-7 shadow-[0_24px_60px_rgba(0,0,0,0.22)]"
                     >
-                      {/* Tilted Polaroid Print Sticking Out of the Lab Sleeve (190x210 matching original) */}
                       <div
                         style={{ transform: `translateX(-50%) rotate(${pkg.rot}deg)` }}
                         className="absolute -top-[80px] left-1/2 w-[190px] h-[210px] bg-white border-[8px] border-white rounded-[2px] shadow-[0_18px_30px_-16px_rgba(0,0,0,0.55)] overflow-hidden"
@@ -1948,9 +1886,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* =========================================================
-            SECTION 09 — PROJECT TIMELINE (#deroule)
-           ========================================================= */}
         <section
           id="deroule"
           className="w-full max-w-[1440px] mx-auto px-5 md:px-[56px] py-[96px] md:py-[140px]"
@@ -1995,9 +1930,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* =========================================================
-            SECTION 10 — FAQ ACCORDION (#faq)
-           ========================================================= */}
         <section
           id="faq"
           className="w-full max-w-[1440px] mx-auto px-5 md:px-[56px] py-[96px] md:py-[140px] border-t border-[#111622]/16"
@@ -2040,16 +1972,10 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* =========================================================
-            SECTION 11 — BONUS INTERACTIVE FOCUS GAME (#bonus)
-           ========================================================= */}
         <section id="bonus">
           <MiseAuPoint />
         </section>
 
-        {/* =========================================================
-            SECTION 12 — CONTACT FORM (#contact)
-           ========================================================= */}
         <section
           id="contact"
           className="w-full bg-[#111622] text-[#f5f8fc] py-[96px] md:py-[140px] px-5 md:px-[56px]"
@@ -2076,7 +2002,6 @@ export default function HomePage() {
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-              {/* Left Column */}
               <div className="lg:col-span-5 flex flex-col gap-8">
                 <p className="font-sans text-[19px] md:text-[22px] min-[1200px]:text-[26px] leading-[1.3] tracking-[-0.025em] text-[#f5f8fc]/72 max-w-[520px]">
                   Send over your character ref sheet and the parts you have in
@@ -2102,7 +2027,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Right Column: Contact Form */}
               <motion.form
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}

@@ -138,7 +138,6 @@ function usePreload(imgs: PolaroidSlide[], need = 3, timeout = 6000): boolean {
       return img;
     });
 
-    // Keep decoded Image objects referenced so GC doesn't purge them mid-loop.
     cacheRef.current = images;
 
     return () => {
@@ -182,7 +181,6 @@ function useStart(delay: number): boolean {
         if (win.__gioiaClic === true || win.__gioiaClic === undefined) {
           finish();
         } else {
-          // Wait slightly more in case Obturateur is finishing
           timerId = window.setTimeout(finish, 300);
         }
       }, delay * 1000);

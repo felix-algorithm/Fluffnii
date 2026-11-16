@@ -44,7 +44,6 @@ export function playShutterSound() {
       noise.stop(t + dur);
     };
 
-    // First curtain + second curtain mechanical shutter
     click(now, 1800, 0.028, 0.35);
     click(now + 0.055, 1200, 0.04, 0.28);
   } catch {
@@ -136,7 +135,6 @@ export default function Obturateur({
             overflow: "hidden",
           }}
         >
-          {/* Center Viewfinder Frame */}
           <motion.div
             initial={{ scale: 1.35, opacity: 0 }}
             animate={
@@ -155,7 +153,6 @@ export default function Obturateur({
               aspectRatio: "3 / 2",
             }}
           >
-            {/* 4 Corners */}
             {CORNERS.map((corner, i) => (
               <div
                 key={i}
@@ -174,7 +171,6 @@ export default function Obturateur({
               />
             ))}
 
-            {/* Center Circle */}
             <motion.div
               animate={{
                 background: phase >= 1 ? couleurAccent : "rgba(0,0,0,0)",
@@ -194,7 +190,6 @@ export default function Obturateur({
               }}
             />
 
-            {/* 4 Crosshair Ticks */}
             <div
               style={{
                 position: "absolute",
@@ -241,7 +236,6 @@ export default function Obturateur({
             />
           </motion.div>
 
-          {/* Top Bar */}
           <div
             style={{
               position: "absolute",
@@ -259,7 +253,6 @@ export default function Obturateur({
             <span>{reglages}</span>
           </div>
 
-          {/* Bottom Bar */}
           <div
             style={{
               position: "absolute",
@@ -301,7 +294,6 @@ export default function Obturateur({
             <span>{sousTitreDroite}</span>
           </div>
 
-          {/* Top Shutter Blade */}
           <motion.div
             initial={{ y: "-101%" }}
             animate={{ y: phase === 1 ? "0%" : "-101%" }}
@@ -320,7 +312,6 @@ export default function Obturateur({
             }}
           />
 
-          {/* Bottom Shutter Blade */}
           <motion.div
             initial={{ y: "101%" }}
             animate={{ y: phase === 1 ? "0%" : "101%" }}
@@ -339,7 +330,6 @@ export default function Obturateur({
             }}
           />
 
-          {/* White Flash Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: phase === 2 ? [0, 1, 0] : 0 }}
