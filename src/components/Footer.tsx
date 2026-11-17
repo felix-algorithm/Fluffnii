@@ -3,14 +3,17 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useLang } from "./LanguageProvider";
 
 const FOOTER_LINKS = [
-  { label: "The Workshop", href: "/#studio" },
-  { label: "Fursuits", href: "/#projets" },
-  { label: "Shop & Tiers", href: "/#offres" },
-  { label: "Process", href: "/#deroule" },
-  { label: "FAQ", href: "/#faq" },
-  { label: "Contact", href: "/#contact" },
+  { href: "/#studio", label: { en: "The Workshop", vi: "Về xưởng" } },
+  { href: "/#projets", label: { en: "Fursuits", vi: "Fursuit" } },
+  { href: "/#offres", label: { en: "Shop & Tiers", vi: "Bảng giá" } },
+  { href: "/#deroule", label: { en: "Process", vi: "Quy trình" } },
+  { href: "/#faq", label: { en: "FAQ", vi: "FAQ" } },
+  { href: "/accessories", label: { en: "Accessories", vi: "Phụ kiện" } },
+  { href: "/terms", label: { en: "Terms", vi: "Điều khoản" } },
+  { href: "/#contact", label: { en: "Contact", vi: "Liên hệ" } },
 ];
 
 const STUDIO_SOCIALS = [
@@ -21,6 +24,8 @@ const STUDIO_SOCIALS = [
 ];
 
 export default function Footer() {
+  const { lang } = useLang();
+
   const scrollToTop = (e: React.MouseEvent) => {
     e.preventDefault();
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -37,7 +42,7 @@ export default function Footer() {
                 href={link.href}
                 className="font-sans text-[15px] font-medium leading-none tracking-[-0.01em] text-[#f5f8fc]/80 hover:text-[#f5f8fc] transition-colors"
               >
-                {link.label}
+                {link.label[lang]}
               </Link>
             ))}
           </nav>
@@ -48,7 +53,7 @@ export default function Footer() {
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/70 hover:text-[#f5f8fc] transition-colors inline-block"
           >
-            [Back to top]
+            {lang === "vi" ? "[Về đầu trang]" : "[Back to top]"}
           </motion.a>
         </div>
 
@@ -68,7 +73,9 @@ export default function Footer() {
 
         <div className="pt-6 border-t border-[#f5f8fc]/16 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-sans text-[14px] text-[#f5f8fc]/65">
           <div>
-            © 2026 FluffNii Studio — Custom Fursuit Maker &amp; Character Workshop
+            {lang === "vi"
+              ? "© 2026 FluffNii Studio · Xưởng làm Fursuit thủ công"
+              : "© 2026 FluffNii Studio — Custom Fursuit Maker & Character Workshop"}
           </div>
           <div className="flex flex-wrap items-center gap-6">
             {STUDIO_SOCIALS.map((item) => (
@@ -83,10 +90,16 @@ export default function Footer() {
               </a>
             ))}
             <Link
+              href="/terms"
+              className="hover:text-[#f5f8fc] transition-colors underline underline-offset-4 decoration-[#f5f8fc]/30"
+            >
+              {lang === "vi" ? "Điều khoản" : "Commission Terms"}
+            </Link>
+            <Link
               href="/mentions-legales"
               className="hover:text-[#f5f8fc] transition-colors underline underline-offset-4 decoration-[#f5f8fc]/30"
             >
-              Legal Notice
+              {lang === "vi" ? "Thông tin pháp lý" : "Legal Notice"}
             </Link>
             <a
               href="https://felixpham.anhtuan-09st.workers.dev/"
@@ -94,7 +107,9 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="hover:text-[#f5f8fc] transition-colors"
             >
-              Website by Felix Algorithm
+              {lang === "vi"
+                ? "Thiết kế bởi Felix Algorithm"
+                : "Website by Felix Algorithm"}
             </a>
           </div>
         </div>

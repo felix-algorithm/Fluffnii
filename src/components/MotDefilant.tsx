@@ -8,6 +8,7 @@ import {
   useMotionValueEvent,
   AnimatePresence,
 } from "framer-motion";
+import { useLang } from "./LanguageProvider";
 
 const DEFAULT_ITEMS = [
   {
@@ -98,12 +99,16 @@ interface MotDefilantProps {
 }
 
 export default function MotDefilant({
-  surTitre = "[Why a FluffNii suit]",
-  prefixe = "A great fursuit",
-  items = DEFAULT_ITEMS,
+  surTitre,
+  prefixe,
+  items,
   voile = 0.42,
 }: MotDefilantProps) {
-  const n = items.length;
+  const { lang } = useLang();
+  const activeSurTitre = surTitre ?? (lang === "vi" ? "[Vì sao chọn FluffNii]" : "[Why a FluffNii suit]");
+  const activePrefixe = prefixe ?? (lang === "vi" ? "Một bộ fursuit" : "A great fursuit");
+  const activeItems = items ?? DEFAULT_ITEMS;
+  const n = activeItems.length;
   const containerRef = useRef<HTMLDivElement>(null);
   const [{ actif, sortant }, setStep] = useState({ actif: 0, sortant: -1 });
   const lastIdxRef = useRef(0);
@@ -112,7 +117,7 @@ export default function MotDefilant({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const imgs = items.map((item) => {
+    const imgs = activeItems.map((item) => {
       const img = new window.Image();
       img.decoding = "async";
       img.src = item.src;
@@ -125,7 +130,7 @@ export default function MotDefilant({
     return () => {
       preloadedImgsRef.current = [];
     };
-  }, [items]);
+  }, [activeItems]);
 
   useEffect(() => {
     return () => {
@@ -192,7 +197,7 @@ export default function MotDefilant({
         }}
       >
         <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-          {items.map((item, i) => {
+          {activeItems.map((item, i) => {
             const isActif = i === actif;
             const isSortant = i === sortant;
             const animateState = isActif
@@ -304,7 +309,7 @@ export default function MotDefilant({
             color: "rgba(245,248,252,0.78)",
           }}
         >
-          <span>{surTitre}</span>
+          <span>{activeSurTitre}</span>
           <span>
             ({String(actif + 1).padStart(3, "0")} /{" "}
             {String(n).padStart(3, "0")})
@@ -326,19 +331,20 @@ export default function MotDefilant({
         >
           <div
             style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontFamily: "var(--font-dm-sans), 'Plus Jakarta Sans', 'DM Sans', sans-serif",
               fontWeight: 500,
               fontSize: "clamp(18px, 2.2vw, 28px)",
               letterSpacing: "-0.02em",
               color: "rgba(245,248,252,0.85)",
             }}
           >
-            {prefixe}
+            {activePrefixe}
           </div>
 
           <div
             className="font-stagheiz"
             style={{
+              fontFamily: '"Stagheiz", sans-serif',
               position: "relative",
               minHeight: "1.12em",
               display: "flex",
@@ -351,7 +357,7 @@ export default function MotDefilant({
             }}
           >
             <AnimatePresence mode="wait">
-              <MotAnime key={actif} mot={items[actif]?.mot || ""} />
+              <MotAnime key={actif} mot={activeItems[actif]?.mot || ""} />
             </AnimatePresence>
           </div>
         </div>
@@ -374,7 +380,7 @@ export default function MotDefilant({
               flexWrap: "wrap",
             }}
           >
-            {items.map((it, i) => {
+            {activeItems.map((it, i) => {
               const estActif = i === actif;
               return (
                 <div

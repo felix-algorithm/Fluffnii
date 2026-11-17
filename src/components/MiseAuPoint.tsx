@@ -11,14 +11,15 @@ import {
   useAnimationFrame,
 } from "framer-motion";
 import { playShutterSound } from "./Obturateur";
+import { useLang } from "./LanguageProvider";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const CREME = "#F5F8FC";
 const NOIR = "#111622";
 const BEURRE = "#FFF0A6";
 const MONO = 'var(--font-space-mono), "Space Mono", ui-monospace, monospace';
-const SANS = 'var(--font-dm-sans), "DM Sans", system-ui, sans-serif';
-const DISPLAY = '"Stagheiz", sans-serif';
+const SANS = 'var(--font-dm-sans), "Plus Jakarta Sans", "DM Sans", system-ui, sans-serif';
+const DISPLAY = 'var(--font-display), "Barlow", sans-serif';
 
 const HOLD = 500;
 const ZONE = 0.035;
@@ -37,14 +38,30 @@ interface MiseAuPointProps {
 
 export default function MiseAuPoint({
   image = "/images/bonus-lockers.jpg",
-  label = "Bonus · your turn to play",
-  title = "BRING IT INTO FOCUS",
-  hint = "Move your mouse to focus, then hold still",
-  text = "Spot on! Ready to bring your OC into the workshop?",
-  button = "Contact",
+  label,
+  title,
+  hint,
+  text,
+  button,
   link = "/#contact",
   sound = true,
 }: MiseAuPointProps) {
+  const { lang } = useLang();
+  const activeLabel =
+    label ?? (lang === "vi" ? "Thử thách · đến lượt bạn" : "Bonus · your turn to play");
+  const activeTitle =
+    title ?? (lang === "vi" ? "LẤY NÉT CHO CHUẨN" : "BRING IT INTO FOCUS");
+  const activeHint =
+    hint ??
+    (lang === "vi"
+      ? "Di chuột để chỉnh nét, rồi giữ yên"
+      : "Move your mouse to focus, then hold still");
+  const activeText =
+    text ??
+    (lang === "vi"
+      ? "Chuẩn nét rồi! Sẵn sàng đưa OC của bạn vào xưởng chưa?"
+      : "Spot on! Ready to bring your OC into the workshop?");
+  const activeButton = button ?? (lang === "vi" ? "Liên hệ" : "Contact");
   const wrapperRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const target = useRef(0.63);
@@ -313,7 +330,7 @@ export default function MiseAuPoint({
           pointerEvents: "none",
         }}
       >
-        <span>[{label}]</span>
+        <span>[{activeLabel}]</span>
         <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span
             style={{
@@ -324,9 +341,15 @@ export default function MiseAuPoint({
             }}
           />
           {sharp
-            ? "AF · click"
+            ? lang === "vi"
+              ? "AF · tách"
+              : "AF · click"
             : inZone
-            ? "AF · sharp, hold still"
+            ? lang === "vi"
+              ? "AF · nét rồi, giữ yên"
+              : "AF · sharp, hold still"
+            : lang === "vi"
+            ? "AF · đang mờ"
             : "AF · blurry"}
         </span>
       </div>
@@ -366,12 +389,12 @@ export default function MiseAuPoint({
                 style={{
                   fontFamily: DISPLAY,
                   textTransform: "uppercase",
-                  fontSize: "clamp(40px, 6vw, 88px)",
-                  lineHeight: 0.95,
-                  letterSpacing: "-0.04em",
+                  fontSize: "clamp(34px, 5.4vw, 82px)",
+                  lineHeight: 1.04,
+                  letterSpacing: "-0.03em",
                 }}
               >
-                {title}
+                {activeTitle}
               </div>
               <div
                 style={{
@@ -381,7 +404,11 @@ export default function MiseAuPoint({
                   opacity: 0.85,
                 }}
               >
-                {inZone ? "It's sharp! Hold still…" : hint}
+                {inZone
+                  ? lang === "vi"
+                    ? "Nét rồi! Giữ yên…"
+                    : "It's sharp! Hold still…"
+                  : activeHint}
               </div>
               <div
                 style={{
@@ -422,12 +449,12 @@ export default function MiseAuPoint({
                 style={{
                   fontFamily: DISPLAY,
                   textTransform: "uppercase",
-                  fontSize: "clamp(48px, 7vw, 104px)",
-                  lineHeight: 0.92,
-                  letterSpacing: "-0.04em",
+                  fontSize: lang === "vi" ? "clamp(34px, 5.4vw, 82px)" : "clamp(48px, 7vw, 104px)",
+                  lineHeight: lang === "vi" ? 1.04 : 0.92,
+                  letterSpacing: lang === "vi" ? "-0.025em" : "-0.04em",
                 }}
               >
-                SHARP. EVERY STITCH.
+                {lang === "vi" ? "SẮC NÉT TỪNG ĐƯỜNG MAY." : "SHARP. EVERY STITCH."}
               </div>
               <div
                 style={{
@@ -436,7 +463,7 @@ export default function MiseAuPoint({
                   letterSpacing: "-0.01em",
                 }}
               >
-                {text}
+                {activeText}
               </div>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
                 <motion.a
@@ -457,7 +484,7 @@ export default function MiseAuPoint({
                     textShadow: "none",
                   }}
                 >
-                  {button}
+                  {activeButton}
                   <span
                     style={{
                       display: "inline-flex",
@@ -506,7 +533,7 @@ export default function MiseAuPoint({
                     fontSize: 15,
                   }}
                 >
-                  Play again
+                  {lang === "vi" ? "Chơi lại" : "Play again"}
                 </button>
               </div>
             </motion.div>

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLang } from "./LanguageProvider";
 
 declare global {
   interface Window {
@@ -47,7 +48,6 @@ export function playShutterSound() {
     click(now, 1800, 0.028, 0.35);
     click(now + 0.055, 1200, 0.04, 0.28);
   } catch {
-    // Web Audio may be blocked without gesture
   }
 }
 
@@ -75,8 +75,12 @@ export default function Obturateur({
   couleurAccent = "#1E3557",
   label = "FluffNii Studio",
   reglages = "ISO 100 · f/8 · 1/125",
-  sousTitreDroite = "From sketch to fursuit",
+  sousTitreDroite,
 }: ObturateurProps) {
+  const { lang } = useLang();
+  const activeSubtitle =
+    sousTitreDroite ??
+    (lang === "vi" ? "Từ bản vẽ thành fursuit" : "From sketch to fursuit");
   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
 
   useEffect(() => {
@@ -289,9 +293,15 @@ export default function Obturateur({
                   background: phase >= 1 ? couleurAccent : couleurEncre,
                 }}
               />
-              {phase === 0 ? "[Focusing]" : "[Click]"}
+              {phase === 0
+                ? lang === "vi"
+                  ? "[Đang lấy nét]"
+                  : "[Focusing]"
+                : lang === "vi"
+                ? "[Tách]"
+                : "[Click]"}
             </span>
-            <span>{sousTitreDroite}</span>
+            <span>{activeSubtitle}</span>
           </div>
 
           <motion.div

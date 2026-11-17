@@ -6,6 +6,7 @@ import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 function norm(s: string) {
   return (s || "")
     .toLowerCase()
+    .replace(/đ/g, "d")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[.,;:!?'"’«»()]/g, "")

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { motion, useAnimationFrame, useInView } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -14,168 +15,13 @@ import FAQAccordion from "@/components/FAQAccordion";
 import MiseAuPoint from "@/components/MiseAuPoint";
 import Bouton from "@/components/Bouton";
 import Footer from "@/components/Footer";
+import { useLang } from "@/components/LanguageProvider";
+import { HOME_COPY, localizeCommissionNote } from "@/lib/homeCopy";
 
-const PILLARS = [
-  {
-    num: "(001)",
-    title: "SCULPT & PROPORTION",
-    desc: "Foam and 3D-printed bases shaped for clean symmetry, a balanced profile, and wide forward vision.",
-  },
-  {
-    num: "(002)",
-    title: "LUXURY FAUX FUR",
-    desc: "Dense imported faux fur patterned by hand, sewn with tight seams, and shaved down for sharp markings.",
-  },
-  {
-    num: "(003)",
-    title: "COMFORT & LINING",
-    desc: "Sweat-wicking interior lining with hidden vents, removable magnetic tongues, and washable padding.",
-  },
-];
-
-const FAN_CARDS = [
-  {
-    num: "(001)",
-    title: "BEAR",
-    desc: "Round ears, full cheeks, and a soft muzzle shaped for a warm, heavy silhouette.",
-    img: "/images/species-bear.jpg",
-    objectPosition: "50% 35%",
-    bg: "#f5f8fc",
-    dark: false,
-    rot: -9,
-  },
-  {
-    num: "(002)",
-    title: "LION",
-    desc: "Layered mane tufts and sculpted brows that hold a bold look from every angle.",
-    img: "/images/species-lion.jpg",
-    objectPosition: "50% 28%",
-    bg: "#ffffff",
-    dark: false,
-    rot: -4.5,
-  },
-  {
-    num: "(003)",
-    title: "FOX-CAT",
-    desc: "Large fox ears paired with a short feline muzzle for a clean Kemono profile.",
-    img: "/images/species-foxcat.jpg",
-    objectPosition: "50% 20%",
-    bg: "#f5f8fc",
-    dark: false,
-    rot: 0,
-  },
-  {
-    num: "(004)",
-    title: "DOG",
-    desc: "Perky ears, upturned muzzles, and bouncy tails built for high-energy canine OCs.",
-    img: "/images/species-dog.jpg",
-    objectPosition: "50% 38%",
-    bg: "#ffffff",
-    dark: false,
-    rot: 4.5,
-  },
-  {
-    num: "(005)",
-    title: "SHIBA INU",
-    desc: "Sharp urajiro cheek markings, pointed ears, and a tightly curled tail that holds shape.",
-    img: "/images/species-shiba.jpg",
-    objectPosition: "50% 15%",
-    bg: "#1e3557",
-    dark: true,
-    rot: 9,
-  },
-];
-
-const METHOD_STEPS = [
-  {
-    tag: "[Step 01]",
-    counter: "(001) / (003)",
-    title: "SCULPTED BASE & EXPRESSIVE 3D EYES",
-    desc: "We shape a symmetrical head base with wide follow-me eyes, clear forward sightlines, and open mouth airflow.",
-    pills: ["Symmetry", "Vision", "Airflow"],
-    img: "/images/method-01.webp",
-    bg: "#fff0a6",
-    dark: false,
-    top: 108,
-  },
-  {
-    tag: "[Step 02]",
-    counter: "(002) / (003)",
-    title: "HAND-PICKED FAUX FUR & CLEAN SHAVING",
-    desc: "Dense faux furs are taped on the base, hand-patterned, sewn with tight seams, and shaved down to show every cheek curve.",
-    pills: ["Softness", "Patterns", "Detail"],
-    img: "/images/method-02.webp",
-    bg: "#dce8f5",
-    dark: false,
-    top: 136,
-  },
-  {
-    tag: "[Step 03]",
-    counter: "(003) / (003)",
-    title: "LINED INTERIOR & BALANCED SILHOUETTE",
-    desc: "Finished with a sweat-wicking head liner, stuffed pawpads, and secure padding fitted to your exact measurements.",
-    pills: ["Breathable", "Fit", "Durable"],
-    img: "/images/method-03.webp",
-    bg: "#1e3557",
-    dark: true,
-    top: 164,
-  },
-];
-
-const PROJECTS = [
-  {
-    client: "SY TRAY",
-    year: "2026",
-    summary:
-      "Ash-grey and cream Kemono partial with fiery orange cheek tufts, oversized amber eyes, and clawed four-finger white paws.",
-    img: "/images/project-01.jpg",
-    objectPosition: "50% 35%",
-    review:
-      "The fur shaving is super smooth and even. It keeps all the facial angles sharp without losing that soft, natural look.",
-    author: "Sy tray",
-    role: "Suit Owner",
-  },
-  {
-    client: "MINNY MINNIE",
-    year: "2026",
-    summary:
-      "Snow-white Kemono partial with red-lined cat eyes, a blue diamond forehead marking, and puffy sky-blue padded paws.",
-    img: "/images/project-02.jpg",
-    objectPosition: "50% 45%",
-  },
-  {
-    client: "FELIX ALGORITHM",
-    year: "2026",
-    summary:
-      "Teal, navy, and cream canine partial featuring a winking left eye, bright yellow ear linings, and matching navy-blue paws.",
-    img: "/images/project-03.jpg",
-    objectPosition: "50% 50%",
-    review:
-      "Thick, sturdy custom 3D-printed TPU base sculpted specifically for my OC. Even complex markings came out clean, with tight seams and crisp hand and machine stitching.",
-    author: "Felix",
-    role: "Suit Owner",
-  },
-  {
-    client: "HUNTER KNIGHT",
-    year: "2026",
-    summary:
-      "Silver-white partial with fluffy layered cheek fur, a red-and-black hair streak on top, and pale-blue paw pads.",
-    img: "/images/project-04.jpg",
-    objectPosition: "50% 50%",
-  },
-  {
-    client: "UMBRÉON RETSQUÔT",
-    year: "2026",
-    summary:
-      "Black, white, and gold canine build with a playful blep tongue, blue eyes, and a braided red-white ear cord with a gold bell.",
-    img: "/images/project-05.jpg",
-    objectPosition: "50% 20%",
-    review:
-      "You can tell the 3D-printed TPU base is thick and built from scratch for each character. Tricky multi-color fur joins sit flat and tidy thanks to spot-on stitching.",
-    author: "Umbréon Retsquôt",
-    role: "Suit Owner",
-  },
-];
+interface CommissionStatusData {
+  open: boolean;
+  note: string;
+}
 
 interface GalleryPhoto {
   src: string;
@@ -273,53 +119,6 @@ const GALLERY_ROW_2: GalleryPhoto[] = [
   },
 ];
 
-const GALLERY_WORDS = [
-  "HEADS",
-  "PARTIALS",
-  "FULLSUITS",
-  "PAWS & TAILS",
-  "COMMISSIONS",
-];
-
-const PACKAGES = [
-  {
-    title: "BASE HEAD",
-    rows: [
-      { label: "Base fur", value: "1 COLOR" },
-      { label: "Extra fur color", value: "+500K VND" },
-      { label: "Add teeth", value: "+150K VND" },
-    ],
-    price: "7,200,000 VND",
-    bg: "#fff0a6",
-    img: "/images/polaroid-01.webp",
-    rot: -6,
-  },
-  {
-    title: "HEAD & JEWELRY",
-    rows: [
-      { label: "Head (1 color)", value: "7,200K VND" },
-      { label: "Extra fur / teeth", value: "+500K / +150K" },
-      { label: "Jewelry & accessories", value: "BY QUOTE" },
-    ],
-    price: "7,200,000+ VND",
-    bg: "#dce8f5",
-    img: "/images/polaroid-02.webp",
-    rot: 4,
-  },
-  {
-    title: "MINI PARTIAL",
-    rows: [
-      { label: "Head (+500K/col)", value: "7,200K VND" },
-      { label: "Paws (+350K/col)", value: "1,500K VND" },
-      { label: "Tail (+400K/col)", value: "1,300K VND" },
-    ],
-    price: "10,000,000 VND",
-    bg: "#f5f8fc",
-    img: "/images/polaroid-03.webp",
-    rot: -3,
-  },
-];
-
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const VIEWPORT = { once: true, amount: 0.15 } as const;
 const RESULT_CELL_DELAYS = [0, 0.04, 0.08, 0.12, 0.2, 0.16, 0.28, 0.24] as const;
@@ -411,7 +210,7 @@ function CharReveal({
             {words.map((word, wi) => (
               <React.Fragment key={`${li}-${wi}`}>
                 <span className="inline-block whitespace-nowrap">
-                  {word.split("").map((char, ci) => {
+                  {Array.from(word).map((char, ci) => {
                     const delay = charIdx * staggerDelay;
                     charIdx += 1;
                     return (
@@ -544,93 +343,36 @@ function SmoothTicker({
   );
 }
 
-interface CommissionOption {
-  value: string;
-  label: string;
-  note?: string;
-}
-
-const COMMISSION_GROUPS: { colsClass: string; options: CommissionOption[] }[] = [
-  {
-    colsClass: "grid-cols-2 sm:grid-cols-4",
-    options: [
-      { value: "Head", label: "Head" },
-      { value: "Hand", label: "Hand" },
-      { value: "Tail", label: "Tail" },
-      { value: "Paws", label: "Paws" },
-    ],
-  },
-  {
-    colsClass: "grid-cols-1 sm:grid-cols-2",
-    options: [
-      {
-        value: "Half-partial",
-        label: "Half-partial",
-        note: "(đầu, tay, đuôi)",
-      },
-      {
-        value: "Partial",
-        label: "Partial",
-        note: "(đầu, tay, đuôi, chân)",
-      },
-    ],
-  },
-  {
-    colsClass: "grid-cols-1 sm:grid-cols-3",
-    options: [
-      {
-        value: "Only body",
-        label: "Only body",
-        note: "Note: Yêu cầu có Duct Tape Dummy",
-      },
-      {
-        value: "Half-body",
-        label: "Half-body",
-        note: "Note: Yêu cầu có Duct Tape Dummy",
-      },
-      {
-        value: "Fullsuit",
-        label: "Fullsuit",
-        note: "Note: Yêu cầu có Duct Tape Dummy",
-      },
-    ],
-  },
-];
-
-const STUDIO_CHANNELS = [
-  {
-    label: "[Email]",
-    value: "FluffNii.furries@gmail.com",
-    href: "mailto:FluffNii.furries@gmail.com",
-    external: false,
-  },
-  {
-    label: "[Instagram]",
-    value: "@fluffnii.fur",
-    href: "https://www.instagram.com/fluffnii.fur",
-    external: true,
-  },
-  {
-    label: "[X / Twitter]",
-    value: "@Fluffnii_FUR",
-    href: "https://x.com/Fluffnii_FUR",
-    external: true,
-  },
-  {
-    label: "[TikTok]",
-    value: "@fluffnii_fur",
-    href: "https://www.tiktok.com/@fluffnii_fur",
-    external: true,
-  },
-];
-
 export default function HomePage() {
+  const { lang } = useLang();
+  const isVi = lang === "vi";
+  const copy = HOME_COPY[lang];
   const [heroReady, setHeroReady] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const carouselInView = useInView(carouselRef, { once: true, amount: 0.08 });
   const [formState, setFormState] = useState<"idle" | "sending" | "sent">("idle");
   const [formError, setFormError] = useState<string | null>(null);
   const [selectedParts, setSelectedParts] = useState<string[]>([]);
+  const [commissionStatus, setCommissionStatus] =
+    useState<CommissionStatusData>({
+      open: true,
+      note: "Taking custom head and mini partial builds. Reply within 24h.",
+    });
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/commission-status", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: CommissionStatusData | null) => {
+        if (active && data && typeof data.open === "boolean") {
+          setCommissionStatus(data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const togglePart = (part: string) => {
     setSelectedParts((prev) =>
@@ -688,10 +430,7 @@ export default function HomePage() {
       } | null;
 
       if (!res.ok) {
-        setFormError(
-          result?.error ||
-            "Không gửi được yêu cầu. Vui lòng thử lại hoặc gửi thẳng tới FluffNii.furries@gmail.com."
-        );
+        setFormError(result?.error || copy.errorFallback);
         setFormState("idle");
         return;
       }
@@ -700,9 +439,7 @@ export default function HomePage() {
       setSelectedParts([]);
       setFormState("sent");
     } catch {
-      setFormError(
-        "Lỗi kết nối khi gửi biểu mẫu. Vui lòng kiểm tra mạng hoặc gửi trực tiếp tới FluffNii.furries@gmail.com."
-      );
+      setFormError(copy.errorNetwork);
       setFormState("idle");
     }
   };
@@ -725,24 +462,54 @@ export default function HomePage() {
               }}
               className="lg:col-span-6 flex flex-col items-start gap-[26px]"
             >
+              <a
+                href="#contact"
+                className={`inline-flex items-center gap-2 rounded-full border border-[#111622]/16 px-3.5 py-1.5 transition-colors ${
+                  commissionStatus.open
+                    ? "bg-[#fff0a6]/85 hover:bg-[#fff0a6]"
+                    : "bg-[#dce8f5] hover:bg-[#dce8f5]/80"
+                }`}
+              >
+                <span className="relative flex h-2 w-2 shrink-0">
+                  {commissionStatus.open && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#16a34a] opacity-75" />
+                  )}
+                  <span
+                    className={`relative inline-flex rounded-full h-2 w-2 ${
+                      commissionStatus.open ? "bg-[#16a34a]" : "bg-[#64748b]"
+                    }`}
+                  />
+                </span>
+                <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]">
+                  {commissionStatus.open
+                    ? copy.heroStatusOpen
+                    : copy.heroStatusClosed}
+                </span>
+              </a>
+
               <p className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] leading-[1.3] uppercase tracking-[0.06em] text-[#111622]/62">
-                Custom Fursuit Workshop
+                {copy.heroEyebrow}
               </p>
 
-              <h1 className="font-stagheiz text-[58px] sm:text-[80px] md:text-[96px] lg:text-[clamp(66px,6.8vw,105px)] min-[1400px]:text-[105px] leading-[0.92] tracking-[-0.01em] text-[#111622]">
-                <span className="block whitespace-nowrap">From sketch</span>
-                <span className="block whitespace-nowrap">to fursuit</span>
+              <h1
+                className={`font-stagheiz text-[#111622] ${
+                  isVi
+                    ? "text-[clamp(38px,11.2vw,52px)] sm:text-[70px] md:text-[84px] lg:text-[clamp(56px,6vw,92px)] min-[1400px]:text-[92px] leading-[1.03] tracking-[-0.025em]"
+                    : "text-[clamp(44px,13vw,58px)] sm:text-[80px] md:text-[96px] lg:text-[clamp(66px,6.8vw,105px)] min-[1400px]:text-[105px] leading-[0.92] tracking-[-0.01em]"
+                }`}
+              >
+                <span className="block whitespace-nowrap">{copy.heroTitle[0]}</span>
+                <span className="block whitespace-nowrap">{copy.heroTitle[1]}</span>
               </h1>
 
               <p className="font-sans font-normal text-[19px] md:text-[22px] min-[1200px]:text-[26px] leading-[1.3] tracking-[-0.025em] text-[#111622]/62 max-w-[540px]">
-                Custom fursuits sculpted, patterned, and sewn straight from your
-                ref sheet
+                {copy.heroDesc}
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-1">
-                <Bouton title="Contact" href="/#contact" variant="primary" />
+                <Bouton title={copy.heroContactCta} href="/#contact" variant="primary" />
                 <Bouton
-                  title="View fursuits"
+                  title={copy.heroProjectsCta}
                   href="/#projets"
                   variant="secondary"
                   showArrow={false}
@@ -768,7 +535,7 @@ export default function HomePage() {
             className="flex items-center justify-between mb-10 md:mb-14"
           >
             <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
-              [The studio]
+              {copy.studioEyebrow}
             </span>
             <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
               (001)
@@ -777,12 +544,13 @@ export default function HomePage() {
 
           <div className="mb-16 md:mb-24 max-w-[1180px]">
             <PhraseScroll
-              texte="FluffNii builds custom fursuits you can actually breathe and move in. We pattern every marking by hand, trim the pile to show the sculpt, and line the inside for long days on the convention floor."
-              surlignes1="breathe and move in, pattern every marking, trim the pile"
+              key={lang}
+              texte={copy.phraseText}
+              surlignes1={copy.phraseHighlights1}
               couleur1="#DCE8F5"
-              surlignes2="line the inside, convention floor"
+              surlignes2={copy.phraseHighlights2}
               couleur2="#FFF0A6"
-              tailleMax={52}
+              tailleMax={isVi ? 44 : 52}
             />
           </div>
 
@@ -797,7 +565,7 @@ export default function HomePage() {
               >
                 <img
                   src="/images/formula-fursuit.jpg"
-                  alt="FluffNii — The Formula"
+                  alt={copy.formulaAlt}
                   className="w-full h-full object-cover object-top"
                 />
               </motion.div>
@@ -805,26 +573,28 @@ export default function HomePage() {
               <div className="lg:col-span-6 flex flex-col justify-center gap-7">
                 <div className="flex flex-col gap-4">
                   <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
-                    [The formula]
+                    {copy.formulaEyebrow}
                   </span>
-                  <h2 className="font-stagheiz text-[30px] sm:text-[34px] md:text-[38px] min-[1200px]:text-[36px] leading-[1] tracking-[-0.04em] text-[#111622]">
-                    Character Design +
+                  <h2
+                    className={`font-stagheiz text-[#111622] ${
+                      isVi
+                        ? "text-[26px] sm:text-[30px] md:text-[34px] min-[1200px]:text-[32px] leading-[1.08] tracking-[-0.025em]"
+                        : "text-[30px] sm:text-[34px] md:text-[38px] min-[1200px]:text-[36px] leading-[1] tracking-[-0.04em]"
+                    }`}
+                  >
+                    {copy.formulaTitleLines[0]}
                     <br />
-                    Fursuit Craft =
+                    {copy.formulaTitleLines[1]}
                   </h2>
                   <p className="font-sans text-[19px] md:text-[22px] min-[1200px]:text-[26px] leading-[1.3] tracking-[-0.025em] text-[#111622] max-w-[560px]">
-                    Suits that keep your character&apos;s face and silhouette
-                    intact once you put them on. Soft outside, breathable
-                    inside.
+                    {copy.formulaLead}
                   </p>
                   <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/62 max-w-[560px]">
-                    We work straight from your ref sheet so every spot, ear
-                    shape, and color break lands where it should. Our{" "}
+                    {copy.formulaBodyBefore}
                     <strong className="font-semibold text-[#111622]">
-                      focus
-                    </strong>{" "}
-                    is clean shaving, solid seams, and a head you can wear for
-                    hours without overheating.
+                      {copy.formulaBodyStrong}
+                    </strong>
+                    {copy.formulaBodyAfter}
                   </p>
                 </div>
 
@@ -837,7 +607,7 @@ export default function HomePage() {
                     className="flex flex-col justify-between gap-2"
                   >
                     <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
-                      (Fursuits &amp; parts built)
+                      {copy.statBuilt}
                     </span>
                     <Compteur valeur={120} prefixe="+" taille={72} />
                   </motion.div>
@@ -849,7 +619,7 @@ export default function HomePage() {
                     className="flex flex-col justify-between gap-2"
                   >
                     <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
-                      (Species &amp; styles)
+                      {copy.statSpecies}
                     </span>
                     <Compteur valeur={40} prefixe="+" taille={72} />
                   </motion.div>
@@ -861,7 +631,7 @@ export default function HomePage() {
                     className="flex flex-col justify-between gap-2"
                   >
                     <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
-                      (Made by hand)
+                      {copy.statHandmade}
                     </span>
                     <Compteur valeur={100} prefixe="" suffixe="%" taille={72} />
                   </motion.div>
@@ -878,7 +648,7 @@ export default function HomePage() {
             className="flex items-center justify-between mb-8"
           >
             <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
-              [3 areas of expertise in the same frame]
+              {copy.pillarsEyebrow}
             </span>
             <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
               (002)
@@ -886,7 +656,7 @@ export default function HomePage() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PILLARS.map((pillar, idx) => (
+            {copy.pillars.map((pillar, idx) => (
               <motion.div
                 key={pillar.num}
                 initial={{ opacity: 0, y: 32 }}
@@ -899,7 +669,13 @@ export default function HomePage() {
                   {pillar.num}
                 </span>
                 <div className="flex flex-col gap-3">
-                  <h3 className="font-stagheiz text-[30px] md:text-[38px] min-[1200px]:text-[36px] leading-[1] tracking-[-0.04em] text-[#111622]">
+                  <h3
+                    className={`font-stagheiz text-[#111622] ${
+                      isVi
+                        ? "text-[25px] md:text-[31px] min-[1200px]:text-[29px] leading-[1.06] tracking-[-0.025em]"
+                        : "text-[30px] md:text-[38px] min-[1200px]:text-[36px] leading-[1] tracking-[-0.04em]"
+                    }`}
+                  >
                     {pillar.title}
                   </h3>
                   <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/62">
@@ -924,11 +700,15 @@ export default function HomePage() {
                 transition={{ duration: 0.9, delay: 0, ease: EASE }}
                 className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62"
               >
-                [Who it&apos;s for]
+                {copy.whoEyebrow}
               </motion.span>
               <WordReveal
-                text={["Every species,", "built your way"]}
-                className="font-stagheiz text-[44px] sm:text-[64px] md:text-[80px] leading-[0.92] text-[#111622] max-w-[900px]"
+                text={copy.whoTitle}
+                className={`font-stagheiz text-[#111622] max-w-[900px] ${
+                  isVi
+                    ? "text-[36px] sm:text-[52px] md:text-[64px] leading-[1.03] tracking-[-0.025em]"
+                    : "text-[44px] sm:text-[64px] md:text-[80px] leading-[0.92]"
+                }`}
               />
               <motion.p
                 initial={{ opacity: 0, y: 16 }}
@@ -937,15 +717,13 @@ export default function HomePage() {
                 transition={{ duration: 0.9, delay: 0, ease: EASE }}
                 className="font-sans text-[17px] md:text-[19px] leading-[1.55] text-[#111622]/68 max-w-[640px]"
               >
-                Bears, lions, fox-cats, dogs, shibas… Every ref sheet has its
-                own proportions, so we shape each base from scratch instead of
-                reusing one mold.
+                {copy.whoDesc}
               </motion.p>
             </div>
 
             <div className="hidden lg:flex justify-center w-full h-[700px] overflow-visible relative">
               <div className="relative w-[1210px] h-[660px] shrink-0">
-                {FAN_CARDS.map((card, i) => {
+                {copy.fanCards.map((card, i) => {
                   const slotTops = [50, 12, 0, 12, 50];
                   return (
                     <motion.div
@@ -998,7 +776,13 @@ export default function HomePage() {
                           >
                             {card.num}
                           </span>
-                          <h3 className="font-stagheiz text-[22px] md:text-[24px] leading-[0.98] tracking-[-0.04em] uppercase">
+                          <h3
+                            className={`font-stagheiz uppercase ${
+                              isVi
+                                ? "text-[19px] md:text-[21px] leading-[1.04] tracking-[-0.02em]"
+                                : "text-[22px] md:text-[24px] leading-[0.98] tracking-[-0.04em]"
+                            }`}
+                          >
                             {card.title}
                           </h3>
                           <p
@@ -1019,7 +803,7 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:hidden pt-4 pb-8">
-              {FAN_CARDS.map((card, i) => (
+              {copy.fanCards.map((card, i) => (
                 <motion.div
                   key={card.num}
                   initial={{ opacity: 0, y: 60, rotate: 0 }}
@@ -1052,7 +836,13 @@ export default function HomePage() {
                     >
                       {card.num}
                     </span>
-                    <h3 className="font-stagheiz text-[21px] sm:text-[24px] leading-[0.98] tracking-[-0.04em] uppercase">
+                    <h3
+                      className={`font-stagheiz uppercase ${
+                        isVi
+                          ? "text-[19px] sm:text-[21px] leading-[1.04] tracking-[-0.02em]"
+                          : "text-[21px] sm:text-[24px] leading-[0.98] tracking-[-0.04em]"
+                      }`}
+                    >
                       {card.title}
                     </h3>
                     <p
@@ -1082,7 +872,7 @@ export default function HomePage() {
             className="flex items-center justify-between mb-8"
           >
             <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
-              [The result]
+              {copy.resultEyebrow}
             </span>
             <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
               (004)
@@ -1091,8 +881,12 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end mb-14 md:mb-20">
             <WordReveal
-              text={["From 2D ref sheet", "to 3D reality"]}
-              className="lg:col-span-7 font-stagheiz text-[44px] sm:text-[60px] md:text-[74px] leading-[0.92] text-[#111622]"
+              text={copy.resultTitle}
+              className={`lg:col-span-7 font-stagheiz text-[#111622] ${
+                isVi
+                  ? "text-[36px] sm:text-[50px] md:text-[62px] leading-[1.03] tracking-[-0.025em]"
+                  : "text-[44px] sm:text-[60px] md:text-[74px] leading-[0.92]"
+              }`}
             />
             <motion.p
               initial={{ opacity: 0, y: 16 }}
@@ -1101,8 +895,7 @@ export default function HomePage() {
               transition={{ duration: 0.9, delay: 0, ease: EASE }}
               className="lg:col-span-5 font-sans text-[17px] md:text-[18px] leading-[1.6] text-[#111622]/68"
             >
-              Getting a suit to look like your art sheet comes down to base
-              proportions, shave depth, and where every seam sits on the face.
+              {copy.resultDesc}
             </motion.p>
           </div>
 
@@ -1140,15 +933,20 @@ export default function HomePage() {
                 className="w-full h-full rounded-[16px] bg-[#fff0a6] border border-[#111622]/14 p-6 flex flex-col justify-between"
               >
                 <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/60">
-                  (001)
+                  {copy.resultCards[0].num}
                 </span>
                 <div className="flex flex-col gap-3">
-                  <h3 className="font-stagheiz text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em] text-[#111622]">
-                    TRUE TO YOUR REF
+                  <h3
+                    className={`font-stagheiz text-[#111622] ${
+                      isVi
+                        ? "text-[25px] md:text-[31px] min-[1200px]:text-[29px] leading-[1.06] tracking-[-0.025em]"
+                        : "text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em]"
+                    }`}
+                  >
+                    {copy.resultCards[0].title}
                   </h3>
                   <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/68">
-                    Every stripe, spot, ear notch, and color break on your ref
-                    sheet is taped and sewn right where you drew it.
+                    {copy.resultCards[0].desc}
                   </p>
                 </div>
               </motion.div>
@@ -1187,15 +985,20 @@ export default function HomePage() {
                 className="w-full h-full rounded-[16px] bg-[#dce8f5] border border-[#111622]/14 p-6 flex flex-col justify-between"
               >
                 <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/60">
-                  (002)
+                  {copy.resultCards[1].num}
                 </span>
                 <div className="flex flex-col gap-3">
-                  <h3 className="font-stagheiz text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em] text-[#111622]">
-                    KEMONO CHARM
+                  <h3
+                    className={`font-stagheiz text-[#111622] ${
+                      isVi
+                        ? "text-[25px] md:text-[31px] min-[1200px]:text-[29px] leading-[1.06] tracking-[-0.025em]"
+                        : "text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em]"
+                    }`}
+                  >
+                    {copy.resultCards[1].title}
                   </h3>
                   <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/68">
-                    Round plush cheeks and deep-set 3D follow-me eyes that keep
-                    their expression from the front and side angles.
+                    {copy.resultCards[1].desc}
                   </p>
                 </div>
               </motion.div>
@@ -1214,15 +1017,20 @@ export default function HomePage() {
                 className="w-full h-full rounded-[16px] bg-[#1e3557] text-[#f5f8fc] p-6 flex flex-col justify-between"
               >
                 <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/65">
-                  (003)
+                  {copy.resultCards[2].num}
                 </span>
                 <div className="flex flex-col gap-3">
-                  <h3 className="font-stagheiz text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em] text-[#f5f8fc]">
-                    MAGNETIC EXTRAS
+                  <h3
+                    className={`font-stagheiz text-[#f5f8fc] ${
+                      isVi
+                        ? "text-[25px] md:text-[31px] min-[1200px]:text-[29px] leading-[1.06] tracking-[-0.025em]"
+                        : "text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em]"
+                    }`}
+                  >
+                    {copy.resultCards[2].title}
                   </h3>
                   <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#f5f8fc]/75">
-                    Switch expressions in seconds with magnetic tongues, clip-on
-                    eyelids, posable ears, and hair tufts.
+                    {copy.resultCards[2].desc}
                   </p>
                 </div>
               </motion.div>
@@ -1261,15 +1069,20 @@ export default function HomePage() {
                 className="w-full h-full rounded-[16px] bg-[#ffffff] border border-[#111622]/14 p-6 flex flex-col justify-between"
               >
                 <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/60">
-                  (004)
+                  {copy.resultCards[3].num}
                 </span>
                 <div className="flex flex-col gap-3">
-                  <h3 className="font-stagheiz text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em] text-[#111622]">
-                    MADE TO MOVE
+                  <h3
+                    className={`font-stagheiz text-[#111622] ${
+                      isVi
+                        ? "text-[25px] md:text-[31px] min-[1200px]:text-[29px] leading-[1.06] tracking-[-0.025em]"
+                        : "text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em]"
+                    }`}
+                  >
+                    {copy.resultCards[3].title}
                   </h3>
                   <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/68">
-                    Wide field of view, hidden back zippers, and a cooling liner
-                    built for full days at a con, not just quick photos.
+                    {copy.resultCards[3].desc}
                   </p>
                 </div>
               </motion.div>
@@ -1309,7 +1122,7 @@ export default function HomePage() {
             className="flex items-center justify-between mb-8"
           >
             <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
-              [How]
+              {copy.methodEyebrow}
             </span>
             <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
               (005)
@@ -1318,8 +1131,12 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end mb-16">
             <WordReveal
-              text="In three stages"
-              className="lg:col-span-7 font-stagheiz text-[44px] sm:text-[60px] md:text-[74px] leading-[0.92] text-[#111622]"
+              text={copy.methodTitle}
+              className={`lg:col-span-7 font-stagheiz text-[#111622] ${
+                isVi
+                  ? "text-[36px] sm:text-[50px] md:text-[64px] leading-[1.03] tracking-[-0.025em]"
+                  : "text-[44px] sm:text-[60px] md:text-[74px] leading-[0.92]"
+              }`}
             />
             <motion.p
               initial={{ opacity: 0, y: 16 }}
@@ -1328,15 +1145,14 @@ export default function HomePage() {
               transition={{ duration: 0.9, delay: 0, ease: EASE }}
               className="lg:col-span-5 font-sans text-[17px] md:text-[18px] leading-[1.6] text-[#111622]/68"
             >
-              Every commission goes through the same three workshop stages, with
-              photo check-ins before we move to the next.
+              {copy.methodDesc}
             </motion.p>
           </div>
 
           <div className="flex flex-col gap-10">
-            {METHOD_STEPS.map((step) => (
+            {copy.methodSteps.map((step) => (
               <div
-                key={step.tag}
+                key={step.counter}
                 style={{
                   backgroundColor: step.bg,
                   top: `${step.top}px`,
@@ -1367,7 +1183,13 @@ export default function HomePage() {
                     </div>
 
                     <div className="flex flex-col gap-4">
-                      <h3 className="font-stagheiz text-[34px] sm:text-[46px] md:text-[56px] leading-[0.95]">
+                      <h3
+                        className={`font-stagheiz ${
+                          isVi
+                            ? "text-[28px] sm:text-[38px] md:text-[46px] leading-[1.04] tracking-[-0.02em]"
+                            : "text-[34px] sm:text-[46px] md:text-[56px] leading-[0.95]"
+                        }`}
+                      >
                         {step.title}
                       </h3>
                       <p
@@ -1423,7 +1245,7 @@ export default function HomePage() {
               className="flex items-center justify-between mb-6"
             >
               <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
-                [Projects]
+                {copy.projectsEyebrow}
               </span>
               <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
                 (006)
@@ -1432,14 +1254,18 @@ export default function HomePage() {
 
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
               <WordReveal
-                text={["Selected", "projects"]}
-                className="font-stagheiz text-[44px] sm:text-[64px] md:text-[80px] leading-[0.92] text-[#111622]"
+                text={copy.projectsTitle}
+                className={`font-stagheiz text-[#111622] ${
+                  isVi
+                    ? "text-[36px] sm:text-[52px] md:text-[66px] leading-[1.03] tracking-[-0.025em]"
+                    : "text-[44px] sm:text-[64px] md:text-[80px] leading-[0.92]"
+                }`}
               />
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => scrollCarousel(-1)}
-                  aria-label="Previous project"
+                  aria-label={copy.prevProjectAria}
                   className="w-[56px] h-[56px] rounded-full border-[1.5px] border-[#111622] flex items-center justify-center text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-5 h-5" strokeWidth={1.75} />
@@ -1447,7 +1273,7 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => scrollCarousel(1)}
-                  aria-label="Next project"
+                  aria-label={copy.nextProjectAria}
                   className="w-[56px] h-[56px] rounded-full border-[1.5px] border-[#111622] flex items-center justify-center text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors cursor-pointer"
                 >
                   <ArrowRight className="w-5 h-5" strokeWidth={1.75} />
@@ -1460,7 +1286,7 @@ export default function HomePage() {
             ref={carouselRef}
             className="flex gap-6 overflow-x-auto no-scrollbar px-5 md:px-[56px] pb-6 scroll-smooth"
           >
-            {PROJECTS.map((proj, idx) => (
+            {copy.projects.map((proj, idx) => (
               <motion.article
                 key={proj.client}
                 data-project-card
@@ -1509,7 +1335,10 @@ export default function HomePage() {
                 </motion.div>
 
                 <div className="flex flex-col gap-2">
-                  <h3 className="font-stagheiz text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em] text-[#111622]">
+                  <h3
+                    style={{ fontFamily: '"Stagheiz", "DM Sans", sans-serif' }}
+                    className="font-stagheiz text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em] text-[#111622]"
+                  >
                     {proj.client}
                   </h3>
                   <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/68">
@@ -1534,7 +1363,7 @@ export default function HomePage() {
               className="flex items-center justify-between mb-6"
             >
               <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
-                [Gallery]
+                {copy.galleryEyebrow}
               </span>
               <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
                 (007)
@@ -1542,8 +1371,12 @@ export default function HomePage() {
             </motion.div>
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <WordReveal
-                text="The wall of fursuits"
-                className="font-stagheiz text-[44px] md:text-[68px] leading-[0.95] tracking-[-0.005em] uppercase text-[#111622] max-w-[820px]"
+                text={copy.galleryTitle}
+                className={`font-stagheiz uppercase text-[#111622] max-w-[820px] ${
+                  isVi
+                    ? "text-[36px] md:text-[56px] leading-[1.03] tracking-[-0.02em]"
+                    : "text-[44px] md:text-[68px] leading-[0.95] tracking-[-0.005em]"
+                }`}
               />
               <motion.p
                 initial={{ opacity: 0, y: 32 }}
@@ -1556,8 +1389,7 @@ export default function HomePage() {
                 }}
                 className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/65 max-w-[380px] shrink-0"
               >
-                Finished heads, partials, paws, and workshop WIPs. Hover a row
-                to slow down the scroll.
+                {copy.galleryDesc}
               </motion.p>
             </div>
           </div>
@@ -1595,9 +1427,12 @@ export default function HomePage() {
               gap={40}
               className="py-[20px]"
             >
-              {GALLERY_WORDS.map((word, idx) => (
+              {copy.galleryWords.map((word, idx) => (
                 <React.Fragment key={idx}>
-                  <span className="font-stagheiz text-[44px] md:text-[68px] leading-[0.95] tracking-[-0.005em] uppercase text-[#111622] whitespace-nowrap select-none shrink-0">
+                  <span
+                    style={{ fontFamily: '"Stagheiz", sans-serif' }}
+                    className="font-stagheiz text-[44px] md:text-[68px] leading-[0.95] tracking-[-0.005em] uppercase text-[#111622] whitespace-nowrap select-none shrink-0"
+                  >
                     {word}
                   </span>
                   <span className="w-[14px] h-[14px] rounded-full bg-[#111622] shrink-0" />
@@ -1645,7 +1480,7 @@ export default function HomePage() {
               className="flex items-center justify-between mb-6"
             >
               <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/65">
-                [Offers]
+                {copy.offersEyebrow}
               </span>
               <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/65">
                 (008)
@@ -1654,8 +1489,12 @@ export default function HomePage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end mb-14 md:mb-20">
               <WordReveal
-                text="Built for your character"
-                className="lg:col-span-7 font-stagheiz text-[44px] sm:text-[64px] md:text-[80px] leading-[0.92] text-[#f5f8fc]"
+                text={copy.offersTitle}
+                className={`lg:col-span-7 font-stagheiz text-[#f5f8fc] ${
+                  isVi
+                    ? "text-[36px] sm:text-[52px] md:text-[64px] leading-[1.03] tracking-[-0.025em]"
+                    : "text-[44px] sm:text-[64px] md:text-[80px] leading-[0.92]"
+                }`}
               />
               <motion.p
                 initial={{ opacity: 0, y: 32 }}
@@ -1664,8 +1503,7 @@ export default function HomePage() {
                 transition={{ duration: 0.9, delay: 0.2, ease: EASE }}
                 className="lg:col-span-5 font-sans text-[17px] md:text-[18px] leading-[1.6] text-[#f5f8fc]/75"
               >
-                Start with a custom head, or pair it with matching paws and a
-                tail cut from the same fur roll.
+                {copy.offersDesc}
               </motion.p>
             </div>
 
@@ -1680,33 +1518,29 @@ export default function HomePage() {
                 <div className="flex flex-col gap-6">
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/60">
-                      [Offer 01]
+                      {copy.offer1Tag}
                     </span>
                   </div>
                   <div className="w-full aspect-[5/4] rounded-[20px] overflow-hidden bg-[#dce8f5]">
                     <img
                       src="/images/offer-01.webp"
-                      alt="Custom Fursuit Head"
+                      alt={copy.offer1Alt}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="flex flex-col gap-3">
-                    <h3 className="font-stagheiz text-[34px] md:text-[42px] leading-[0.96]">
-                      Custom Fursuit Head
+                    <h3
+                      style={{ fontFamily: '"Stagheiz", sans-serif' }}
+                      className="font-stagheiz text-[34px] md:text-[42px] leading-[0.96]"
+                    >
+                      {copy.offer1Title}
                     </h3>
                     <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/72">
-                      Just the head, built on a custom 3D-printed TPU base from
-                      your ref sheet. Base price covers one fur color.
+                      {copy.offer1Desc}
                     </p>
                   </div>
                   <ul className="flex flex-col gap-3 pt-2 border-t border-[#111622]/14">
-                    {[
-                      "3D-printed TPU base shaped specifically for your OC's silhouette",
-                      "3D follow-me eyes and breathable interior lining for long wear",
-                      "Base price (7,200,000 VND) covers 1 fur color with smooth shaving",
-                      "Extra fur colors are +500,000 VND each; teeth add +150,000 VND",
-                      "Includes one magnetic tongue and a breathable storage bag",
-                    ].map((bullet) => (
+                    {copy.offer1Bullets.map((bullet) => (
                       <li
                         key={bullet}
                         className="flex items-start gap-3 font-sans text-[16px] md:text-[17px] leading-[1.5] text-[#111622]/80"
@@ -1720,14 +1554,21 @@ export default function HomePage() {
 
                 <div className="pt-6 border-t border-[#111622]/14 flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <div className="font-stagheiz text-[28px] xl:text-[32px] leading-none">
-                      From 7,200,000 VND
+                    <div
+                      className={`font-stagheiz leading-none ${
+                        isVi ? "text-[25px] xl:text-[29px]" : "text-[28px] xl:text-[32px]"
+                      }`}
+                    >
+                      {copy.offer1Price}
+                    </div>
+                    <div className="font-mono text-[13px] md:text-[14px] font-bold tracking-[0.04em] text-[#111622]/85 mt-1.5">
+                      {copy.offer1Usd}
                     </div>
                     <div className="font-mono text-[11px] md:text-[12px] uppercase tracking-[0.06em] text-[#111622]/60 mt-1">
-                      1 base color · +500k/color · +150k teeth
+                      {copy.offer1Sub}
                     </div>
                   </div>
-                  <Bouton title="Contact" href="/#contact" variant="primary" />
+                  <Bouton title={copy.heroContactCta} href="/#contact" variant="primary" />
                 </div>
               </motion.div>
 
@@ -1745,33 +1586,29 @@ export default function HomePage() {
                 <div className="flex flex-col gap-6">
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/60">
-                      [Offer 02]
+                      {copy.offer2Tag}
                     </span>
                   </div>
                   <div className="w-full aspect-[5/4] rounded-[20px] overflow-hidden bg-[#dce8f5]">
                     <img
                       src="/images/offer-02.webp"
-                      alt="Head and Matching Parts"
+                      alt={copy.offer2Alt}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="flex flex-col gap-3">
-                    <h3 className="font-stagheiz text-[34px] md:text-[42px] leading-[0.96]">
-                      Head + Matching Parts
+                    <h3
+                      style={{ fontFamily: '"Stagheiz", sans-serif' }}
+                      className="font-stagheiz text-[34px] md:text-[42px] leading-[0.96]"
+                    >
+                      {copy.offer2Title}
                     </h3>
                     <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/72">
-                      Your custom head paired with matching handpaws and a tail
-                      cut from the exact same dye lot of fur.
+                      {copy.offer2Desc}
                     </p>
                   </div>
                   <ul className="flex flex-col gap-3 pt-2 border-t border-[#111622]/14">
-                    {[
-                      "Base Head starts at 7,200,000 VND (+500K/extra color, +150K teeth)",
-                      "Handpaws start at 1,500,000 VND for 1 base color (+350K per color)",
-                      "Belt-loop tail starts at 1,300,000 VND for 1 base color (+400K per color)",
-                      "Optional TPU horns or layered wig styling matched to your ref",
-                      "WIP photo checks on the TPU base and fur trim before seams close",
-                    ].map((bullet) => (
+                    {copy.offer2Bullets.map((bullet) => (
                       <li
                         key={bullet}
                         className="flex items-start gap-3 font-sans text-[16px] md:text-[17px] leading-[1.5] text-[#111622]/80"
@@ -1785,15 +1622,22 @@ export default function HomePage() {
 
                 <div className="pt-6 border-t border-[#111622]/14 flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <div className="font-stagheiz text-[28px] xl:text-[32px] leading-none">
-                      From 10,000,000 VND
+                    <div
+                      className={`font-stagheiz leading-none ${
+                        isVi ? "text-[25px] xl:text-[29px]" : "text-[28px] xl:text-[32px]"
+                      }`}
+                    >
+                      {copy.offer2Price}
+                    </div>
+                    <div className="font-mono text-[13px] md:text-[14px] font-bold tracking-[0.04em] text-[#111622]/85 mt-1.5">
+                      {copy.offer2Usd}
                     </div>
                     <div className="font-mono text-[11px] md:text-[12px] uppercase tracking-[0.06em] text-[#111622]/60 mt-1">
-                      Head + Paws + Tail (1 base color)
+                      {copy.offer2Sub}
                     </div>
                   </div>
                   <Bouton
-                    title="Contact"
+                    title={copy.heroContactCta}
                     href="/#contact"
                     variant="primary"
                   />
@@ -1802,7 +1646,7 @@ export default function HomePage() {
             </div>
 
             <p className="font-mono text-[12px] min-[1200px]:text-[13px] text-[#f5f8fc]/65 mb-20">
-              All base prices cover 1 primary fur color. Extra colors and add-ons like teeth are priced cleanly below.
+              {copy.furNotice}
             </p>
 
             <div id="constitue-ton-offre" className="pt-4">
@@ -1814,25 +1658,29 @@ export default function HomePage() {
                 className="mb-7"
               >
                 <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/65">
-                  [Pricing &amp; add-on examples]
+                  {copy.priceSheetEyebrow}
                 </span>
               </motion.div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-[28px] gap-y-[130px] lg:gap-[28px] pt-[90px]">
-                {PACKAGES.map((pkg, idx) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-[28px] gap-y-[130px] pt-[90px]">
+                {copy.packages.map((pkg, idx) => (
                   <motion.div
-                    key={pkg.title}
+                    key={idx}
                     initial={{ opacity: 0, y: 40 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={VIEWPORT}
-                    transition={{ duration: 0.9, delay: idx * 0.1, ease: EASE }}
+                    transition={{
+                      duration: 0.9,
+                      delay: (idx % 3) * 0.1,
+                      ease: EASE,
+                    }}
                     className="h-full"
                   >
                     <motion.div
                       whileHover={{ y: -10, scale: 1 }}
                       transition={{ duration: 0.5, ease: EASE }}
                       style={{ backgroundColor: pkg.bg }}
-                      className="relative h-full rounded-[28px] text-[#111622] px-[28px] pb-[28px] pt-[152px] flex flex-col justify-between gap-7 shadow-[0_24px_60px_rgba(0,0,0,0.22)]"
+                      className="relative h-full rounded-[28px] text-[#111622] px-[26px] pb-[28px] pt-[152px] flex flex-col justify-between gap-6 shadow-[0_24px_60px_rgba(0,0,0,0.22)]"
                     >
                       <div
                         style={{ transform: `translateX(-50%) rotate(${pkg.rot}deg)` }}
@@ -1841,12 +1689,16 @@ export default function HomePage() {
                         <img
                           src={pkg.img}
                           alt={pkg.title}
-                          className="w-full h-full object-cover object-center"
+                          style={{ objectPosition: pkg.imgPos }}
+                          className="w-full h-full object-cover"
                         />
                       </div>
 
-                      <div className="flex flex-col gap-5">
-                        <h3 className="font-stagheiz text-[30px] lg:text-[34px] leading-none text-center">
+                      <div className="flex flex-col gap-4">
+                        <h3
+                          style={{ fontFamily: '"Stagheiz", sans-serif' }}
+                          className="font-stagheiz text-[30px] lg:text-[34px] leading-none text-center"
+                        >
                           {pkg.title}
                         </h3>
 
@@ -1854,25 +1706,38 @@ export default function HomePage() {
                           {pkg.rows.map((row) => (
                             <div
                               key={row.label}
-                              className="flex items-center justify-between gap-2 py-4 border-b border-dashed border-[#111622]/30"
+                              className="flex items-center justify-between gap-3 py-3 border-b border-dashed border-[#111622]/30"
                             >
-                              <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/65">
+                              <span className="font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622]/68">
                                 {row.label}
                               </span>
-                              <span className="font-stagheiz text-[20px] lg:text-[22px] whitespace-nowrap">
+                              <span className="font-mono text-[12px] lg:text-[13px] font-bold text-[#111622] text-right shrink-0">
                                 {row.value}
                               </span>
                             </div>
                           ))}
                         </div>
+
+                        <p className="font-sans text-[13px] leading-[1.5] text-[#111622]/75">
+                          {pkg.note}
+                        </p>
                       </div>
 
                       <div className="flex flex-col items-center gap-4 pt-2">
-                        <div className="font-stagheiz text-[30px] lg:text-[34px] leading-none whitespace-nowrap">
-                          {pkg.price}
+                        <div className="flex flex-col items-center gap-1 text-center">
+                          <div
+                            className={`font-stagheiz leading-none whitespace-nowrap ${
+                              isVi ? "text-[25px] lg:text-[29px]" : "text-[28px] lg:text-[32px]"
+                            }`}
+                          >
+                            {pkg.price}
+                          </div>
+                          <div className="font-mono text-[13px] lg:text-[14px] font-bold uppercase tracking-[0.05em] text-[#111622]/75 whitespace-nowrap">
+                            {pkg.usdPrice}
+                          </div>
                         </div>
                         <Bouton
-                          title="Contact"
+                          title={copy.heroContactCta}
                           href="/#contact"
                           variant="primary"
                           fullWidth
@@ -1881,6 +1746,79 @@ export default function HomePage() {
                     </motion.div>
                   </motion.div>
                 ))}
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-14">
+                <motion.div
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={VIEWPORT}
+                  transition={{ duration: 0.75, ease: EASE }}
+                  className="rounded-[28px] bg-[#f5f8fc] text-[#111622] p-7 sm:p-8 flex flex-col gap-5"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/60">
+                      {copy.extraOptionsEyebrow}
+                    </span>
+                    <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/60">
+                      {copy.extraOptionsTag}
+                    </span>
+                  </div>
+                  <div className="flex flex-col divide-y divide-dashed divide-[#111622]/20 border-t border-b border-dashed border-[#111622]/20">
+                    {copy.extraOptions.map((opt) => (
+                      <div
+                        key={opt.label}
+                        className="py-3.5 flex flex-col sm:flex-row sm:items-baseline justify-between gap-2"
+                      >
+                        <span className="font-sans text-[15px] font-medium text-[#111622] shrink-0">
+                          {opt.label}
+                        </span>
+                        <span className="font-sans text-[14px] text-[#111622]/76 sm:text-right">
+                          {opt.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={VIEWPORT}
+                  transition={{ duration: 0.75, delay: 0.08, ease: EASE }}
+                  className="rounded-[28px] bg-[#fff0a6] text-[#111622] p-7 sm:p-8 flex flex-col justify-between gap-5"
+                >
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/65">
+                        {copy.freeGiftsEyebrow}
+                      </span>
+                      <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/65">
+                        {copy.freeGiftsTag}
+                      </span>
+                    </div>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {copy.freeGifts.map((gift) => (
+                        <li
+                          key={gift}
+                          className="flex items-center gap-2.5 rounded-[14px] bg-[#f5f8fc]/75 border border-[#111622]/12 px-3.5 py-2.5 font-sans text-[14px] font-medium text-[#111622]"
+                        >
+                          <Check className="w-4 h-4 shrink-0 text-[#111622]" />
+                          <span>{gift}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="rounded-[16px] bg-[#111622] text-[#f5f8fc] px-4 py-3.5 flex flex-col gap-1">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-[#fff0a6]">
+                      {copy.bonusTag}
+                    </span>
+                    <p className="font-sans text-[14px] leading-[1.45] text-[#f5f8fc]/88">
+                      {copy.bonusText}
+                    </p>
+                  </div>
+                </motion.div>
               </div>
             </div>
           </div>
@@ -1898,7 +1836,7 @@ export default function HomePage() {
             className="w-full flex items-center justify-between mb-12 md:mb-16"
           >
             <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
-              [Project timeline]
+              {copy.timelineEyebrow}
             </span>
             <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
               (009)
@@ -1908,8 +1846,12 @@ export default function HomePage() {
           <div className="flex flex-col lg:flex-row items-start gap-12 lg:gap-[96px]">
             <div className="w-full lg:w-[520px] lg:shrink-0 lg:sticky lg:top-[140px] flex flex-col items-start gap-[28px]">
               <WordReveal
-                text={["No guesswork", "on WIPs"]}
-                className="font-stagheiz text-[44px] sm:text-[60px] md:text-[68px] leading-[0.95] tracking-[-0.005em] text-[#111622]"
+                text={copy.timelineTitle}
+                className={`font-stagheiz text-[#111622] ${
+                  isVi
+                    ? "text-[36px] sm:text-[50px] md:text-[58px] leading-[1.03] tracking-[-0.02em]"
+                    : "text-[44px] sm:text-[60px] md:text-[68px] leading-[0.95] tracking-[-0.005em]"
+                }`}
               />
               <motion.p
                 initial={{ opacity: 0, y: 32 }}
@@ -1918,10 +1860,17 @@ export default function HomePage() {
                 transition={{ duration: 0.9, delay: 0.2, ease: EASE }}
                 className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/62"
               >
-                You get photo updates at every milestone before we cut fur or
-                close a seam, so nothing moves forward without your okay.
+                {copy.timelineDesc}
               </motion.p>
-              <Bouton title="Contact" href="/#contact" variant="primary" />
+              <div className="flex flex-wrap items-center gap-3">
+                <Bouton title={copy.heroContactCta} href="/#contact" variant="primary" />
+                <Bouton
+                  title={copy.timelineTermsCta}
+                  href="/terms"
+                  variant="secondary"
+                  showArrow={false}
+                />
+              </div>
             </div>
 
             <div className="flex-1 min-w-0 w-full">
@@ -1942,7 +1891,7 @@ export default function HomePage() {
             className="w-full flex items-center justify-between mb-12 md:mb-16"
           >
             <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
-              [Frequently asked questions]
+              {copy.faqEyebrow}
             </span>
             <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/62">
               (010)
@@ -1952,18 +1901,29 @@ export default function HomePage() {
           <div className="flex flex-col lg:flex-row items-start gap-12 lg:gap-[64px]">
             <div className="w-full lg:w-[480px] lg:shrink-0 lg:sticky lg:top-[120px] flex flex-col items-start gap-[28px]">
               <WordReveal
-                text={["Got a", "question?"]}
-                className="font-stagheiz text-[44px] sm:text-[60px] md:text-[68px] leading-[0.95] tracking-[-0.005em] text-[#111622]"
+                text={copy.faqTitle}
+                className={`font-stagheiz text-[#111622] ${
+                  isVi
+                    ? "text-[36px] sm:text-[50px] md:text-[58px] leading-[1.03] tracking-[-0.02em]"
+                    : "text-[44px] sm:text-[60px] md:text-[68px] leading-[0.95] tracking-[-0.005em]"
+                }`}
               />
               <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/62">
-                Answers to the questions we get asked the most. And if yours
-                isn&apos;t here, write to us: we reply fast.
+                {copy.faqDesc}
               </p>
-              <Bouton
-                title="Ask a question"
-                href="/#contact"
-                variant="secondary"
-              />
+              <div className="flex flex-wrap items-center gap-3">
+                <Bouton
+                  title={copy.faqAskCta}
+                  href="/#contact"
+                  variant="secondary"
+                />
+                <Bouton
+                  title={copy.faqTermsCta}
+                  href="/terms"
+                  variant="primary"
+                  showArrow={false}
+                />
+              </div>
             </div>
 
             <div className="flex-1 min-w-0 w-full">
@@ -1989,7 +1949,7 @@ export default function HomePage() {
               className="flex items-center justify-between mb-8"
             >
               <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/65">
-                [Contact]
+                {copy.contactEyebrow}
               </span>
               <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/65">
                 (011)
@@ -1997,19 +1957,22 @@ export default function HomePage() {
             </motion.div>
 
             <CharReveal
-              text={["Ready to start", "a build?"]}
-              className="font-stagheiz text-[44px] sm:text-[68px] lg:text-[98px] leading-[0.92] tracking-[-0.01em] text-[#f5f8fc] mb-12 md:mb-16"
+              text={copy.contactTitle}
+              className={`font-stagheiz text-[#f5f8fc] mb-12 md:mb-16 ${
+                isVi
+                  ? "text-[36px] sm:text-[56px] lg:text-[82px] leading-[1.03] tracking-[-0.02em]"
+                  : "text-[44px] sm:text-[68px] lg:text-[98px] leading-[0.92] tracking-[-0.01em]"
+              }`}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
               <div className="lg:col-span-5 flex flex-col gap-8">
                 <p className="font-sans text-[19px] md:text-[22px] min-[1200px]:text-[26px] leading-[1.3] tracking-[-0.025em] text-[#f5f8fc]/72 max-w-[520px]">
-                  Send over your character ref sheet and the parts you have in
-                  mind. We reply within 48h.
+                  {copy.contactIntro}
                 </p>
 
                 <div className="flex flex-col gap-5 pt-4 border-t border-[#f5f8fc]/16">
-                  {STUDIO_CHANNELS.map((channel) => (
+                  {copy.channels.map((channel) => (
                     <div key={channel.label}>
                       <div className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/55 mb-1">
                         {channel.label}
@@ -2035,30 +1998,52 @@ export default function HomePage() {
                 onSubmit={handleContactSubmit}
                 className="lg:col-span-7 flex flex-col gap-6 bg-[#f5f8fc]/[0.04] border border-[#f5f8fc]/14 rounded-[28px] p-6 sm:p-10"
               >
+                <div className="rounded-[16px] bg-[#f5f8fc]/[0.06] border border-[#f5f8fc]/16 px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${
+                        commissionStatus.open ? "bg-[#4ade80]" : "bg-[#94a3b8]"
+                      }`}
+                    />
+                    <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#fff0a6]">
+                      {commissionStatus.open
+                        ? copy.statusBadgeOpen
+                        : copy.statusBadgeClosed}
+                    </span>
+                  </div>
+                  <span className="font-sans text-[13px] text-[#f5f8fc]/80">
+                    {localizeCommissionNote(
+                      commissionStatus.note,
+                      commissionStatus.open,
+                      lang
+                    )}
+                  </span>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <label className="flex flex-col gap-2">
                     <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/70">
-                      [Name or handle]
+                      {copy.fieldName}
                     </span>
                     <input
                       type="text"
                       name="name"
                       required
                       maxLength={120}
-                      placeholder="Your name or @handle"
+                      placeholder={copy.placeholderName}
                       className="w-full rounded-[14px] bg-[#f5f8fc]/8 border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/35 focus:outline-none focus:border-[#fff0a6]"
                     />
                   </label>
                   <label className="flex flex-col gap-2">
                     <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/70">
-                      [Character species]
+                      {copy.fieldSpecies}
                     </span>
                     <input
                       type="text"
                       name="species"
                       required
                       maxLength={120}
-                      placeholder="Wolf, Kemono cat, Shiba..."
+                      placeholder={copy.placeholderSpecies}
                       className="w-full rounded-[14px] bg-[#f5f8fc]/8 border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/35 focus:outline-none focus:border-[#fff0a6]"
                     />
                   </label>
@@ -2067,24 +2052,24 @@ export default function HomePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <label className="flex flex-col gap-2">
                     <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/70">
-                      [Email]
+                      {copy.fieldEmail}
                     </span>
                     <input
                       type="email"
                       name="email"
                       required
-                      placeholder="you@email.com"
+                      placeholder={copy.placeholderEmail}
                       className="w-full rounded-[14px] bg-[#f5f8fc]/8 border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/35 focus:outline-none focus:border-[#fff0a6]"
                     />
                   </label>
                   <label className="flex flex-col gap-2">
                     <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/70">
-                      [Phone number]
+                      {copy.fieldPhone}
                     </span>
                     <input
                       type="tel"
                       name="phone"
-                      placeholder="+84 9xx xxx xxx"
+                      placeholder={copy.placeholderPhone}
                       className="w-full rounded-[14px] bg-[#f5f8fc]/8 border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/35 focus:outline-none focus:border-[#fff0a6]"
                     />
                   </label>
@@ -2092,12 +2077,12 @@ export default function HomePage() {
 
                 <label className="flex flex-col gap-2">
                   <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/70">
-                    [Facebook name or link]
+                    {copy.fieldFacebook}
                   </span>
                   <input
                     type="text"
                     name="facebook"
-                    placeholder="Your Facebook name or https://facebook.com/..."
+                    placeholder={copy.placeholderFacebook}
                     className="w-full rounded-[14px] bg-[#f5f8fc]/8 border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/35 focus:outline-none focus:border-[#fff0a6]"
                   />
                 </label>
@@ -2111,10 +2096,10 @@ export default function HomePage() {
                     id="commission-type-label"
                     className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/70"
                   >
-                    [Commission type]
+                    {copy.fieldType}
                   </span>
                   <div className="flex flex-col gap-3">
-                    {COMMISSION_GROUPS.map((group) => (
+                    {copy.commissionGroups.map((group) => (
                       <div
                         key={group.colsClass}
                         className={`grid ${group.colsClass} gap-3`}
@@ -2174,29 +2159,38 @@ export default function HomePage() {
 
                 <label className="flex flex-col gap-2">
                   <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/70">
-                    [Thông tin khác và ref link]
+                    {copy.fieldNotes}
                   </span>
                   <textarea
                     name="message"
                     rows={4}
                     required
                     maxLength={4000}
-                    placeholder="Gửi link ref sheet, ghi chú màu lông hoặc phụ kiện, và thời gian dự kiến nhận suit..."
+                    placeholder={copy.placeholderNotes}
                     className="w-full rounded-[14px] bg-[#f5f8fc]/8 border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/35 focus:outline-none focus:border-[#fff0a6]"
                   />
                 </label>
 
                 <div className="pt-2 flex flex-col items-start gap-3">
+                  <p className="font-sans text-[13px] leading-[1.5] text-[#f5f8fc]/65">
+                    {copy.termsNoticeBefore}
+                    <Link
+                      href="/terms"
+                      className="text-[#fff0a6] hover:underline underline-offset-4"
+                    >
+                      {copy.termsNoticeLink}
+                    </Link>
+                    .
+                  </p>
                   <button
                     type="submit"
                     disabled={formState !== "idle"}
                     className="group inline-flex items-center justify-between gap-4 min-w-[280px] px-[26px] py-[19px] rounded-full bg-[#f5f8fc] text-[#111622] hover:bg-[#fff0a6] transition-colors font-sans text-[15px] font-medium cursor-pointer disabled:opacity-75"
                   >
                     <span>
-                      {formState === "idle" && "Send my request"}
-                      {formState === "sending" && "Sending…"}
-                      {formState === "sent" &&
-                        "Thank you! We'll reply within 48h."}
+                      {formState === "idle" && copy.submitIdle}
+                      {formState === "sending" && copy.submitSending}
+                      {formState === "sent" && copy.submitSent}
                     </span>
                     {formState === "sent" ? (
                       <Check className="w-[18px] h-[18px] shrink-0" />
@@ -2210,7 +2204,7 @@ export default function HomePage() {
                       onClick={() => setFormState("idle")}
                       className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#f5f8fc]/65 hover:text-[#fff0a6] transition-colors underline underline-offset-4"
                     >
-                      Send another request
+                      {copy.submitAnother}
                     </button>
                   )}
                   {formError && (

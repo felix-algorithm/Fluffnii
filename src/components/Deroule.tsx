@@ -8,6 +8,7 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
+import { useLang } from "./LanguageProvider";
 
 export interface TimelineStep {
   num: string;
@@ -19,42 +20,81 @@ export interface TimelineStep {
 const NODE = 56;
 const HALF = NODE / 2;
 
-const DEFAULT_ETAPES: TimelineStep[] = [
+const DEFAULT_ETAPES_EN: TimelineStep[] = [
   {
     num: "01",
-    tag: "Ref & Quote",
-    titre: "Review your ref sheet",
-    desc: "Send your character turnaround and part list. We confirm fur colors, features, and your exact quote.",
+    tag: "Quote & 40% Deposit",
+    titre: "Email inquiry & deposit",
+    desc: "Send your email quote request and wait for our reply within 24 hours. Once confirmed, pay the 40% non-refundable deposit to lock your slot.",
   },
   {
     num: "02",
-    tag: "Sizing",
-    titre: "Head measurements or DTD",
-    desc: "Share your head circumference for partials, or mail in your duct tape dummy so the bodysuit fits right.",
+    tag: "Materials",
+    titre: "Fur discussion & sourcing",
+    desc: "We agree on fur shades, markings, and hardware together, then purchase materials for your build before you wait your turn in the queue.",
   },
   {
     num: "03",
-    tag: "Base & Eyes",
-    titre: "Base sculpt & eye check",
-    desc: "We shape the head base, set the 3D follow-me eyes, and send front and side photos for your approval.",
+    tag: "Build Notice",
+    titre: "Start notice & progress checks",
+    desc: "When your slot begins in our solo studio queue, we notify you and share progress photos along the way so any questions come up early.",
   },
   {
     num: "04",
-    tag: "Fur & Shave",
-    titre: "Patterning, sewing & shave",
-    desc: "Each marking is taped, sewn, and shaved down cleanly. We check in again with photos before lining.",
+    tag: "Shape Check",
+    titre: "Pattern & silhouette approval",
+    desc: "Review WIP photos to confirm the pattern fit and overall head silhouette before fur seams are sewn permanently.",
   },
   {
     num: "05",
-    tag: "Lining & Fit",
-    titre: "Interior lining & details",
-    desc: "We sew in the cooling liner, pawpads, zippers, and magnetic tongues, then test visibility and airflow.",
+    tag: "Final Look",
+    titre: "Finished build confirmation",
+    desc: "Check completed suit photos once shaving, eyes, interior lining, and details are done so everything looks right.",
   },
   {
     num: "06",
-    tag: "Tracked Ship",
-    titre: "Final photos & shipping",
-    desc: "After final studio photos and a care walkthrough, your suit ships boxed and insured with full tracking.",
+    tag: "Balance & Ship",
+    titre: "60% balance & shipping",
+    desc: "Complete the remaining 60% payment within 3 months of finish. Your suit is packed and shipped immediately once 100% paid.",
+  },
+];
+
+const DEFAULT_ETAPES_VI: TimelineStep[] = [
+  {
+    num: "01",
+    tag: "Báo giá & Cọc 40%",
+    titre: "Gửi mail báo giá & đặt cọc",
+    desc: "Gửi email yêu cầu báo giá và chờ phản hồi trong 24 giờ. Sau khi chốt, thanh toán 40% tiền cọc không hoàn lại để giữ slot và mua nguyên liệu.",
+  },
+  {
+    num: "02",
+    tag: "Nguyên liệu",
+    titre: "Trao đổi & đặt mua lông",
+    desc: "Hai bên thống nhất mã màu lông, chi tiết phụ kiện và tiến hành mua vật liệu trước khi đơn của bạn vào hàng chờ.",
+  },
+  {
+    num: "03",
+    tag: "Khởi công",
+    titre: "Thông báo làm & ảnh tiến độ",
+    desc: "Khi đến lượt trong lịch xưởng 1 người, studio sẽ báo bắt đầu làm và cập nhật ảnh tiến độ bất cứ lúc nào để trao đổi kịp thời.",
+  },
+  {
+    num: "04",
+    tag: "Duyệt phom",
+    titre: "Xác nhận rập & dáng tổng thể",
+    desc: "Kiểm tra ảnh WIP để chốt tỷ lệ Head, tai, mõm và phom dáng tổng thể trước khi may ráp cố định.",
+  },
+  {
+    num: "05",
+    tag: "Thành phẩm",
+    titre: "Xác nhận thành phẩm hoàn thiện",
+    desc: "Xem ảnh hoàn thiện sau khi cạo lông, lắp mắt, may lót và hoàn chỉnh các chi tiết cuối cùng của fursuit.",
+  },
+  {
+    num: "06",
+    tag: "Thanh toán & Ship",
+    titre: "Thanh toán 60% & giao hàng",
+    desc: "Thanh toán 60% còn lại trong vòng 3 tháng sau khi xong. Fursuit sẽ được đóng gói và gửi đi ngay khi nhận đủ 100%.",
   },
 ];
 
@@ -215,12 +255,15 @@ interface DerouleProps {
 }
 
 export default function Deroule({
-  etapes = DEFAULT_ETAPES,
+  etapes,
   couleurTexte = "#111622",
   couleurAccent = "#111622",
   couleurFondPastille = "#F5F8FC",
   trackColor = "rgba(17, 22, 34, 0.16)",
 }: DerouleProps) {
+  const { lang } = useLang();
+  const activeEtapes =
+    etapes ?? (lang === "vi" ? DEFAULT_ETAPES_VI : DEFAULT_ETAPES_EN);
   const ref = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll({
@@ -277,12 +320,12 @@ export default function Deroule({
           position: "relative",
         }}
       >
-        {etapes.map((item, index) => (
+        {activeEtapes.map((item, index) => (
           <StepItem
             key={`${item.num}-${index}`}
             item={item}
             index={index}
-            total={etapes.length}
+            total={activeEtapes.length}
             progress={progress}
             couleurTexte={couleurTexte}
             couleurAccent={couleurAccent}
