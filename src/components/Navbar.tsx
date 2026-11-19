@@ -11,11 +11,14 @@ import { useLang } from "./LanguageProvider";
 const NAV_LINKS = [
   { href: "/#studio", label: { en: "The Workshop", vi: "Về xưởng" } },
   { href: "/#projets", label: { en: "Fursuits", vi: "Fursuit" } },
-  { href: "/#offres", label: { en: "Shop & Tiers", vi: "Bảng giá" } },
+  { href: "/#offres", label: { en: "Shop & Tiers", vi: "Hạng mục" } },
   { href: "/#deroule", label: { en: "Process", vi: "Quy trình" } },
   { href: "/#faq", label: { en: "FAQ", vi: "FAQ" } },
   { href: "/accessories", label: { en: "Accessories", vi: "Phụ kiện" } },
 ];
+
+const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2";
 
 function LanguageSwitch({
   lang,
@@ -38,10 +41,10 @@ function LanguageSwitch({
             type="button"
             aria-pressed={active}
             onClick={() => onChange(code)}
-            className={`px-2.5 py-1 rounded-full font-mono text-[11px] font-bold uppercase tracking-[0.04em] transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 min-h-[36px] inline-flex items-center justify-center rounded-full font-mono text-[11px] font-bold uppercase tracking-[0.04em] transition-colors cursor-pointer ${FOCUS_RING} ${
               active
                 ? "bg-[#111622] text-[#f5f8fc]"
-                : "text-[#111622]/70 hover:text-[#111622]"
+                : "text-[#111622]/75 hover:text-[#111622]"
             }`}
           >
             {code.toUpperCase()}
@@ -58,6 +61,47 @@ export default function Navbar() {
   const { lang, setLang } = useLang();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [navStage, setNavStage] = useState<"ready" | "waiting" | "enter">("ready");
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isHome) {
+      setNavStage("ready");
+      return;
+    }
+
+    const hasHash = Boolean(window.location.hash);
+    const reduced =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+    let seen = false;
+    try {
+      seen = window.sessionStorage.getItem("fluffnii-intro-seen") === "1";
+    } catch {
+      seen = false;
+    }
+
+    const win = window as Window & { __gioiaClic?: boolean };
+    const introRunning = win.__gioiaClic === false;
+
+    if (!introRunning && (hasHash || seen || reduced || win.__gioiaClic === true)) {
+      setNavStage("ready");
+      return;
+    }
+
+    setNavStage("waiting");
+    const reveal = () => setNavStage("enter");
+    window.addEventListener("gioia:clic", reveal, { once: true });
+    const fallback = window.setTimeout(reveal, 1300);
+
+    return () => {
+      window.removeEventListener("gioia:clic", reveal);
+      window.clearTimeout(fallback);
+    };
+  }, [isHome]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -70,16 +114,29 @@ export default function Navbar() {
 
   useEffect(() => {
     if (!mobileOpen) return;
+    const html = document.documentElement;
+    const prevOverflow = html.style.overflow;
+    html.style.overflow = "hidden";
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setMobileOpen(false);
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      html.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, [mobileOpen]);
 
   const contactLabel = lang === "vi" ? "Liên hệ" : "Contact";
   const termsLabel =
     lang === "vi" ? "Điều khoản & Chính sách" : "Commission Terms & Policy";
+  const toggleMenuLabel = mobileOpen
+    ? lang === "vi"
+      ? "Đóng menu"
+      : "Close menu"
+    : lang === "vi"
+    ? "Mở menu"
+    : "Open menu";
 
   return (
     <>
@@ -97,16 +154,20 @@ export default function Navbar() {
       </AnimatePresence>
 
       <motion.header
-        initial={{ opacity: 0.001, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={false}
+        animate={
+          navStage === "waiting"
+            ? { opacity: 0.001, y: -24 }
+            : { opacity: 1, y: 0 }
+        }
         transition={{
-          delay: isHome ? 2.1 : 0.05,
-          duration: isHome ? 0.9 : 0.45,
+          duration: navStage === "enter" ? 0.65 : 0,
           ease: [0.22, 1, 0.36, 1],
         }}
         className="fixed top-3.5 sm:top-4 lg:top-6 left-0 right-0 z-50 flex justify-center px-4 sm:px-5 lg:px-6 pointer-events-none"
       >
         <nav
+          aria-label={lang === "vi" ? "Điều hướng chính" : "Main navigation"}
           className={`w-full overflow-hidden pointer-events-auto border transition-[max-width,background-color,border-color,box-shadow,border-radius] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
             mobileOpen
               ? "bg-[#f5f8fc]/95 border-[#111622]/15 rounded-[28px] lg:rounded-[32px] shadow-[0_20px_50px_rgba(17,22,34,0.16)]"
@@ -120,14 +181,16 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-[64px] sm:h-[68px] lg:h-[78px] px-3 sm:px-4 lg:px-6 gap-2.5 sm:gap-4">
             <div className="flex items-center lg:flex-1">
               <Link
-                href="/#hero"
+                href="/#top"
                 onClick={() => setMobileOpen(false)}
-                className="block w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] md:w-[54px] md:h-[54px] rounded-[12px] overflow-hidden relative shrink-0"
+                className={`inline-flex items-center justify-center rounded-[12px] overflow-hidden relative shrink-0 ${FOCUS_RING}`}
               >
                 <img
-                  src="/images/logo-navbar.png"
+                  src="/images/logo-navbar.webp"
                   alt="FluffNii"
-                  className="w-full h-full object-contain"
+                  width={54}
+                  height={54}
+                  className="h-[42px] md:h-[46px] lg:h-[54px] w-auto object-contain"
                 />
               </Link>
             </div>
@@ -144,7 +207,7 @@ export default function Navbar() {
                     key={item.href}
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
-                    className="relative group font-sans text-[15px] font-medium text-[#111622] tracking-[-0.01em] py-1.5 whitespace-nowrap"
+                    className={`relative group font-sans text-[15px] font-medium text-[#111622] tracking-[-0.01em] py-1.5 px-1 rounded-md whitespace-nowrap ${FOCUS_RING}`}
                   >
                     <span className="relative block overflow-hidden h-[1.25em] leading-[1.25]">
                       <span className="block transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] translate-y-0 group-hover:-translate-y-full">
@@ -152,7 +215,7 @@ export default function Navbar() {
                       </span>
                       <span
                         aria-hidden="true"
-                        className="block absolute left-0 top-full w-full text-[#111622]/60 transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] translate-y-0 group-hover:-translate-y-full"
+                        className="block absolute left-0 top-full w-full text-[#111622]/70 transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] translate-y-0 group-hover:-translate-y-full"
                       >
                         {text}
                       </span>
@@ -181,15 +244,15 @@ export default function Navbar() {
 
               <button
                 type="button"
-                aria-label="Toggle Menu"
+                aria-label={toggleMenuLabel}
                 aria-expanded={mobileOpen}
                 onClick={() => setMobileOpen((prev) => !prev)}
-                className="lg:hidden flex items-center justify-center w-[42px] h-[42px] sm:w-[44px] sm:h-[44px] rounded-full bg-[#111622] text-[#f5f8fc] active:scale-95 transition-transform shrink-0 cursor-pointer"
+                className={`lg:hidden flex items-center justify-center w-[42px] h-[42px] sm:w-[44px] sm:h-[44px] rounded-full bg-[#111622] text-[#f5f8fc] active:scale-95 transition-transform shrink-0 cursor-pointer ${FOCUS_RING}`}
               >
                 {mobileOpen ? (
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5" aria-hidden="true" />
                 ) : (
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-5 h-5" aria-hidden="true" />
                 )}
               </button>
             </div>
@@ -215,7 +278,7 @@ export default function Navbar() {
                       href={item.href}
                       aria-current={isActive ? "page" : undefined}
                       onClick={() => setMobileOpen(false)}
-                      className={`font-stagheiz text-[26px] sm:text-[34px] leading-[1.08] tracking-[-0.03em] transition-opacity hover:opacity-70 ${
+                      className={`font-stagheiz text-[26px] sm:text-[34px] leading-[1.08] tracking-[-0.03em] rounded-md transition-opacity hover:opacity-70 ${FOCUS_RING} ${
                         isActive
                           ? "text-[#1e3557] underline underline-offset-4 decoration-[#111622]/40"
                           : "text-[#111622]"
@@ -236,7 +299,7 @@ export default function Navbar() {
                   <Link
                     href="/terms"
                     onClick={() => setMobileOpen(false)}
-                    className="self-center font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/70 hover:text-[#111622] underline underline-offset-4 py-1"
+                    className={`self-center font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/75 hover:text-[#111622] underline underline-offset-4 px-2 py-2 min-h-[36px] inline-flex items-center rounded-md ${FOCUS_RING}`}
                   >
                     {termsLabel}
                   </Link>

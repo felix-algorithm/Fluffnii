@@ -19,11 +19,22 @@ const NOIR = "#111622";
 const BEURRE = "#FFF0A6";
 const MONO = 'var(--font-space-mono), "Space Mono", ui-monospace, monospace';
 const SANS = 'var(--font-dm-sans), "Plus Jakarta Sans", "DM Sans", system-ui, sans-serif';
-const DISPLAY = 'var(--font-display), "Barlow", sans-serif';
+const DISPLAY = 'var(--font-display), "Be Vietnam Pro", sans-serif';
 
 const HOLD = 500;
 const ZONE = 0.035;
 const MARKS = ["0.3 m", "0.5", "0.8", "1.2", "2", "5", "∞"];
+
+interface FocusHoldLoopProps {
+  onTick: (delta: number) => void;
+}
+
+function FocusHoldLoop({ onTick }: FocusHoldLoopProps) {
+  useAnimationFrame((_, delta) => {
+    onTick(delta);
+  });
+  return null;
+}
 
 interface MiseAuPointProps {
   image?: string;
@@ -37,7 +48,7 @@ interface MiseAuPointProps {
 }
 
 export default function MiseAuPoint({
-  image = "/images/bonus-lockers.jpg",
+  image = "/images/bonus-lockers.webp",
   label,
   title,
   hint,
@@ -54,114 +65,67 @@ export default function MiseAuPoint({
   const activeHint =
     hint ??
     (lang === "vi"
-      ? "Di chuột để chỉnh nét, rồi giữ yên"
-      : "Move your mouse to focus, then hold still");
+      ? "Rê chuột hoặc kéo để lấy nét, rồi giữ yên"
+      : "Drag or move cursor to focus, then hold still");
   const activeText =
     text ??
     (lang === "vi"
       ? "Chuẩn nét rồi! Sẵn sàng đưa OC của bạn vào xưởng chưa?"
       : "Spot on! Ready to bring your OC into the workshop?");
   const activeButton = button ?? (lang === "vi" ? "Liên hệ" : "Contact");
-  const wrapperRef = useRef<HTMLDivElement>(null);
+
   const ref = useRef<HTMLDivElement>(null);
   const target = useRef(0.63);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     target.current = 0.22 + Math.random() * 0.6;
   }, []);
 
+  const [inView, setInView] = useState(false);
+  const [tabVisible, setTabVisible] = useState(true);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
   useEffect(() => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper) return;
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (mq) {
+      setReducedMotion(mq.matches);
+      const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+      mq.addEventListener?.("change", onChange);
+      return () => mq.removeEventListener?.("change", onChange);
+    }
+  }, []);
 
-    let lastY = window.scrollY;
-    let dir: 1 | -1 | 0 = 0;
-    let settleTimer: number | undefined;
-    let lastSnapAt = 0;
-    let isPointerDown = false;
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    setTabVisible(!document.hidden);
+    const onVisibility = () => setTabVisible(!document.hidden);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
 
-    const cancelPending = () => {
-      if (settleTimer !== undefined) {
-        window.clearTimeout(settleTimer);
-        settleTimer = undefined;
-      }
-    };
-
-    const trySettle = () => {
-      if (isPointerDown) return;
-      const now = performance.now();
-      if (now - lastSnapAt < 450) return;
-
-      const r = wrapper.getBoundingClientRect();
-      const vh = window.innerHeight;
-      if (vh <= 0) return;
-
-      if (r.top <= 2 && r.bottom >= vh - 2) return;
-
-      const edgeThreshold = Math.min(180, vh * 0.22);
-      let delta = 0;
-
-      if (dir > 0 && r.top > 2 && r.top <= edgeThreshold) {
-        delta = r.top;
-      }
-      // Returning from below (#contact): overshot slightly past sticky release
-      else if (dir < 0 && r.bottom < vh - 2 && vh - r.bottom <= edgeThreshold) {
-        delta = r.bottom - vh;
-      }
-
-      if (Math.abs(delta) > 3) {
-        lastSnapAt = now;
-        const reduced =
-          window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ??
-          false;
-        window.scrollTo({
-          top: Math.max(0, window.scrollY + delta),
-          behavior: reduced ? "instant" : "smooth",
-        });
-      }
-    };
-
-    const onScroll = () => {
-      const y = window.scrollY;
-      const dy = y - lastY;
-      if (Math.abs(dy) > 0.5) {
-        dir = dy > 0 ? 1 : -1;
-        lastY = y;
-      }
-      cancelPending();
-      settleTimer = window.setTimeout(trySettle, 140);
-    };
-
-    const onPointerDown = () => {
-      isPointerDown = true;
-      cancelPending();
-    };
-    const onPointerUp = () => {
-      isPointerDown = false;
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("pointerdown", onPointerDown, { passive: true });
-    window.addEventListener("pointerup", onPointerUp, { passive: true });
-    window.addEventListener("pointercancel", onPointerUp, { passive: true });
-    window.addEventListener("blur", onPointerUp);
-
-    return () => {
-      cancelPending();
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("pointerup", onPointerUp);
-      window.removeEventListener("pointercancel", onPointerUp);
-      window.removeEventListener("blur", onPointerUp);
-    };
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { threshold: 0.05 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   const focus = useMotionValue(0.04);
   const smooth = useSpring(focus, { stiffness: 120, damping: 22 });
-  const blur = useTransform(
-    smooth,
-    (f) => `blur(${Math.min(28, Math.abs(f - target.current) * 70)}px)`
-  );
+  const blurOpacity = useTransform(smooth, (f) => {
+    const d = Math.abs(f - target.current);
+    if (d <= ZONE) return 0;
+    return Math.min(1, (d - ZONE) * 3.4);
+  });
   const scale = useTransform(
     smooth,
     (f) => 1.06 - Math.max(0, 0.06 - Math.abs(f - target.current) * 0.2)
@@ -173,14 +137,20 @@ export default function MiseAuPoint({
   const [sharp, setSharp] = useState(false);
   const [inZone, setInZone] = useState(false);
   const [flash, setFlash] = useState(0);
+  const [focusPercent, setFocusPercent] = useState(4);
   const lastMove = useRef(0);
+
+  useMotionValueEvent(focus, "change", (v) => {
+    const pct = Math.round(v * 100);
+    if (pct !== focusPercent) setFocusPercent(pct);
+  });
 
   useMotionValueEvent(smooth, "change", (f) => {
     const ok = Math.abs(f - target.current) < ZONE;
     if (ok !== inZone) startTransition(() => setInZone(ok));
   });
 
-  useAnimationFrame((_, delta) => {
+  const handleTick = (delta: number) => {
     if (sharp) return;
     const still = performance.now() - lastMove.current > 120;
     const ok = Math.abs(smooth.get() - target.current) < ZONE;
@@ -197,15 +167,39 @@ export default function MiseAuPoint({
     } else if (hold.get() > 0) {
       hold.set(Math.max(0, hold.get() - delta / 300));
     }
-  });
+  };
+
+  const moveClientX = (clientX: number) => {
+    if (sharp) return;
+    const r = ref.current?.getBoundingClientRect();
+    if (!r || r.width <= 0) return;
+    lastMove.current = performance.now();
+    focus.set(Math.max(0, Math.min(1, (clientX - r.left) / r.width)));
+  };
 
   const move = (e: React.PointerEvent<HTMLDivElement>) => {
     if (sharp) return;
     if (e.pointerType === "mouse" && !e.movementX && !e.movementY) return;
-    const r = ref.current?.getBoundingClientRect();
-    if (!r) return;
+    moveClientX(e.clientX);
+  };
+
+  const handleSliderKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (sharp) return;
+    const step = e.shiftKey ? 0.06 : 0.025;
+    let next: number | null = null;
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      next = Math.max(0, focus.get() - step);
+    } else if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      next = Math.min(1, focus.get() + step);
+    } else if (e.key === "Home") {
+      next = 0;
+    } else if (e.key === "End") {
+      next = 1;
+    }
+    if (next === null) return;
+    e.preventDefault();
     lastMove.current = performance.now();
-    focus.set(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)));
+    focus.set(next);
   };
 
   const replay = () => {
@@ -222,45 +216,95 @@ export default function MiseAuPoint({
 
   return (
     <div
-      ref={wrapperRef}
+      ref={ref}
+      onPointerMove={(e) => {
+        if (e.pointerType === "mouse" || e.buttons > 0) {
+          move(e);
+        }
+      }}
+      onTouchStart={(e) => {
+        const t = e.touches[0];
+        if (!t) return;
+        touchStartRef.current = { x: t.clientX, y: t.clientY };
+      }}
+      onTouchMove={(e) => {
+        const t = e.touches[0];
+        if (!t || !touchStartRef.current) return;
+        const dx = t.clientX - touchStartRef.current.x;
+        const dy = t.clientY - touchStartRef.current.y;
+        if (Math.abs(dx) > 4 && Math.abs(dx) >= Math.abs(dy) * 0.7) {
+          moveClientX(t.clientX);
+        }
+      }}
+      onTouchEnd={() => {
+        touchStartRef.current = null;
+      }}
+      className="relative w-full h-[100svh] min-h-[600px] bg-[#111622] overflow-hidden text-[#F5F8FC] select-none"
       style={{
-        position: "relative",
-        width: "100%",
-        height: "128vh",
-        minHeight: "calc(640px + 28vh)",
-        background: NOIR,
+        cursor: sharp ? "default" : "ew-resize",
+        touchAction: "pan-y",
       }}
     >
-      <div
-        ref={ref}
-        onPointerMove={(e) => e.pointerType === "mouse" && move(e)}
-        style={{
-          position: "sticky",
-          top: 0,
-          width: "100%",
-          height: "100vh",
-          minHeight: 640,
-          background: NOIR,
-          overflow: "hidden",
-          color: CREME,
-          cursor: sharp ? "default" : "ew-resize",
-          touchAction: "pan-y",
-          userSelect: "none",
-        }}
-      >
+      {inView && tabVisible && !sharp && <FocusHoldLoop onTick={handleTick} />}
+
       <motion.div
+        aria-hidden="true"
         style={{
           position: "absolute",
           inset: 0,
-          backgroundImage: image ? `url(${image})` : undefined,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          filter: blur,
-          scale,
+          scale: reducedMotion ? 1 : scale,
         }}
-      />
+      >
+        <img
+          src={image}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          width={1024}
+          height={576}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center",
+            pointerEvents: "none",
+          }}
+        />
+        <motion.div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            opacity: sharp ? 0 : blurOpacity,
+            pointerEvents: "none",
+          }}
+        >
+          <img
+            src={image}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            width={1024}
+            height={576}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center",
+              filter: "blur(18px)",
+              transform: "scale(1.08)",
+              pointerEvents: "none",
+            }}
+          />
+        </motion.div>
+      </motion.div>
 
       <div
+        aria-hidden="true"
         style={{
           position: "absolute",
           inset: 0,
@@ -270,28 +314,25 @@ export default function MiseAuPoint({
         }}
       />
 
-      {[
-        { left: 32, top: 32, rot: 0 },
-        { right: 32, top: 32, rot: 90 },
-        { right: 32, bottom: 32, rot: 180 },
-        { left: 32, bottom: 32, rot: 270 },
-      ].map(({ rot, ...pos }, k) => (
-        <span
-          key={k}
-          style={{
-            position: "absolute",
-            width: 26,
-            height: 26,
-            borderTop: `1.5px solid ${CREME}`,
-            borderLeft: `1.5px solid ${CREME}`,
-            transform: `rotate(${rot}deg)`,
-            pointerEvents: "none",
-            ...pos,
-          }}
-        />
-      ))}
+      <span
+        aria-hidden="true"
+        className="hidden sm:block absolute left-8 top-[88px] lg:top-[112px] w-[26px] h-[26px] border-t-[1.5px] border-l-[1.5px] border-[#F5F8FC] pointer-events-none"
+      />
+      <span
+        aria-hidden="true"
+        className="hidden sm:block absolute right-8 top-[88px] lg:top-[112px] w-[26px] h-[26px] border-t-[1.5px] border-r-[1.5px] border-[#F5F8FC] pointer-events-none"
+      />
+      <span
+        aria-hidden="true"
+        className="hidden sm:block absolute left-8 bottom-8 w-[26px] h-[26px] border-b-[1.5px] border-l-[1.5px] border-[#F5F8FC] pointer-events-none"
+      />
+      <span
+        aria-hidden="true"
+        className="hidden sm:block absolute right-8 bottom-8 w-[26px] h-[26px] border-b-[1.5px] border-r-[1.5px] border-[#F5F8FC] pointer-events-none"
+      />
 
       <motion.div
+        aria-hidden="true"
         animate={{
           borderColor: sharp || inZone ? BEURRE : "rgba(245,248,252,0.8)",
           scale: sharp ? 0.8 : inZone ? 0.9 : 1,
@@ -312,27 +353,19 @@ export default function MiseAuPoint({
       />
 
       <div
+        className="absolute left-6 right-6 sm:left-[64px] sm:right-[64px] top-24 lg:top-28 flex justify-between items-center gap-3 flex-wrap pointer-events-none"
         style={{
-          position: "absolute",
-          left: "clamp(48px, 6vw, 72px)",
-          right: "clamp(48px, 6vw, 72px)",
-          top: 36,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-          flexWrap: "wrap",
           fontFamily: MONO,
           fontSize: 12,
           letterSpacing: "0.06em",
           textTransform: "uppercase",
           textShadow: "0 2px 12px rgba(17,22,34,0.5)",
-          pointerEvents: "none",
         }}
       >
         <span>[{activeLabel}]</span>
         <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span
+            aria-hidden="true"
             style={{
               width: 8,
               height: 8,
@@ -364,7 +397,7 @@ export default function MiseAuPoint({
           justifyContent: "center",
           gap: 20,
           textAlign: "center",
-          padding: "0 48px",
+          padding: "0 32px",
           textShadow: "0 2px 18px rgba(17,22,34,0.45)",
           pointerEvents: "none",
         }}
@@ -373,10 +406,10 @@ export default function MiseAuPoint({
           {!sharp ? (
             <motion.div
               key="jeu"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: reducedMotion ? 0 : 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5, ease: EASE }}
+              exit={{ opacity: 0, y: reducedMotion ? 0 : -20 }}
+              transition={{ duration: reducedMotion ? 0.15 : 0.5, ease: EASE }}
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -390,8 +423,8 @@ export default function MiseAuPoint({
                   fontFamily: DISPLAY,
                   textTransform: "uppercase",
                   fontSize: "clamp(34px, 5.4vw, 82px)",
-                  lineHeight: 1.04,
-                  letterSpacing: "-0.03em",
+                  lineHeight: lang === "vi" ? 1.14 : 1.04,
+                  letterSpacing: lang === "vi" ? "-0.02em" : "-0.03em",
                 }}
               >
                 {activeTitle}
@@ -401,7 +434,7 @@ export default function MiseAuPoint({
                   fontFamily: SANS,
                   fontSize: 18,
                   letterSpacing: "-0.01em",
-                  opacity: 0.85,
+                  opacity: 0.9,
                 }}
               >
                 {inZone
@@ -411,6 +444,7 @@ export default function MiseAuPoint({
                   : activeHint}
               </div>
               <div
+                aria-hidden="true"
                 style={{
                   width: 220,
                   height: 3,
@@ -433,9 +467,13 @@ export default function MiseAuPoint({
           ) : (
             <motion.div
               key="gagne"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: reducedMotion ? 0 : 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: EASE, delay: 0.35 }}
+              transition={{
+                duration: reducedMotion ? 0.15 : 0.6,
+                ease: EASE,
+                delay: reducedMotion ? 0 : 0.35,
+              }}
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -449,9 +487,12 @@ export default function MiseAuPoint({
                 style={{
                   fontFamily: DISPLAY,
                   textTransform: "uppercase",
-                  fontSize: lang === "vi" ? "clamp(34px, 5.4vw, 82px)" : "clamp(48px, 7vw, 104px)",
-                  lineHeight: lang === "vi" ? 1.04 : 0.92,
-                  letterSpacing: lang === "vi" ? "-0.025em" : "-0.04em",
+                  fontSize:
+                    lang === "vi"
+                      ? "clamp(34px, 5.4vw, 82px)"
+                      : "clamp(48px, 7vw, 104px)",
+                  lineHeight: lang === "vi" ? 1.14 : 0.92,
+                  letterSpacing: lang === "vi" ? "-0.02em" : "-0.04em",
                 }}
               >
                 {lang === "vi" ? "SẮC NÉT TỪNG ĐƯỜNG MAY." : "SHARP. EVERY STITCH."}
@@ -465,10 +506,18 @@ export default function MiseAuPoint({
               >
                 {activeText}
               </div>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                }}
+              >
                 <motion.a
                   href={link}
                   whileHover="h"
+                  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFF0A6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622]"
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -486,6 +535,7 @@ export default function MiseAuPoint({
                 >
                   {activeButton}
                   <span
+                    aria-hidden="true"
                     style={{
                       display: "inline-flex",
                       width: 18,
@@ -520,6 +570,7 @@ export default function MiseAuPoint({
                 <button
                   type="button"
                   onClick={replay}
+                  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFF0A6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622]"
                   style={{
                     appearance: "none",
                     cursor: "pointer",
@@ -542,20 +593,34 @@ export default function MiseAuPoint({
       </div>
 
       <div
+        role="slider"
+        tabIndex={0}
+        aria-label={
+          lang === "vi" ? "Thanh chỉnh lấy nét" : "Focus distance slider"
+        }
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={focusPercent}
+        onKeyDown={handleSliderKeyDown}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId);
-          move(e);
+          moveClientX(e.clientX);
         }}
-        onPointerMove={(e) => e.buttons && move(e)}
+        onPointerMove={(e) => {
+          if (e.buttons > 0 || e.pointerType !== "mouse") {
+            moveClientX(e.clientX);
+          }
+        }}
+        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFF0A6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622]"
         style={{
           position: "absolute",
           left: "50%",
-          bottom: 56,
-          width: "min(560px, 80%)",
+          bottom: 44,
+          width: "min(560px, 84%)",
           transform: "translateX(-50%)",
           height: 54,
           borderRadius: 99,
-          background: "rgba(17,22,34,0.45)",
+          background: "rgba(17,22,34,0.52)",
           backdropFilter: "blur(10px)",
           WebkitBackdropFilter: "blur(10px)",
           overflow: "hidden",
@@ -564,6 +629,7 @@ export default function MiseAuPoint({
         }}
       >
         <motion.div
+          aria-hidden="true"
           style={{
             position: "absolute",
             left: "50%",
@@ -603,6 +669,7 @@ export default function MiseAuPoint({
           ))}
         </motion.div>
         <span
+          aria-hidden="true"
           style={{
             position: "absolute",
             left: "50%",
@@ -617,23 +684,25 @@ export default function MiseAuPoint({
         />
       </div>
 
-      <AnimatePresence>
-        {flash > 0 && sharp && (
-          <motion.div
-            key={flash}
-            initial={{ opacity: 0.9 }}
-            animate={{ opacity: 0 }}
-            transition={{ duration: 0.6 }}
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "#fff",
-              pointerEvents: "none",
-            }}
-          />
-        )}
-      </AnimatePresence>
-      </div>
+      {!reducedMotion && (
+        <AnimatePresence>
+          {flash > 0 && sharp && (
+            <motion.div
+              key={flash}
+              aria-hidden="true"
+              initial={{ opacity: 0.9 }}
+              animate={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "#fff",
+                pointerEvents: "none",
+              }}
+            />
+          )}
+        </AnimatePresence>
+      )}
     </div>
   );
 }

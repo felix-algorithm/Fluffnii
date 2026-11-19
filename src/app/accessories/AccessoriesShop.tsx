@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import {
   motion,
   AnimatePresence,
@@ -10,9 +11,11 @@ import {
   useSpring,
 } from "framer-motion";
 import {
+  ArrowRight,
   ArrowUpRight,
   Check,
   Copy,
+  Mail,
   Minus,
   Plus,
   ShoppingBag,
@@ -22,7 +25,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import Bouton from "@/components/Bouton";
 import { useLang } from "@/components/LanguageProvider";
 import {
   ACCESSORIES_COPY,
@@ -66,6 +68,92 @@ const DIRECT_CONTACTS = [
     spanFull: true,
   },
 ];
+
+async function writeToClipboard(text: string): Promise<boolean> {
+  if (
+    typeof navigator === "undefined" ||
+    !navigator.clipboard ||
+    typeof navigator.clipboard.writeText !== "function"
+  ) {
+    return false;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function ClipboardFallbackBox({
+  text,
+  prompt,
+  closeAria,
+  onClose,
+  dark = false,
+  rows = 3,
+}: {
+  text: string;
+  prompt: string;
+  closeAria: string;
+  onClose: () => void;
+  dark?: boolean;
+  rows?: number;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.focus();
+    el.select();
+  }, [text]);
+
+  return (
+    <div
+      className={`rounded-[16px] border p-3.5 flex flex-col gap-2 ${
+        dark
+          ? "bg-[#f5f8fc]/[0.08] border-[#f5f8fc]/20 text-[#f5f8fc]"
+          : "bg-[#f5f8fc] border-[#111622]/20 text-[#111622]"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p
+          className={`font-sans text-[12px] leading-[1.45] pt-1.5 ${
+            dark ? "text-[#fff0a6]" : "text-[#111622]/80"
+          }`}
+        >
+          {prompt}
+        </p>
+        <button
+          type="button"
+          aria-label={closeAria}
+          onClick={onClose}
+          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 ${
+            dark
+              ? "text-[#f5f8fc]/80 hover:bg-[#f5f8fc]/15 hover:text-[#f5f8fc] focus-visible:ring-[#fff0a6]"
+              : "text-[#111622]/70 hover:bg-[#dce8f5] hover:text-[#111622] focus-visible:ring-[#111622]"
+          }`}
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      <textarea
+        ref={textareaRef}
+        readOnly
+        rows={rows}
+        value={text}
+        onFocus={(e) => e.currentTarget.select()}
+        onClick={(e) => e.currentTarget.select()}
+        className={`w-full rounded-[12px] border px-3 py-2 font-mono text-[12px] leading-[1.5] resize-none select-all focus-visible:outline-none focus-visible:ring-2 ${
+          dark
+            ? "bg-[#111622]/80 border-[#f5f8fc]/25 text-[#f5f8fc] focus-visible:ring-[#fff0a6]"
+            : "bg-white border-[#111622]/20 text-[#111622] focus-visible:ring-[#111622]"
+        }`}
+      />
+    </div>
+  );
+}
 
 function BlueprintVisual({
   variant,
@@ -245,14 +333,14 @@ function AccessoryCard({
         delay: Math.min(idx * 0.06, 0.2),
         ease: EASE,
       }}
-      className={`group relative rounded-[22px] bg-white/88 border overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 ${
+      className={`group relative rounded-[22px] bg-white/90 border overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 ${
         isFeatured
           ? "sm:col-span-2 grid grid-cols-1 sm:grid-cols-12"
           : "flex flex-col"
       } ${
         selected
           ? "border-[#111622] shadow-[0_18px_38px_rgba(17,22,34,0.1)]"
-          : "border-[#111622]/16 hover:border-[#111622]/40 hover:shadow-[0_16px_34px_rgba(17,22,34,0.07)]"
+          : "border-[#111622]/15 hover:border-[#111622]/40 hover:shadow-[0_16px_34px_rgba(17,22,34,0.07)]"
       }`}
     >
       <motion.div
@@ -265,7 +353,7 @@ function AccessoryCard({
         type="button"
         onClick={() => onPreview(item.id)}
         aria-label={copy.previewAria(item.name)}
-        className={`relative overflow-hidden bg-[#dce8f5] cursor-zoom-in block text-left ${
+        className={`relative overflow-hidden bg-[#dce8f5] cursor-zoom-in block text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-inset ${
           isFeatured
             ? "sm:col-span-6 aspect-[4/3] sm:aspect-auto sm:min-h-[260px]"
             : "aspect-[4/3] w-full"
@@ -275,6 +363,10 @@ function AccessoryCard({
           <img
             src={item.image}
             alt={item.imageAlt}
+            width={item.imageWidth}
+            height={item.imageHeight}
+            loading="lazy"
+            decoding="async"
             style={{
               objectPosition: item.imagePosition || "center center",
             }}
@@ -287,11 +379,11 @@ function AccessoryCard({
           />
         )}
 
-        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-[#f5f8fc]/92 border border-[#111622]/14 font-mono text-[10px] uppercase tracking-[0.06em] text-[#111622]">
+        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-[#f5f8fc]/90 border border-[#111622]/15 font-mono text-[10px] uppercase tracking-[0.06em] text-[#111622]">
           {item.code} / {item.leadTime}
         </span>
-        <span className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-[#f5f8fc]/90 border border-[#111622]/16 flex items-center justify-center text-[#111622] opacity-0 translate-y-1.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-          <ZoomIn className="w-3.5 h-3.5" />
+        <span className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-[#f5f8fc]/90 border border-[#111622]/15 flex items-center justify-center text-[#111622] opacity-85 lg:opacity-0 lg:translate-y-1.5 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 transition-all duration-300">
+          <ZoomIn className="w-4 h-4" />
         </span>
         {selected && (
           <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-[#fff0a6] border border-[#111622]/25 font-mono text-[10px] font-bold uppercase tracking-[0.06em] text-[#111622]">
@@ -326,12 +418,12 @@ function AccessoryCard({
             <span className="font-mono text-[14px] font-bold text-[#111622]">
               {item.priceLabel}
             </span>
-            <span className="font-sans text-[12px] text-[#111622]/60">
+            <span className="font-sans text-[12px] text-[#111622]/70">
               {item.note}
             </span>
           </div>
 
-          <p className="font-sans text-[14px] leading-[1.55] text-[#111622]/76 pt-0.5">
+          <p className="font-sans text-[14px] leading-[1.55] text-[#111622]/80 pt-0.5">
             {item.description}
           </p>
         </div>
@@ -341,15 +433,15 @@ function AccessoryCard({
             initial={{ scale: 0.96 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.25, ease: EASE }}
-            className="flex items-center justify-between gap-2 rounded-full bg-[#fff0a6] border border-[#111622]/25 p-1.5"
+            className="flex items-center justify-between gap-2 rounded-full bg-[#fff0a6] border border-[#111622]/25 p-1"
           >
             <button
               type="button"
               aria-label={copy.removeOneAria(item.name)}
               onClick={() => onQtyChange(item.id, -1)}
-              className="w-8 h-8 rounded-full bg-[#f5f8fc] text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors flex items-center justify-center cursor-pointer"
+              className="w-10 h-10 rounded-full bg-[#f5f8fc] text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622]"
             >
-              <Minus className="w-3.5 h-3.5" />
+              <Minus className="w-4 h-4" />
             </button>
             <span className="font-mono text-[12px] font-bold uppercase tracking-[0.05em] text-[#111622]">
               {copy.pickedLabel(qty)}
@@ -358,9 +450,9 @@ function AccessoryCard({
               type="button"
               aria-label={copy.addOneAria(item.name)}
               onClick={() => onQtyChange(item.id, 1)}
-              className="w-8 h-8 rounded-full bg-[#111622] text-[#f5f8fc] hover:bg-[#1e3557] transition-colors flex items-center justify-center cursor-pointer"
+              className="w-10 h-10 rounded-full bg-[#111622] text-[#f5f8fc] hover:bg-[#1e3557] transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622]"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4" />
             </button>
           </motion.div>
         ) : (
@@ -368,7 +460,7 @@ function AccessoryCard({
             type="button"
             whileTap={{ scale: 0.98 }}
             onClick={() => onQtyChange(item.id, 1)}
-            className="w-full rounded-full border border-[#111622]/22 bg-[#f5f8fc] hover:bg-[#111622] hover:text-[#f5f8fc] hover:border-[#111622] px-4 py-2.5 font-sans text-[14px] font-medium text-[#111622] transition-colors inline-flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full min-h-[44px] rounded-full border border-[#111622]/20 bg-[#f5f8fc] hover:bg-[#111622] hover:text-[#f5f8fc] hover:border-[#111622] px-4 py-2.5 font-sans text-[14px] font-medium text-[#111622] transition-colors inline-flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
           >
             <Plus className="w-4 h-4" />
             {copy.addToEstimate}
@@ -386,7 +478,15 @@ export default function AccessoriesShop() {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [copiedDiscord, setCopiedDiscord] = useState(false);
   const [copiedList, setCopiedList] = useState(false);
+  const [clipboardFallback, setClipboardFallback] = useState<{
+    source: "estimator" | "contact" | "discord";
+    text: string;
+  } | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
+
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  const closeModalBtnRef = useRef<HTMLButtonElement | null>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
 
   const previewItem = useMemo(
     () =>
@@ -403,14 +503,63 @@ export default function AccessoriesShop() {
     restDelta: 0.001,
   });
 
+  const openPreview = useCallback((id: string) => {
+    lastFocusedRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setPreviewId(id);
+  }, []);
+
+  const closePreview = useCallback(() => {
+    setPreviewId(null);
+    window.requestAnimationFrame(() => {
+      lastFocusedRef.current?.focus();
+    });
+  }, []);
+
   useEffect(() => {
     if (!previewId) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const focusTimer = window.requestAnimationFrame(() => {
+      closeModalBtnRef.current?.focus();
+    });
+
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setPreviewId(null);
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closePreview();
+        return;
+      }
+      if (e.key === "Tab" && modalRef.current) {
+        const focusables = Array.from(
+          modalRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        );
+        if (focusables.length === 0) {
+          e.preventDefault();
+          return;
+        }
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [previewId]);
+    return () => {
+      window.cancelAnimationFrame(focusTimer);
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [previewId, closePreview]);
 
   const cartItems = useMemo(
     () =>
@@ -445,6 +594,58 @@ export default function AccessoriesShop() {
     [cartItems]
   );
 
+  const estimatedSubtotalText = useMemo(() => {
+    if (totalCount === 0) return copy.zeroPrice;
+    if (fixedSubtotal > 0 && hasQuotedItem) {
+      return copy.subtotalPlusQuoted(formatVnd(fixedSubtotal, lang));
+    }
+    if (fixedSubtotal > 0) {
+      return formatVnd(fixedSubtotal, lang);
+    }
+    return copy.byQuote;
+  }, [totalCount, fixedSubtotal, hasQuotedItem, copy, lang]);
+
+  const dmSummaryText = useMemo(() => {
+    if (cartItems.length === 0) return "";
+    const lines = cartItems.map(
+      ({ item, qty }) => `- ${item.name} x${qty} (${item.priceLabel})`
+    );
+    const formattedSubtotal = formatVnd(fixedSubtotal, lang);
+    const totalLine =
+      fixedSubtotal > 0
+        ? hasQuotedItem
+          ? copy.dmSubtotalQuoted(formattedSubtotal)
+          : copy.dmSubtotalExact(formattedSubtotal)
+        : copy.dmSubtotalByQuote;
+    return `${copy.dmHeader}\n${lines.join("\n")}\n${totalLine}`;
+  }, [cartItems, fixedSubtotal, hasQuotedItem, lang, copy]);
+
+  const bundleSummary = useMemo(() => {
+    if (cartItems.length === 0) return "";
+    const parts = cartItems.map(
+      ({ item, qty }) => `${item.name} x${qty} (${item.priceLabel})`
+    );
+    const label = copy.estimatedTotalLabel.replace(/^\[|\]$/g, "");
+    return `${copy.bundleHeader}: ${parts.join(", ")} | ${label}: ${estimatedSubtotalText}`;
+  }, [cartItems, copy.bundleHeader, copy.estimatedTotalLabel, estimatedSubtotalText]);
+
+  const bundleHref = useMemo(
+    () =>
+      bundleSummary
+        ? `/?addons=${encodeURIComponent(bundleSummary)}#contact`
+        : "/#contact",
+    [bundleSummary]
+  );
+
+  const emailFallbackHref = useMemo(() => {
+    const subject = encodeURIComponent(copy.emailFallbackSubject);
+    if (!dmSummaryText) {
+      return `mailto:FluffNii.furries@gmail.com?subject=${subject}`;
+    }
+    const body = encodeURIComponent(dmSummaryText);
+    return `mailto:FluffNii.furries@gmail.com?subject=${subject}&body=${body}`;
+  }, [copy.emailFallbackSubject, dmSummaryText]);
+
   const setItemQty = (id: string, delta: number) => {
     setQuantities((prev) => {
       const next = (prev[id] ?? 0) + delta;
@@ -465,36 +666,40 @@ export default function AccessoriesShop() {
     });
   };
 
-  const handleCopyDiscord = () => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText("crosstalk_f").catch(() => {});
+  const handleCopyDiscord = async () => {
+    const ok = await writeToClipboard("crosstalk_f");
+    if (ok) {
+      setClipboardFallback(null);
+      setCopiedDiscord(true);
+      window.setTimeout(() => setCopiedDiscord(false), 1800);
+      return;
     }
-    setCopiedDiscord(true);
-    window.setTimeout(() => setCopiedDiscord(false), 1800);
+    setCopiedDiscord(false);
+    setClipboardFallback({ source: "discord", text: "crosstalk_f" });
   };
 
-  const handleCopyList = () => {
-    if (cartItems.length === 0) return;
-    const lines = cartItems.map(
-      ({ item, qty }) => `- ${item.name} x${qty} (${item.priceLabel})`
-    );
-    const formattedSubtotal = formatVnd(fixedSubtotal, lang);
-    const totalLine =
-      fixedSubtotal > 0
-        ? hasQuotedItem
-          ? copy.dmSubtotalQuoted(formattedSubtotal)
-          : copy.dmSubtotalExact(formattedSubtotal)
-        : copy.dmSubtotalByQuote;
-    const summary = `${copy.dmHeader}\n${lines.join("\n")}\n${totalLine}`;
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(summary).catch(() => {});
+  const handleCopyList = async (source: "estimator" | "contact") => {
+    if (!dmSummaryText) return;
+    const ok = await writeToClipboard(dmSummaryText);
+    if (ok) {
+      setClipboardFallback(null);
+      setCopiedList(true);
+      window.setTimeout(() => setCopiedList(false), 2000);
+      return;
     }
-    setCopiedList(true);
-    window.setTimeout(() => setCopiedList(false), 2000);
+    setCopiedList(false);
+    setClipboardFallback({ source, text: dmSummaryText });
   };
 
   const scrollToContact = () => {
     const target = document.getElementById("accessories-contact");
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const scrollToEstimator = () => {
+    const target = document.getElementById("accessories-estimator");
     if (target) {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -515,13 +720,13 @@ export default function AccessoriesShop() {
 
       <main className="flex-1 w-full max-w-[1440px] mx-auto px-5 md:px-[56px] pt-[128px] md:pt-[148px] pb-[96px] md:pb-[132px]">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-          <div className="lg:col-span-5 lg:sticky lg:top-[108px] flex flex-col gap-5">
+          <div className="lg:col-span-5 lg:sticky lg:top-[108px] lg:max-h-[calc(100vh-124px)] lg:overflow-y-auto no-scrollbar flex flex-col gap-5">
             <div className="flex flex-col gap-3">
               <motion.span
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.55, ease: EASE }}
-                className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/65"
+                className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70"
               >
                 {copy.eyebrow}
               </motion.span>
@@ -560,13 +765,22 @@ export default function AccessoriesShop() {
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.24, ease: EASE }}
-                className="font-sans text-[15px] md:text-[16px] leading-[1.58] text-[#111622]/78 max-w-[440px]"
+                className="font-sans text-[15px] md:text-[16px] leading-[1.58] text-[#111622]/80 max-w-[460px]"
               >
                 {copy.heroDesc}
               </motion.p>
+
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                className="rounded-[14px] bg-[#dce8f5]/75 border border-[#111622]/15 px-3.5 py-2.5 font-sans text-[13px] leading-[1.5] text-[#111622]/80 max-w-[460px]"
+              >
+                {copy.partnerNote}
+              </motion.p>
             </div>
 
-            <div className="flex flex-col border-t border-[#111622]/16">
+            <div className="flex flex-col border-t border-[#111622]/15">
               {copy.workshopNotes.map((row, idx) => (
                 <motion.div
                   key={row.num}
@@ -577,16 +791,16 @@ export default function AccessoriesShop() {
                     delay: 0.3 + idx * 0.07,
                     ease: EASE,
                   }}
-                  className="py-2.5 border-b border-[#111622]/16 flex items-baseline gap-4 transition-[padding] duration-300 hover:pl-1.5"
+                  className="py-2.5 border-b border-[#111622]/15 flex items-baseline gap-4 transition-[padding] duration-300 hover:pl-1.5"
                 >
-                  <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/55 shrink-0">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/70 shrink-0">
                     {row.num}
                   </span>
                   <div className="flex flex-col gap-0.5">
                     <span className="font-sans text-[14px] font-medium text-[#111622]">
                       {row.title}
                     </span>
-                    <span className="font-sans text-[13px] leading-[1.42] text-[#111622]/68">
+                    <span className="font-sans text-[13px] leading-[1.42] text-[#111622]/70">
                       {row.detail}
                     </span>
                   </div>
@@ -595,17 +809,18 @@ export default function AccessoriesShop() {
             </div>
 
             <motion.div
+              id="accessories-estimator"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.45, ease: EASE }}
-              className="rounded-[22px] bg-[#dce8f5] border border-[#111622]/16 p-4 md:p-5 flex flex-col gap-3.5"
+              className="rounded-[22px] bg-[#dce8f5] border border-[#111622]/15 p-4 md:p-5 flex flex-col gap-3.5 scroll-mt-[110px]"
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/78 inline-flex items-center gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/80 inline-flex items-center gap-2">
                   <ShoppingBag className="w-3.5 h-3.5" />
                   {copy.estimatorLabel}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#f5f8fc] border border-[#111622]/14 font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622]">
+                <span className="px-2.5 py-0.5 rounded-full bg-[#f5f8fc] border border-[#111622]/15 font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622]">
                   {totalCount} {totalCount === 1 ? copy.itemSingular : copy.itemPlural}
                 </span>
               </div>
@@ -617,7 +832,7 @@ export default function AccessoriesShop() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="rounded-[14px] border border-dashed border-[#111622]/22 bg-[#f5f8fc]/60 px-3.5 py-3 font-sans text-[13px] leading-[1.48] text-[#111622]/68"
+                    className="rounded-[14px] border border-dashed border-[#111622]/20 bg-[#f5f8fc]/60 px-3.5 py-3 font-sans text-[13px] leading-[1.48] text-[#111622]/70"
                   >
                     {copy.estimatorEmpty}
                   </motion.p>
@@ -627,7 +842,7 @@ export default function AccessoriesShop() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="flex flex-col gap-2 max-h-[175px] overflow-y-auto pr-1"
+                    className="flex flex-col gap-2 max-h-[210px] overflow-y-auto pr-1"
                   >
                     {cartItems.map(({ item, qty }) => (
                       <motion.div
@@ -637,14 +852,18 @@ export default function AccessoriesShop() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.96 }}
                         transition={{ duration: 0.25, ease: EASE }}
-                        className="flex items-center justify-between gap-3 rounded-[13px] bg-[#f5f8fc] border border-[#111622]/12 p-2"
+                        className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 rounded-[13px] bg-[#f5f8fc] border border-[#111622]/15 p-2"
                       >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-9 h-9 rounded-[8px] overflow-hidden shrink-0 bg-[#dce8f5]">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div className="w-10 h-10 rounded-[8px] overflow-hidden shrink-0 bg-[#dce8f5]">
                             {item.image ? (
                               <img
                                 src={item.image}
                                 alt={item.imageAlt}
+                                width={item.imageWidth}
+                                height={item.imageHeight}
+                                loading="lazy"
+                                decoding="async"
                                 style={{
                                   objectPosition:
                                     item.imagePosition || "center center",
@@ -663,39 +882,39 @@ export default function AccessoriesShop() {
                             <div className="font-sans text-[13px] font-medium text-[#111622] truncate">
                               {item.name}
                             </div>
-                            <div className="font-mono text-[11px] text-[#111622]/65">
+                            <div className="font-mono text-[11px] text-[#111622]/70">
                               {item.priceLabel}
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center gap-0.5 shrink-0 ml-auto">
                           <button
                             type="button"
                             aria-label={copy.decreaseAria(item.name)}
                             onClick={() => setItemQty(item.id, -1)}
-                            className="w-6 h-6 rounded-full border border-[#111622]/20 flex items-center justify-center text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors cursor-pointer"
+                            className="w-10 h-10 rounded-full border border-[#111622]/20 flex items-center justify-center text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622]"
                           >
-                            <Minus className="w-3 h-3" />
+                            <Minus className="w-3.5 h-3.5" />
                           </button>
-                          <span className="w-5 text-center font-mono text-[11px] font-medium text-[#111622]">
+                          <span className="w-6 text-center font-mono text-[12px] font-medium text-[#111622]">
                             {qty}
                           </span>
                           <button
                             type="button"
                             aria-label={copy.increaseAria(item.name)}
                             onClick={() => setItemQty(item.id, 1)}
-                            className="w-6 h-6 rounded-full border border-[#111622]/20 flex items-center justify-center text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors cursor-pointer"
+                            className="w-10 h-10 rounded-full border border-[#111622]/20 flex items-center justify-center text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622]"
                           >
-                            <Plus className="w-3 h-3" />
+                            <Plus className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
                             aria-label={copy.removeItemAria(item.name)}
                             onClick={() => removeItem(item.id)}
-                            className="w-6 h-6 rounded-full flex items-center justify-center text-[#111622]/45 hover:text-[#111622] transition-colors cursor-pointer"
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-[#111622]/70 hover:text-[#111622] hover:bg-[#dce8f5]/70 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622]"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </motion.div>
@@ -704,57 +923,88 @@ export default function AccessoriesShop() {
                 )}
               </AnimatePresence>
 
-              <div className="pt-2.5 border-t border-[#111622]/16 flex items-baseline justify-between gap-2">
-                <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/65">
-                  {copy.estimatedTotalLabel}
-                </span>
-                <span
-                  className={`font-stagheiz tracking-[-0.02em] text-[#111622] ${
-                    isVi ? "text-[19px]" : "text-[21px]"
-                  }`}
-                >
-                  {fixedSubtotal > 0
-                    ? formatVnd(fixedSubtotal, lang)
-                    : hasQuotedItem
-                    ? copy.byQuote
-                    : copy.zeroPrice}
-                </span>
+              <div className="pt-2.5 border-t border-[#111622]/15 flex flex-col gap-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/70">
+                    {copy.estimatedTotalLabel}
+                  </span>
+                  <span
+                    className={`font-stagheiz tracking-[-0.02em] text-[#111622] text-right ${
+                      isVi ? "text-[19px]" : "text-[21px]"
+                    }`}
+                  >
+                    {estimatedSubtotalText}
+                  </span>
+                </div>
+                <p className="font-sans text-[12px] text-[#111622]/70">
+                  {copy.currencyNote}
+                </p>
               </div>
 
               <div className="flex flex-col gap-2">
-                <Bouton
-                  title={copy.orderCta}
+                <Link
+                  href={bundleHref}
+                  className="group w-full min-h-[48px] inline-flex items-center justify-center gap-3 px-6 py-3.5 rounded-full border-[1.5px] border-[#111622] bg-[#111622] text-[#f5f8fc] hover:bg-[#1e3557] hover:border-[#1e3557] transition-colors duration-300 no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
+                >
+                  <span className="font-sans text-[15px] font-semibold leading-none tracking-[-0.01em]">
+                    {copy.bundleCta}
+                  </span>
+                  <ArrowRight className="w-[18px] h-[18px] stroke-[1.75] shrink-0 transition-transform duration-300 group-hover:translate-x-0.5" />
+                </Link>
+
+                <button
+                  type="button"
                   onClick={scrollToContact}
-                  variant="primary"
-                  fullWidth
-                />
+                  className="group w-full min-h-[48px] inline-flex items-center justify-center gap-3 px-6 py-3 rounded-full border-[1.5px] border-[#111622] bg-transparent text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
+                >
+                  <span className="font-sans text-[15px] font-semibold leading-snug tracking-[-0.01em] text-center">
+                    {copy.orderCta}
+                  </span>
+                  <ArrowRight className="w-[18px] h-[18px] stroke-[1.75] shrink-0 transition-transform duration-300 group-hover:translate-x-0.5" />
+                </button>
+
                 {cartItems.length > 0 && (
                   <div className="flex items-center justify-between gap-2 pt-0.5">
                     <button
                       type="button"
-                      onClick={handleCopyList}
-                      className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622] hover:text-[#1e3557] underline underline-offset-4 cursor-pointer"
+                      onClick={() => handleCopyList("estimator")}
+                      className="min-h-[40px] px-2 -ml-2 rounded-[10px] inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622] hover:text-[#1e3557] underline underline-offset-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622]"
                     >
                       {copiedList ? (
                         <>
-                          <Check className="w-3 h-3" />
+                          <Check className="w-3.5 h-3.5" />
                           {copy.copiedList}
                         </>
                       ) : (
                         <>
-                          <Copy className="w-3 h-3" />
+                          <Copy className="w-3.5 h-3.5" />
                           {copy.copyList}
                         </>
                       )}
                     </button>
                     <button
                       type="button"
-                      onClick={() => setQuantities({})}
-                      className="font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622]/60 hover:text-[#111622] underline underline-offset-4 cursor-pointer"
+                      onClick={() => {
+                        setQuantities({});
+                        setClipboardFallback((prev) =>
+                          prev?.source === "estimator" ? null : prev
+                        );
+                      }}
+                      className="min-h-[40px] px-2 -mr-2 rounded-[10px] font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622]/70 hover:text-[#111622] underline underline-offset-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622]"
                     >
                       {copy.clearList}
                     </button>
                   </div>
+                )}
+
+                {clipboardFallback?.source === "estimator" && (
+                  <ClipboardFallbackBox
+                    text={clipboardFallback.text}
+                    prompt={copy.clipboardBlockedPrompt}
+                    closeAria={copy.closeFallbackAria}
+                    onClose={() => setClipboardFallback(null)}
+                    rows={4}
+                  />
                 )}
               </div>
             </motion.div>
@@ -774,7 +1024,7 @@ export default function AccessoriesShop() {
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-baseline gap-3">
-                        <span className="font-mono text-[12px] uppercase tracking-[0.06em] text-[#111622]/55">
+                        <span className="font-mono text-[12px] uppercase tracking-[0.06em] text-[#111622]/70">
                           ({chapter.num})
                         </span>
                         <h2
@@ -787,11 +1037,11 @@ export default function AccessoriesShop() {
                           {chapter.title}
                         </h2>
                       </div>
-                      <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/55 shrink-0">
+                      <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/70 shrink-0">
                         [{chapterItems.length} {copy.piecesLabel}]
                       </span>
                     </div>
-                    <p className="font-sans text-[14px] leading-[1.5] text-[#111622]/68">
+                    <p className="font-sans text-[14px] leading-[1.5] text-[#111622]/70">
                       {chapter.subtitle}
                     </p>
                     <motion.div
@@ -799,7 +1049,7 @@ export default function AccessoriesShop() {
                       whileInView={{ scaleX: 1 }}
                       viewport={{ once: true, amount: 0.4 }}
                       transition={{ duration: 0.85, ease: EASE }}
-                      className="h-px w-full bg-[#111622]/18 origin-left"
+                      className="h-px w-full bg-[#111622]/20 origin-left"
                     />
                   </div>
 
@@ -813,7 +1063,7 @@ export default function AccessoriesShop() {
                         isVi={isVi}
                         copy={copy}
                         onQtyChange={setItemQty}
-                        onPreview={setPreviewId}
+                        onPreview={openPreview}
                       />
                     ))}
                   </div>
@@ -827,7 +1077,7 @@ export default function AccessoriesShop() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.14 }}
               transition={{ duration: 0.8, ease: EASE }}
-              className="relative overflow-hidden rounded-[26px] bg-[#111622] text-[#f5f8fc] p-6 sm:p-8 md:p-10 border border-[#f5f8fc]/16 flex flex-col gap-6 scroll-mt-[110px]"
+              className="relative overflow-hidden rounded-[26px] bg-[#111622] text-[#f5f8fc] p-6 sm:p-8 md:p-10 border border-[#f5f8fc]/15 flex flex-col gap-6 scroll-mt-[110px]"
             >
               <div
                 aria-hidden="true"
@@ -847,46 +1097,74 @@ export default function AccessoriesShop() {
                 >
                   {copy.contactTitle}
                 </h2>
-                <p className="font-sans text-[15px] leading-[1.58] text-[#f5f8fc]/74 max-w-[540px]">
+                <p className="font-sans text-[15px] leading-[1.58] text-[#f5f8fc]/80 max-w-[540px]">
                   {copy.contactDesc}
+                </p>
+                <p className="font-sans text-[13px] leading-[1.52] text-[#f5f8fc]/70 max-w-[560px]">
+                  {copy.contactPartnerNote}
                 </p>
               </div>
 
               {cartItems.length > 0 && (
-                <div className="relative z-10 rounded-[16px] bg-[#f5f8fc]/8 border border-[#f5f8fc]/14 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-[#fff0a6]">
-                      {copy.readyForDm(totalCount)}
-                    </span>
-                    <div className="font-sans text-[13px] text-[#f5f8fc]/85 truncate">
-                      {cartItems
-                        .map(({ item, qty }) => `${item.name} x${qty}`)
-                        .join(", ")}
+                <div className="relative z-10 rounded-[16px] bg-[#f5f8fc]/[0.08] border border-[#f5f8fc]/15 p-4 flex flex-col gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-[#fff0a6]">
+                        {copy.readyForDm(totalCount)} · {estimatedSubtotalText}
+                      </span>
+                      <div className="font-sans text-[13px] text-[#f5f8fc]/85 truncate">
+                        {cartItems
+                          .map(({ item, qty }) => `${item.name} x${qty}`)
+                          .join(", ")}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleCopyList("contact")}
+                        className="min-h-[40px] inline-flex items-center gap-2 rounded-full bg-[#fff0a6] hover:bg-[#f5f8fc] text-[#111622] px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.05em] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622]"
+                      >
+                        {copiedList ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            {copy.copiedList}
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            {copy.copyList}
+                          </>
+                        )}
+                      </button>
+                      <Link
+                        href={bundleHref}
+                        className="min-h-[40px] inline-flex items-center gap-2 rounded-full border border-[#f5f8fc]/30 bg-transparent hover:bg-[#f5f8fc] text-[#f5f8fc] hover:text-[#111622] px-4 py-2 font-sans text-[13px] font-medium transition-colors no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622]"
+                      >
+                        <span>{copy.bundleCta}</span>
+                        <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+                      </Link>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleCopyList}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#fff0a6] hover:bg-[#f5f8fc] text-[#111622] px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.05em] transition-colors shrink-0 cursor-pointer"
-                  >
-                    {copiedList ? (
-                      <>
-                        <Check className="w-3.5 h-3.5" />
-                        {copy.copiedNote}
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        {copy.copyNote}
-                      </>
-                    )}
-                  </button>
+                </div>
+              )}
+
+              {(clipboardFallback?.source === "contact" ||
+                clipboardFallback?.source === "discord") && (
+                <div className="relative z-10">
+                  <ClipboardFallbackBox
+                    text={clipboardFallback.text}
+                    prompt={copy.clipboardBlockedPrompt}
+                    closeAria={copy.closeFallbackAria}
+                    onClose={() => setClipboardFallback(null)}
+                    dark
+                    rows={clipboardFallback.source === "discord" ? 1 : 4}
+                  />
                 </div>
               )}
 
               <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {DIRECT_CONTACTS.map((contact, idx) => {
-                  const cardClass = `group flex items-center justify-between gap-3 rounded-[16px] bg-[#f5f8fc]/[0.07] border border-[#f5f8fc]/14 px-4 py-3.5 text-left transition-colors duration-300 hover:border-[#fff0a6]/80 hover:bg-[#f5f8fc]/[0.12] ${
+                  const cardClass = `group flex items-center justify-between gap-3 rounded-[16px] bg-[#f5f8fc]/[0.07] border border-[#f5f8fc]/15 px-4 py-3.5 min-h-[56px] text-left transition-colors duration-300 hover:border-[#fff0a6]/80 hover:bg-[#f5f8fc]/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622] ${
                     contact.spanFull ? "sm:col-span-2" : ""
                   }`;
 
@@ -902,7 +1180,7 @@ export default function AccessoriesShop() {
                         className={`${cardClass} cursor-pointer`}
                       >
                         <div className="min-w-0">
-                          <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-[#f5f8fc]/55 mb-0.5">
+                          <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-[#f5f8fc]/70 mb-0.5">
                             [{contact.label}]
                           </div>
                           <div className="font-sans text-[15px] font-medium text-[#f5f8fc] group-hover:text-[#fff0a6] transition-colors truncate">
@@ -915,7 +1193,7 @@ export default function AccessoriesShop() {
                             {copy.copiedShort}
                           </span>
                         ) : (
-                          <Copy className="w-4 h-4 text-[#f5f8fc]/55 group-hover:text-[#fff0a6] transition-colors shrink-0" />
+                          <Copy className="w-4 h-4 text-[#f5f8fc]/70 group-hover:text-[#fff0a6] transition-colors shrink-0" />
                         )}
                       </motion.button>
                     );
@@ -939,22 +1217,69 @@ export default function AccessoriesShop() {
                       className={cardClass}
                     >
                       <div className="min-w-0">
-                        <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-[#f5f8fc]/55 mb-0.5">
+                        <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-[#f5f8fc]/70 mb-0.5">
                           [{contact.label}]
                         </div>
                         <div className="font-sans text-[15px] font-medium text-[#f5f8fc] group-hover:text-[#fff0a6] transition-colors truncate">
                           {contact.value}
                         </div>
                       </div>
-                      <ArrowUpRight className="w-4 h-4 text-[#f5f8fc]/55 group-hover:text-[#fff0a6] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 shrink-0" />
+                      <ArrowUpRight className="w-4 h-4 text-[#f5f8fc]/70 group-hover:text-[#fff0a6] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 shrink-0" />
                     </motion.a>
                   );
                 })}
+              </div>
+
+              <div className="relative z-10 pt-2 border-t border-[#f5f8fc]/15 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2 font-sans text-[13px] text-[#f5f8fc]/75">
+                  <Mail className="w-4 h-4 text-[#fff0a6] shrink-0" />
+                  <span>{copy.emailFallbackLabel}</span>
+                  <a
+                    href={emailFallbackHref}
+                    className="font-mono text-[12px] text-[#fff0a6] hover:underline underline-offset-4 break-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] rounded"
+                  >
+                    FluffNii.furries@gmail.com
+                  </a>
+                </div>
+                <Link
+                  href={bundleHref}
+                  className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.05em] text-[#f5f8fc] hover:text-[#fff0a6] underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] rounded"
+                >
+                  <span>{copy.bundleCta}</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </motion.section>
           </div>
         </div>
       </main>
+
+      {totalCount > 0 && (
+        <div className="fixed bottom-0 inset-x-0 z-50 lg:hidden bg-[#f5f8fc]/95 backdrop-blur-md border-t border-[#111622]/15 px-4 py-3 shadow-[0_-8px_28px_rgba(17,22,34,0.12)]">
+          <div className="max-w-[680px] mx-auto flex flex-wrap items-center justify-between gap-2.5">
+            <button
+              type="button"
+              onClick={scrollToEstimator}
+              aria-label={copy.stickyReviewAria}
+              className="min-h-[44px] px-2.5 py-1.5 -ml-1 rounded-[12px] text-left hover:bg-[#dce8f5]/70 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622]"
+            >
+              <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-[#111622]/70">
+                {totalCount} {totalCount === 1 ? copy.itemSingular : copy.itemPlural} · {copy.stickyReviewLabel}
+              </div>
+              <div className="font-stagheiz text-[17px] leading-tight text-[#111622]">
+                {estimatedSubtotalText}
+              </div>
+            </button>
+            <Link
+              href={bundleHref}
+              className="min-h-[44px] inline-flex items-center justify-center gap-2 rounded-full bg-[#111622] hover:bg-[#1e3557] text-[#f5f8fc] px-4 py-2.5 font-sans text-[13px] font-semibold transition-colors no-underline shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
+            >
+              <span>{copy.bundleCta}</span>
+              <ArrowUpRight className="w-4 h-4 shrink-0" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       <AnimatePresence>
         {previewItem && (
@@ -963,10 +1288,11 @@ export default function AccessoriesShop() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25, ease: EASE }}
-            onClick={() => setPreviewId(null)}
+            onClick={closePreview}
             className="fixed inset-0 z-[70] bg-[#111622]/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
           >
             <motion.div
+              ref={modalRef}
               role="dialog"
               aria-modal="true"
               aria-label={previewItem.name}
@@ -975,13 +1301,14 @@ export default function AccessoriesShop() {
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.35, ease: EASE }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-[680px] rounded-[24px] bg-[#f5f8fc] text-[#111622] border border-[#111622]/16 overflow-hidden shadow-[0_24px_60px_rgba(17,22,34,0.35)]"
+              className="relative w-full max-w-[680px] rounded-[24px] bg-[#f5f8fc] text-[#111622] border border-[#111622]/15 overflow-hidden shadow-[0_24px_60px_rgba(17,22,34,0.35)]"
             >
               <button
+                ref={closeModalBtnRef}
                 type="button"
                 aria-label={copy.closePreviewAria}
-                onClick={() => setPreviewId(null)}
-                className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-[#f5f8fc]/90 border border-[#111622]/18 text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors flex items-center justify-center cursor-pointer"
+                onClick={closePreview}
+                className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-[#f5f8fc]/90 border border-[#111622]/20 text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -991,6 +1318,9 @@ export default function AccessoriesShop() {
                   <img
                     src={previewItem.image}
                     alt={previewItem.imageAlt}
+                    width={previewItem.imageWidth}
+                    height={previewItem.imageHeight}
+                    decoding="async"
                     style={{
                       objectPosition:
                         previewItem.imagePosition || "center center",
@@ -1007,7 +1337,7 @@ export default function AccessoriesShop() {
 
               <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex flex-col gap-1">
-                  <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/55">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/70">
                     [{previewItem.chapterLabel} · {previewItem.leadTime}]
                   </span>
                   <h3
@@ -1019,7 +1349,7 @@ export default function AccessoriesShop() {
                   >
                     {previewItem.name}
                   </h3>
-                  <p className="font-sans text-[14px] text-[#111622]/75 max-w-[420px]">
+                  <p className="font-sans text-[14px] text-[#111622]/80 max-w-[420px]">
                     {previewItem.description}
                   </p>
                 </div>
@@ -1032,9 +1362,9 @@ export default function AccessoriesShop() {
                     type="button"
                     onClick={() => {
                       setItemQty(previewItem.id, 1);
-                      setPreviewId(null);
+                      closePreview();
                     }}
-                    className="rounded-full bg-[#111622] hover:bg-[#1e3557] text-[#f5f8fc] px-5 py-2.5 font-sans text-[14px] font-medium inline-flex items-center gap-2 transition-colors cursor-pointer"
+                    className="min-h-[44px] rounded-full bg-[#111622] hover:bg-[#1e3557] text-[#f5f8fc] px-5 py-2.5 font-sans text-[14px] font-medium inline-flex items-center gap-2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
                   >
                     <Plus className="w-4 h-4" />
                     {copy.addToEstimate}
@@ -1046,7 +1376,9 @@ export default function AccessoriesShop() {
         )}
       </AnimatePresence>
 
-      <Footer />
+      <div className={totalCount > 0 ? "bg-[#111622] pb-[124px] lg:pb-0" : ""}>
+        <Footer />
+      </div>
     </div>
   );
 }

@@ -18,99 +18,107 @@ interface LegalLocaleCopy {
 
 const LEGAL_COPY: Record<Lang, LegalLocaleCopy> = {
   en: {
-    eyebrow: "[Legal information]",
-    title: "Legal notice",
-    updated: "Last updated: October 2026.",
+    eyebrow: "[Legal & Privacy]",
+    title: "Studio notice & privacy",
+    updated: "Last updated: November 2026.",
     sections: [
       {
         num: "(001)",
-        title: "SITE PUBLISHER",
+        title: "STUDIO INFORMATION",
         paragraphs: [
-          "FluffNii Studio, custom fursuit workshop.",
-          "Legal form: [to be completed]\nSIRET: [to be completed]\nAddress: [to be completed]\nPublication Director: [to be completed]\nEmail: FluffNii.furries@gmail.com",
+          "FluffNii Studio is an independent fursuit workshop based in Vietnam, taking domestic and worldwide commissions online.",
+          "Operation: Solo handmade workshop (online)\nLocation: Vietnam\nEmail: FluffNii.furries@gmail.com\nVerified channels: Instagram (@fluffnii.fur), X (@Fluffnii_FUR), TikTok (@fluffnii_fur)",
         ],
       },
       {
         num: "(002)",
-        title: "WEBSITE DESIGN",
-        paragraphs: ["Design and development: Felix Algorithm"],
+        title: "WEBSITE & HOSTING",
+        paragraphs: [
+          "Design and development: Felix Algorithm",
+          "This site runs on Cloudflare Workers so visitors anywhere can browse and send quote requests without hiccups.",
+        ],
       },
       {
         num: "(003)",
         title: "INTELLECTUAL PROPERTY",
         paragraphs: [
-          "All content on this website (photographs, texts, logotype, graphics, animations) is the exclusive property of FluffNii Studio or its partners, and is protected by copyright law. Any reproduction, representation, or reuse, even partial, without prior written authorization is prohibited. Project visuals remain the property of their respective authors and owners.",
+          "Photos, text, graphics, and motion work on this site belong to FluffNii Studio or its collaborators. Please do not copy or repost them elsewhere without written permission. Every OC design shown in commission photos remains the property of its respective owner.",
         ],
       },
       {
         num: "(004)",
-        title: "PERSONAL DATA",
+        title: "PERSONAL DATA & PRIVACY",
         paragraphs: [
-          "Information submitted via the contact form (name or handle, species, email, project) is used solely to respond to your inquiry and prepare a quote. It is neither sold nor shared, and is retained only for the time necessary to follow up on your request.",
-          "In accordance with the GDPR and the French Data Protection Act, you have the right to access, rectify, erase, restrict, and object to the processing of your data. To exercise this right, write to FluffNii.furries@gmail.com. In case of difficulty, you may contact the CNIL (cnil.fr).",
+          "When you fill out the quote form, we collect your name or handle, character species, email address, selected commission items, and project notes. If you add them, we also receive your optional phone number, social or DM handle, and ref sheet link.",
+          "We use those details strictly to review your character design, put together a quote for your fursuit or bundled accessories, and reply to you. Your info is never sold or passed to outside marketers, and we only keep it while handling your request.",
+          "If you want to review, update, or delete any details you sent, write to FluffNii.furries@gmail.com anytime.",
         ],
       },
       {
         num: "(005)",
-        title: "COOKIES",
+        title: "COOKIES & STORAGE",
         paragraphs: [
-          "This website only uses essential technical storage needed for page rendering and does not set advertising or tracking cookies.",
+          "There are no ad trackers or analytics cookies on this site. Browser storage is only used for basic functions: remembering your EN/VI language choice, skipping the intro screen during the same session, and keeping your in-progress quote form draft.",
         ],
       },
       {
         num: "(006)",
-        title: "LIABILITY",
+        title: "CONTENT ACCURACY & LINKS",
         paragraphs: [
-          "FluffNii Studio strives to provide accurate and up-to-date information, without being able to guarantee the absence of errors. Links to third-party websites do not engage its liability regarding their content.",
+          "We keep suit options, accessory listings, and slot status updated, though small oversights or brief delays can still slip through. External links and partner channels (such as @CrossTalk_f for standalone 3D-printed accessories) follow those platforms' own rules.",
         ],
       },
     ],
   },
   vi: {
-    eyebrow: "[Thông tin pháp lý]",
-    title: "Thông tin pháp lý",
-    updated: "Cập nhật lần cuối: Tháng 10/2026.",
+    eyebrow: "[Thông tin & Quyền riêng tư]",
+    title: "Thông tin Xưởng & Quyền riêng tư",
+    updated: "Cập nhật lần cuối: Tháng 11/2026.",
     sections: [
       {
         num: "(001)",
-        title: "ĐƠN VỊ CHỦ QUẢN",
+        title: "THÔNG TIN XƯỞNG",
         paragraphs: [
-          "FluffNii Studio, xưởng làm fursuit thủ công theo yêu cầu.",
-          "Loại hình: [đang cập nhật]\nMã số đăng ký: [đang cập nhật]\nĐịa chỉ: [đang cập nhật]\nNgười phụ trách nội dung: [đang cập nhật]\nEmail: FluffNii.furries@gmail.com",
+          "FluffNii Studio là xưởng làm fursuit thủ công độc lập tại Việt Nam, nhận trao đổi và đặt đơn online cho cả bạn ở trong nước lẫn nước ngoài.",
+          "Mô hình: Xưởng thủ công cá nhân (nhận đơn online)\nĐịa điểm: Việt Nam\nEmail: FluffNii.furries@gmail.com\nKênh chính thức: Instagram (@fluffnii.fur), X (@Fluffnii_FUR), TikTok (@fluffnii_fur)",
         ],
       },
       {
         num: "(002)",
-        title: "THIẾT KẾ WEBSITE",
-        paragraphs: ["Thiết kế và phát triển: Felix Algorithm"],
+        title: "WEBSITE & VẬN HÀNH",
+        paragraphs: [
+          "Thiết kế và phát triển: Felix Algorithm",
+          "Website chạy trên hạ tầng Cloudflare Workers để mọi người ở Việt Nam hay nước ngoài đều vào xem và gửi form báo giá ổn định.",
+        ],
       },
       {
         num: "(003)",
         title: "BẢN QUYỀN & SỞ HỮU TRÍ TUỆ",
         paragraphs: [
-          "Toàn bộ nội dung trên trang web này (hình ảnh, văn bản, logo, đồ họa và hiệu ứng) thuộc quyền sở hữu của FluffNii Studio hoặc các đối tác liên quan và được bảo hộ theo quy định bản quyền. Mọi hành vi sao chép hoặc sử dụng lại khi chưa có sự đồng ý bằng văn bản đều bị nghiêm cấm. Thiết kế nhân vật gốc thuộc quyền sở hữu của từng chủ nhân suit tương ứng.",
+          "Hình ảnh, chữ viết, đồ họa và hiệu ứng trên trang web thuộc về FluffNii Studio hoặc các cộng tác viên thực hiện. Vui lòng đừng lấy lại hay sử dụng cho mục đích khác khi chưa có đồng ý bằng văn bản. Còn thiết kế nhân vật gốc (OC) trên các bộ suit trưng bày vẫn luôn thuộc về chủ nhân của nhân vật đó.",
         ],
       },
       {
         num: "(004)",
-        title: "DỮ LIỆU CÁ NHÂN",
+        title: "DỮ LIỆU CÁ NHÂN & QUYỀN RIÊNG TƯ",
         paragraphs: [
-          "Thông tin bạn gửi qua biểu mẫu liên hệ (tên hoặc nickname, loài nhân vật, email, mô tả đơn) chỉ được dùng để phản hồi yêu cầu và lập báo giá. Xưởng không bán hay chia sẻ dữ liệu với bên thứ ba và chỉ lưu trong thời gian trao đổi đơn hàng.",
-          "Bạn có quyền yêu cầu xem lại, chỉnh sửa hoặc xóa thông tin cá nhân đã gửi bất kỳ lúc nào bằng cách nhắn về địa chỉ FluffNii.furries@gmail.com.",
+          "Khi bạn gửi form yêu cầu báo giá, mình sẽ nhận được tên hoặc nickname, loài nhân vật, email, các hạng mục bạn chọn và phần ghi chú dự án, kèm số điện thoại, tài khoản MXH/DM và link ref sheet nếu bạn tự điền thêm.",
+          "Mình chỉ dùng những thông tin này để xem kỹ thiết kế nhân vật, tính báo giá fursuit hoặc phụ kiện gửi kèm rồi trả lời cho bạn. Xưởng không bán hay chia sẻ thông tin cho bên thứ ba, và chỉ giữ lại trong thời gian trao đổi đơn.",
+          "Cần xem lại, sửa hoặc xóa bất kỳ thông tin nào đã gửi, bạn cứ nhắn về FluffNii.furries@gmail.com bất cứ lúc nào.",
         ],
       },
       {
         num: "(005)",
-        title: "COOKIE & LƯU TRỮ CỤC BỘ",
+        title: "COOKIE & LƯU TRỮ TRÌNH DUYỆT",
         paragraphs: [
-          "Trang web chỉ dùng bộ nhớ cục bộ tối thiểu để ghi nhớ ngôn ngữ hiển thị (EN/VI) và vận hành giao diện, không dùng cookie quảng cáo hay theo dõi người dùng.",
+          "Trang web không gắn cookie quảng cáo hay theo dõi hành vi. Trình duyệt chỉ lưu vài thứ cơ bản: nhớ ngôn ngữ bạn chọn (EN/VI), không phát lại màn intro trong cùng phiên truy cập và giữ tạm nội dung bạn đang gõ dở trong form báo giá.",
         ],
       },
       {
         num: "(006)",
-        title: "TRÁCH NHIỆM NỘI DUNG",
+        title: "ĐỘ CHÍNH XÁC NỘI DUNG & LIÊN KẾT NGOÀI",
         paragraphs: [
-          "FluffNii Studio luôn cố gắng giữ thông tin giá cả và trạng thái nhận đơn chính xác và mới nhất. Các liên kết dẫn sang mạng xã hội hoặc trang bên ngoài thuộc quyền quản lý của từng nền tảng tương ứng.",
+          "Mình cố gắng giữ thông tin hạng mục, danh sách phụ kiện và trạng thái mở slot sát thực tế nhất, nhưng đôi lúc vẫn có thể sót chi tiết nhỏ hoặc cập nhật chậm vài nhịp. Các link sang mạng xã hội hay trang của đối tác (như @CrossTalk_f cho phụ kiện in 3D mua lẻ) sẽ áp dụng theo quy định riêng của từng nền tảng đó.",
         ],
       },
     ],
@@ -128,7 +136,7 @@ export default function LegalContent() {
 
       <main className="flex-1 w-full max-w-[1120px] mx-auto px-5 md:px-10 pt-[136px] md:pt-[156px] pb-[96px] md:pb-[132px]">
         <div className="flex flex-col gap-5 pb-12 md:pb-16">
-          <span className="font-mono text-[12px] uppercase tracking-[0.06em] text-[#111622]/62">
+          <span className="font-mono text-[12px] uppercase tracking-[0.06em] text-[#111622]/70">
             {copy.eyebrow}
           </span>
           <h1
@@ -140,19 +148,19 @@ export default function LegalContent() {
           >
             {copy.title}
           </h1>
-          <p className="font-sans text-[16px] text-[#111622]/62">
+          <p className="font-sans text-[16px] text-[#111622]/70">
             {copy.updated}
           </p>
         </div>
 
-        <div className="flex flex-col border-t border-[#111622]/16">
+        <div className="flex flex-col border-t border-[#111622]/15">
           {copy.sections.map((sec) => (
             <section
               key={sec.num}
-              className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 py-8 md:py-10 border-b border-[#111622]/16"
+              className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 py-8 md:py-10 border-b border-[#111622]/15"
             >
               <div className="md:col-span-5 flex items-baseline gap-4">
-                <span className="font-mono text-[12px] uppercase tracking-[0.06em] text-[#111622]/55 shrink-0">
+                <span className="font-mono text-[12px] uppercase tracking-[0.06em] text-[#111622]/70 shrink-0">
                   {sec.num}
                 </span>
                 <h2
@@ -169,7 +177,7 @@ export default function LegalContent() {
                 {sec.paragraphs.map((p, i) => (
                   <p
                     key={i}
-                    className="font-sans text-[16px] md:text-[17px] leading-[1.6] text-[#111622]/72 whitespace-pre-line"
+                    className="font-sans text-[16px] md:text-[17px] leading-[1.6] text-[#111622]/80 whitespace-pre-line"
                   >
                     {p}
                   </p>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "./LanguageProvider";
 
@@ -11,11 +11,30 @@ declare global {
   }
 }
 
+const INTRO_SEEN_KEY = "fluffnii-intro-seen";
+let sharedAudioCtx: AudioContext | null = null;
+
+function getAudioContext(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  try {
+    if (!sharedAudioCtx || sharedAudioCtx.state === "closed") {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      sharedAudioCtx = new AudioCtx();
+    }
+    if (sharedAudioCtx.state === "suspended") {
+      void sharedAudioCtx.resume().catch(() => {});
+    }
+    return sharedAudioCtx;
+  } catch {
+    return null;
+  }
+}
+
 export function playShutterSound() {
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
+    const ctx = getAudioContext();
+    if (!ctx) return;
     const now = ctx.currentTime;
 
     const click = (t: number, freq: number, dur: number, gainPeak: number) => {
@@ -59,6 +78,7 @@ interface ObturateurProps {
   label?: string;
   reglages?: string;
   sousTitreDroite?: string;
+  onComplete?: () => void;
 }
 
 const CORNERS = [
@@ -69,22 +89,54 @@ const CORNERS = [
 ] as const;
 
 export default function Obturateur({
-  duree = 1050,
+  duree = 650,
   couleurFond = "#F5F8FC",
   couleurEncre = "#111622",
   couleurAccent = "#1E3557",
   label = "FluffNii Studio",
   reglages = "ISO 100 · f/8 · 1/125",
   sousTitreDroite,
+  onComplete,
 }: ObturateurProps) {
   const { lang } = useLang();
   const activeSubtitle =
     sousTitreDroite ??
     (lang === "vi" ? "Từ bản vẽ thành fursuit" : "From sketch to fursuit");
   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
+  const [skipped, setSkipped] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    const prefersReduced =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+    setReducedMotion(prefersReduced);
+
+    let alreadySeen = false;
+    try {
+      alreadySeen = window.sessionStorage.getItem(INTRO_SEEN_KEY) === "1";
+    } catch {
+      alreadySeen = false;
+    }
+
+    const hasHash = Boolean(window.location.hash);
+
+    if (alreadySeen || hasHash || prefersReduced) {
+      setSkipped(true);
+      setPhase(3);
+      window.__gioiaClic = true;
+      window.dispatchEvent(new CustomEvent("gioia:clic"));
+      onCompleteRef.current?.();
+      return;
+    }
+
+    try {
+      window.sessionStorage.setItem(INTRO_SEEN_KEY, "1");
+    } catch {
+    }
 
     const html = document.documentElement;
     const prevOverflow = html.style.overflow;
@@ -97,14 +149,15 @@ export default function Obturateur({
 
     const t2 = window.setTimeout(() => {
       setPhase(2);
-    }, duree + 280);
+    }, duree + 180);
 
     const t3 = window.setTimeout(() => {
       setPhase(3);
       html.style.overflow = prevOverflow;
       window.__gioiaClic = true;
       window.dispatchEvent(new CustomEvent("gioia:clic"));
-    }, duree + 700);
+      onCompleteRef.current?.();
+    }, duree + 450);
 
     return () => {
       window.clearTimeout(t1);
@@ -114,15 +167,18 @@ export default function Obturateur({
     };
   }, [duree]);
 
+  if (skipped) return null;
+
   return (
     <AnimatePresence>
       {phase < 3 && (
         <motion.div
           key="obturateur"
+          aria-hidden="true"
           initial={{ opacity: 1 }}
           exit={{
             opacity: 0,
-            transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+            transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
           }}
           style={{
             position: "fixed",
@@ -140,14 +196,14 @@ export default function Obturateur({
           }}
         >
           <motion.div
-            initial={{ scale: 1.35, opacity: 0 }}
+            initial={{ scale: 1.25, opacity: 0 }}
             animate={
               phase === 0
-                ? { scale: [1.35, 0.94, 1.03, 1], opacity: 1 }
+                ? { scale: [1.25, 0.96, 1.02, 1], opacity: 1 }
                 : { scale: 1, opacity: 1 }
             }
             transition={{
-              duration: 0.95,
+              duration: 0.58,
               ease: [0.22, 1, 0.36, 1],
               times: [0, 0.55, 0.8, 1],
             }}
@@ -180,7 +236,7 @@ export default function Obturateur({
                 background: phase >= 1 ? couleurAccent : "rgba(0,0,0,0)",
                 scale: phase >= 1 ? 0.7 : 1,
               }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.16 }}
               style={{
                 position: "absolute",
                 left: "50%",
@@ -283,7 +339,7 @@ export default function Obturateur({
                   opacity: phase === 0 ? [1, 0.2, 1] : 1,
                 }}
                 transition={{
-                  duration: 0.5,
+                  duration: 0.45,
                   repeat: phase === 0 ? Infinity : 0,
                 }}
                 style={{
@@ -308,7 +364,7 @@ export default function Obturateur({
             initial={{ y: "-101%" }}
             animate={{ y: phase === 1 ? "0%" : "-101%" }}
             transition={{
-              duration: phase === 1 ? 0.12 : 0.22,
+              duration: phase === 1 ? 0.1 : 0.18,
               ease: phase === 1 ? [0.7, 0, 1, 1] : [0.22, 1, 0.36, 1],
             }}
             style={{
@@ -326,7 +382,7 @@ export default function Obturateur({
             initial={{ y: "101%" }}
             animate={{ y: phase === 1 ? "0%" : "101%" }}
             transition={{
-              duration: phase === 1 ? 0.12 : 0.22,
+              duration: phase === 1 ? 0.1 : 0.18,
               ease: phase === 1 ? [0.7, 0, 1, 1] : [0.22, 1, 0.36, 1],
             }}
             style={{
@@ -340,17 +396,19 @@ export default function Obturateur({
             }}
           />
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: phase === 2 ? [0, 1, 0] : 0 }}
-            transition={{ duration: 0.45, times: [0, 0.15, 1] }}
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "#FFFFFF",
-              pointerEvents: "none",
-            }}
-          />
+          {!reducedMotion && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: phase === 2 ? [0, 1, 0] : 0 }}
+              transition={{ duration: 0.36, times: [0, 0.15, 1] }}
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "#FFFFFF",
+                pointerEvents: "none",
+              }}
+            />
+          )}
         </motion.div>
       )}
     </AnimatePresence>

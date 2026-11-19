@@ -13,24 +13,42 @@ import { useLang } from "./LanguageProvider";
 const DEFAULT_ITEMS = [
   {
     mot: "Aura Farming",
-    src: "/images/why-01.jpg",
+    src: "/images/why-01.webp",
   },
   {
     mot: "No Homo",
-    src: "/images/why-02.jpg",
+    src: "/images/why-02.webp",
   },
   {
     mot: "Silly Cat",
-    src: "/images/why-03.jpg",
+    src: "/images/why-03.webp",
   },
   {
     mot: "Vicious Dog",
-    src: "/images/why-04.jpg",
+    src: "/images/why-04.webp",
   },
 ];
 
-function MotAnime({ mot }: { mot: string }) {
+function MotAnime({ mot, reducedMotion }: { mot: string; reducedMotion: boolean }) {
   const chars = useMemo(() => Array.from(mot), [mot]);
+  if (reducedMotion) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        style={{
+          display: "inline-flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          padding: "0.08em 0.04em",
+        }}
+      >
+        {mot}
+      </motion.div>
+    );
+  }
   return (
     <motion.div
       initial="initial"
@@ -80,7 +98,6 @@ function MotAnime({ mot }: { mot: string }) {
             style={{
               display: "inline-block",
               whiteSpace: c === " " ? "pre" : "normal",
-              willChange: "transform, opacity",
             }}
           >
             {c === " " ? "\u00A0" : c}
@@ -105,29 +122,69 @@ export default function MotDefilant({
   voile = 0.42,
 }: MotDefilantProps) {
   const { lang } = useLang();
-  const activeSurTitre = surTitre ?? (lang === "vi" ? "[Vì sao chọn FluffNii]" : "[Why a FluffNii suit]");
-  const activePrefixe = prefixe ?? (lang === "vi" ? "Một bộ fursuit" : "A great fursuit");
+  const activeSurTitre =
+    surTitre ?? (lang === "vi" ? "[Vì sao chọn FluffNii]" : "[Why a FluffNii suit]");
+  const activePrefixe =
+    prefixe ?? (lang === "vi" ? "Một bộ fursuit" : "A great fursuit");
   const activeItems = items ?? DEFAULT_ITEMS;
   const n = activeItems.length;
   const containerRef = useRef<HTMLDivElement>(null);
   const [{ actif, sortant }, setStep] = useState({ actif: 0, sortant: -1 });
+  const [reducedMotion, setReducedMotion] = useState(false);
   const lastIdxRef = useRef(0);
   const sortantTimerRef = useRef<number | undefined>(undefined);
   const preloadedImgsRef = useRef<HTMLImageElement[]>([]);
+  const preloadedRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const imgs = activeItems.map((item) => {
-      const img = new window.Image();
-      img.decoding = "async";
-      img.src = item.src;
-      if (typeof img.decode === "function") {
-        img.decode().catch(() => {});
-      }
-      return img;
-    });
-    preloadedImgsRef.current = imgs;
+    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (!mq) return;
+    setReducedMotion(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    preloadedRef.current = false;
+    const el = containerRef.current;
+    if (!el || typeof window === "undefined") return;
+
+    const triggerPreload = () => {
+      if (preloadedRef.current) return;
+      preloadedRef.current = true;
+      preloadedImgsRef.current = activeItems.map((item) => {
+        const img = new window.Image();
+        img.decoding = "async";
+        img.src = item.src;
+        if (typeof img.decode === "function") {
+          img.decode().catch(() => {});
+        }
+        return img;
+      });
+    };
+
+    if (typeof IntersectionObserver === "undefined") {
+      triggerPreload();
+      return () => {
+        preloadedImgsRef.current = [];
+      };
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          triggerPreload();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "300px 0px" }
+    );
+
+    observer.observe(el);
     return () => {
+      observer.disconnect();
       preloadedImgsRef.current = [];
     };
   }, [activeItems]);
@@ -172,55 +229,39 @@ export default function MotDefilant({
   const barreScale = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        position: "relative",
-        width: "100%",
-        height: "320vh",
-      }}
-    >
+    <div ref={containerRef} className="relative w-full h-[240vh]">
       <div
-        style={{
-          position: "sticky",
-          top: 0,
-          width: "100%",
-          height: "100vh",
-          overflow: "hidden",
-          background: "#111622",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          padding: "clamp(24px, 4vw, 48px)",
-          boxSizing: "border-box",
-          color: "#F5F8FC",
-        }}
+        className="sticky top-0 w-full h-[100svh] overflow-hidden bg-[#111622] flex flex-col justify-between px-5 sm:px-8 lg:px-12 pt-[92px] sm:pt-[100px] lg:pt-[118px] pb-6 sm:pb-8 lg:pb-12 box-border text-[#F5F8FC]"
       >
-        <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+        <div aria-hidden="true" className="absolute inset-0 z-0">
           {activeItems.map((item, i) => {
             const isActif = i === actif;
             const isSortant = i === sortant;
             const animateState = isActif
               ? { opacity: 1, scale: 1 }
               : isSortant
-              ? { opacity: 0, scale: 0.97 }
-              : { opacity: 0, scale: 1.08 };
+              ? { opacity: 0, scale: reducedMotion ? 1 : 0.97 }
+              : { opacity: 0, scale: reducedMotion ? 1 : 1.08 };
             const transitionSpec =
               isActif || isSortant
-                ? { duration: 0.85, ease: [0.22, 1, 0.36, 1] as const }
+                ? {
+                    duration: reducedMotion ? 0.2 : 0.85,
+                    ease: [0.22, 1, 0.36, 1] as const,
+                  }
                 : { duration: 0 };
 
             return (
               <motion.img
                 key={item.src + i}
                 src={item.src}
-                alt={item.mot || ""}
-                loading="eager"
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
                 decoding="async"
                 initial={
                   i === 0
                     ? { opacity: 1, scale: 1 }
-                    : { opacity: 0, scale: 1.08 }
+                    : { opacity: 0, scale: reducedMotion ? 1 : 1.08 }
                 }
                 animate={animateState}
                 transition={transitionSpec}
@@ -231,7 +272,6 @@ export default function MotDefilant({
                   height: "100%",
                   objectFit: "cover",
                   zIndex: isActif ? 2 : isSortant ? 1 : 0,
-                  willChange: "transform, opacity",
                   backfaceVisibility: "hidden",
                   pointerEvents: "none",
                 }}
@@ -252,47 +292,22 @@ export default function MotDefilant({
           />
         </div>
 
-        {(["tl", "tr", "bl", "br"] as const).map((pos) => (
-          <div
-            key={pos}
-            style={{
-              position: "absolute",
-              zIndex: 2,
-              width: 22,
-              height: 22,
-              borderColor: "rgba(245,248,252,0.55)",
-              borderStyle: "solid",
-              borderWidth: 0,
-              ...(pos === "tl"
-                ? {
-                    top: 24,
-                    left: 24,
-                    borderTopWidth: 1.5,
-                    borderLeftWidth: 1.5,
-                  }
-                : pos === "tr"
-                ? {
-                    top: 24,
-                    right: 24,
-                    borderTopWidth: 1.5,
-                    borderRightWidth: 1.5,
-                  }
-                : pos === "bl"
-                ? {
-                    bottom: 24,
-                    left: 24,
-                    borderBottomWidth: 1.5,
-                    borderLeftWidth: 1.5,
-                  }
-                : {
-                    bottom: 24,
-                    right: 24,
-                    borderBottomWidth: 1.5,
-                    borderRightWidth: 1.5,
-                  }),
-            }}
-          />
-        ))}
+        <span
+          aria-hidden="true"
+          className="hidden sm:block absolute left-6 top-[92px] lg:top-[116px] z-[2] w-[22px] h-[22px] border-t-[1.5px] border-l-[1.5px] border-[#F5F8FC]/55 pointer-events-none"
+        />
+        <span
+          aria-hidden="true"
+          className="hidden sm:block absolute right-6 top-[92px] lg:top-[116px] z-[2] w-[22px] h-[22px] border-t-[1.5px] border-r-[1.5px] border-[#F5F8FC]/55 pointer-events-none"
+        />
+        <span
+          aria-hidden="true"
+          className="hidden sm:block absolute left-6 bottom-6 z-[2] w-[22px] h-[22px] border-b-[1.5px] border-l-[1.5px] border-[#F5F8FC]/55 pointer-events-none"
+        />
+        <span
+          aria-hidden="true"
+          className="hidden sm:block absolute right-6 bottom-6 z-[2] w-[22px] h-[22px] border-b-[1.5px] border-r-[1.5px] border-[#F5F8FC]/55 pointer-events-none"
+        />
 
         <div
           style={{
@@ -306,7 +321,7 @@ export default function MotDefilant({
             fontSize: 12,
             letterSpacing: "0.06em",
             textTransform: "uppercase",
-            color: "rgba(245,248,252,0.78)",
+            color: "rgba(245,248,252,0.84)",
           }}
         >
           <span>{activeSurTitre}</span>
@@ -331,11 +346,12 @@ export default function MotDefilant({
         >
           <div
             style={{
-              fontFamily: "var(--font-dm-sans), 'Plus Jakarta Sans', 'DM Sans', sans-serif",
+              fontFamily:
+                "var(--font-dm-sans), 'Plus Jakarta Sans', 'DM Sans', sans-serif",
               fontWeight: 500,
               fontSize: "clamp(18px, 2.2vw, 28px)",
               letterSpacing: "-0.02em",
-              color: "rgba(245,248,252,0.85)",
+              color: "rgba(245,248,252,0.88)",
             }}
           >
             {activePrefixe}
@@ -344,20 +360,23 @@ export default function MotDefilant({
           <div
             className="font-stagheiz"
             style={{
-              fontFamily: '"Stagheiz", sans-serif',
               position: "relative",
-              minHeight: "1.12em",
+              minHeight: "1.14em",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: "clamp(44px, 8.8vw, 128px)",
-              lineHeight: 0.96,
-              letterSpacing: "-0.04em",
+              lineHeight: lang === "vi" ? 1.14 : 0.96,
+              letterSpacing: lang === "vi" ? "-0.02em" : "-0.04em",
               color: "#FFF0A6",
             }}
           >
             <AnimatePresence mode="wait">
-              <MotAnime key={actif} mot={activeItems[actif]?.mot || ""} />
+              <MotAnime
+                key={actif}
+                mot={activeItems[actif]?.mot || ""}
+                reducedMotion={reducedMotion}
+              />
             </AnimatePresence>
           </div>
         </div>
@@ -389,18 +408,18 @@ export default function MotDefilant({
                     padding: "6px 14px",
                     borderRadius: 999,
                     border: `1px solid ${
-                      estActif ? "#FFF0A6" : "rgba(245,248,252,0.22)"
+                      estActif ? "#FFF0A6" : "rgba(245,248,252,0.28)"
                     }`,
                     background: estActif
                       ? "rgba(255,240,166,0.14)"
-                      : "rgba(17,22,34,0.35)",
+                      : "rgba(17,22,34,0.45)",
                     backdropFilter: "blur(8px)",
                     fontFamily:
                       "var(--font-space-mono), 'Space Mono', monospace",
                     fontSize: 11,
                     letterSpacing: "0.05em",
                     textTransform: "uppercase",
-                    color: estActif ? "#FFF0A6" : "rgba(245,248,252,0.6)",
+                    color: estActif ? "#FFF0A6" : "rgba(245,248,252,0.75)",
                     transition:
                       "border-color 0.35s ease, background-color 0.35s ease, color 0.35s ease",
                   }}
@@ -412,6 +431,7 @@ export default function MotDefilant({
           </div>
 
           <div
+            aria-hidden="true"
             style={{
               width: "100%",
               height: 2,

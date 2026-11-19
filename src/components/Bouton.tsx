@@ -4,13 +4,13 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-interface BoutonProps {
+export interface BoutonProps {
   title?: string;
   href?: string;
   variant?: "primary" | "secondary" | "light";
   showArrow?: boolean;
   className?: string;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   type?: "button" | "submit";
   fullWidth?: boolean;
 }
@@ -27,11 +27,11 @@ export default function Bouton({
 }: BoutonProps) {
   const variantClasses = {
     primary:
-      "bg-[#111622] text-[#f5f8fc] border-[#111622] hover:bg-[#1e3557] hover:border-[#1e3557]",
+      "bg-[#111622] text-[#f5f8fc] border-[#111622] hover:bg-[#1e3557] hover:border-[#1e3557] focus-visible:ring-[#111622] focus-visible:ring-offset-[#f5f8fc]",
     secondary:
-      "bg-transparent text-[#111622] border-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc]",
+      "bg-transparent text-[#111622] border-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622] focus-visible:ring-offset-[#f5f8fc]",
     light:
-      "bg-[#f5f8fc] text-[#111622] border-[#f5f8fc] hover:bg-[#fff0a6] hover:border-[#fff0a6]",
+      "bg-[#f5f8fc] text-[#111622] border-[#f5f8fc] hover:bg-[#fff0a6] hover:border-[#fff0a6] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#111622]",
   }[variant];
 
   const content = (
@@ -40,7 +40,10 @@ export default function Bouton({
         {title}
       </span>
       {showArrow && (
-        <span className="relative flex items-center justify-end w-[18px] h-[18px] overflow-hidden shrink-0">
+        <span
+          aria-hidden="true"
+          className="relative flex items-center justify-end w-[18px] h-[18px] overflow-hidden shrink-0"
+        >
           <span className="flex items-center gap-[16px] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] translate-x-0 group-hover:translate-x-[34px]">
             <ArrowRight className="w-[18px] h-[18px] stroke-[1.75] shrink-0" />
             <ArrowRight className="w-[18px] h-[18px] stroke-[1.75] shrink-0" />
@@ -50,7 +53,7 @@ export default function Bouton({
     </>
   );
 
-  const baseClass = `group inline-flex items-center justify-center gap-[12px] px-[24px] py-[17px] rounded-full border-[1.5px] transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer no-underline ${
+  const baseClass = `group inline-flex items-center justify-center gap-[12px] px-[24px] py-[17px] rounded-full border-[1.5px] transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
     fullWidth ? "w-full" : "w-fit"
   } ${variantClasses} ${className}`;
 
@@ -77,7 +80,15 @@ export default function Bouton({
   }
 
   return (
-    <button type={type} onClick={onClick} className={baseClass}>
+    <button
+      type={type}
+      onClick={
+        onClick
+          ? (e) => onClick(e as unknown as React.MouseEvent<HTMLAnchorElement>)
+          : undefined
+      }
+      className={baseClass}
+    >
       {content}
     </button>
   );
