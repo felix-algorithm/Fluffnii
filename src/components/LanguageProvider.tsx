@@ -12,8 +12,6 @@ interface LanguageContextValue {
   toggleLang: () => void;
 }
 
-const STORAGE_KEY = "fluffnii-lang";
-
 const ROUTE_TITLES: Record<string, Record<Lang, string>> = {
   "/": {
     en: "FluffNii - Custom Fursuit Maker",
@@ -44,15 +42,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved === "vi" || saved === "en") {
-        setLangState(saved);
-      }
-    } catch {}
-  }, []);
-
-  useEffect(() => {
     const html = document.documentElement;
     html.lang = lang;
     html.dataset.lang = lang;
@@ -66,19 +55,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const setLang = (next: Lang) => {
     setLangState(next);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next);
-    } catch {}
   };
 
   const toggleLang = () =>
-    setLangState((prev) => {
-      const next = prev === "en" ? "vi" : "en";
-      try {
-        window.localStorage.setItem(STORAGE_KEY, next);
-      } catch {}
-      return next;
-    });
+    setLangState((prev) => (prev === "en" ? "vi" : "en"));
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, toggleLang }}>
