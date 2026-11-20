@@ -4,6 +4,7 @@ import React, { useId, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useLang } from "./LanguageProvider";
+import { useTheme } from "./CircularRevealToggle";
 
 export interface FAQItem {
   question: string;
@@ -78,6 +79,7 @@ const DEFAULT_FAQS_VI: FAQItem[] = [
 
 export default function FAQAccordion({ items }: { items?: FAQItem[] }) {
   const { lang } = useLang();
+  const { isDark } = useTheme();
   const baseId = useId();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const activeItems =
@@ -90,7 +92,12 @@ export default function FAQAccordion({ items }: { items?: FAQItem[] }) {
         const buttonId = `${baseId}-btn-${idx}`;
         const panelId = `${baseId}-panel-${idx}`;
         return (
-          <div key={idx} className="border-b border-[#111622]/[0.16]">
+          <div
+            key={idx}
+            className={`border-b ${
+              isDark ? "border-[#f5f8fc]/[0.16]" : "border-[#111622]/[0.16]"
+            }`}
+          >
             <h3 className="m-0">
               <button
                 id={buttonId}
@@ -98,23 +105,50 @@ export default function FAQAccordion({ items }: { items?: FAQItem[] }) {
                 aria-expanded={isOpen}
                 aria-controls={panelId}
                 onClick={() => setOpenIndex(isOpen ? null : idx)}
-                className="w-full py-[24px] md:py-[26px] flex items-center justify-between gap-6 text-left cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f5f8fc]"
+                className={`w-full py-[24px] md:py-[26px] flex items-center justify-between gap-6 text-left cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                  isDark
+                    ? "focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#0b0f17]"
+                    : "focus-visible:ring-[#111622] focus-visible:ring-offset-[#f5f8fc]"
+                }`}
               >
-                <span className="font-sans text-[20px] md:text-[22px] font-medium tracking-[-0.02em] leading-[1.3] text-[#111622]">
+                <span
+                  className={`font-sans text-[20px] md:text-[22px] font-medium tracking-[-0.02em] leading-[1.3] ${
+                    isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                  }`}
+                >
                   {item.question}
                 </span>
                 <motion.span
                   aria-hidden="true"
                   animate={{
                     rotate: isOpen ? 45 : 0,
-                    backgroundColor: isOpen ? "#111622" : "rgba(0,0,0,0)",
+                    backgroundColor: isOpen
+                      ? isDark
+                        ? "#fff0a6"
+                        : "#111622"
+                      : "rgba(0,0,0,0)",
+                    borderColor: isDark
+                      ? isOpen
+                        ? "#fff0a6"
+                        : "#f5f8fc"
+                      : "#111622",
                   }}
                   transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                  className="w-[44px] h-[44px] rounded-full border-[1.5px] border-[#111622] flex items-center justify-center shrink-0"
+                  className={`w-[44px] h-[44px] rounded-full border-[1.5px] flex items-center justify-center shrink-0 ${
+                    isDark ? "border-[#f5f8fc]" : "border-[#111622]"
+                  }`}
                 >
                   <Plus
                     className="w-[20px] h-[20px] transition-colors duration-300"
-                    style={{ color: isOpen ? "#f5f8fc" : "#111622" }}
+                    style={{
+                      color: isOpen
+                        ? isDark
+                          ? "#111622"
+                          : "#f5f8fc"
+                        : isDark
+                        ? "#f5f8fc"
+                        : "#111622",
+                    }}
                     strokeWidth={1.75}
                   />
                 </motion.span>
@@ -132,7 +166,11 @@ export default function FAQAccordion({ items }: { items?: FAQItem[] }) {
                   transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                   className="overflow-hidden"
                 >
-                  <p className="pb-[26px] pr-0 md:pr-[80px] font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/75">
+                  <p
+                    className={`pb-[26px] pr-0 md:pr-[80px] font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] ${
+                      isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/75"
+                    }`}
+                  >
                     {item.answer}
                   </p>
                 </motion.div>

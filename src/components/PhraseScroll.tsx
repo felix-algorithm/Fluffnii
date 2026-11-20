@@ -2,6 +2,23 @@
 
 import React, { useRef, useMemo } from "react";
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
+import { useTheme } from "./CircularRevealToggle";
+
+function isLightHighlight(color: string | null): boolean {
+  if (!color) return false;
+  const c = color.trim().toLowerCase();
+  if (c === "#dce8f5" || c === "#fff0a6" || c === "#f5f8fc" || c === "#ffffff") {
+    return true;
+  }
+  const hex = c.replace(/^#/, "");
+  if (/^[0-9a-f]{6}$/.test(hex)) {
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 >= 150;
+  }
+  return true;
+}
 
 function norm(s: string) {
   return (s || "")
@@ -47,13 +64,27 @@ interface MotProps {
   total: number;
   progress: MotionValue<number>;
   couleurSurlignage: string | null;
+  isDark: boolean;
+  baseTextColor: string;
 }
 
-function Mot({ mot, index, total, progress, couleurSurlignage }: MotProps) {
+function Mot({
+  mot,
+  index,
+  total,
+  progress,
+  couleurSurlignage,
+  isDark,
+  baseTextColor,
+}: MotProps) {
   const debut = (index / total) * 0.85;
   const fin = debut + (1 / total) * 1.4;
-  const opacity = useTransform(progress, [debut, Math.min(1, fin)], [0.14, 1]);
-  const scaleX = useTransform(progress, [debut, Math.min(1, fin)], [0, 1]);
+  const clampedEnd = Math.min(1, fin);
+  const opacity = useTransform(progress, [debut, clampedEnd], [0.14, 1]);
+  const scaleX = useTransform(progress, [debut, clampedEnd], [0, 1]);
+  const revealMix = useTransform(progress, [debut, clampedEnd], [0, 1]);
+  const baseFade = useTransform(progress, [debut, clampedEnd], [1, 0]);
+  const hasLightHighlight = isLightHighlight(couleurSurlignage);
 
   return (
     <motion.span
@@ -79,7 +110,28 @@ function Mot({ mot, index, total, progress, couleurSurlignage }: MotProps) {
           }}
         />
       )}
-      {mot}
+      {hasLightHighlight && isDark ? (
+        <span className="relative inline-block">
+          <motion.span style={{ opacity: baseFade, color: baseTextColor }}>
+            {mot}
+          </motion.span>
+          <motion.span
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              color: "#111622",
+              opacity: revealMix,
+            }}
+          >
+            {mot}
+          </motion.span>
+        </span>
+      ) : (
+        <span style={{ color: hasLightHighlight ? "#111622" : undefined }}>
+          {mot}
+        </span>
+      )}
     </motion.span>
   );
 }
@@ -105,6 +157,7 @@ export default function PhraseScroll({
   couleurTexte = "#111622",
   tailleMax = 52,
 }: PhraseScrollProps) {
+  const { isDark } = useTheme();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -116,6 +169,10 @@ export default function PhraseScroll({
   const set2 = useMemo(() => trouverPlages(mots, surlignes2), [mots, surlignes2]);
 
   const minPx = Math.max(28, Math.round(tailleMax * 0.54));
+  const resolvedTextColor =
+    isDark && couleurTexte.toLowerCase() === "#111622"
+      ? "#f5f8fc"
+      : couleurTexte;
 
   return (
     <div
@@ -127,7 +184,7 @@ export default function PhraseScroll({
         fontSize: `clamp(${minPx}px, 4.2vw, ${tailleMax}px)`,
         lineHeight: 1.12,
         letterSpacing: "-0.035em",
-        color: couleurTexte,
+        color: resolvedTextColor,
         textAlign: alignement,
         display: "flex",
         flexWrap: "wrap",
@@ -145,6 +202,8 @@ export default function PhraseScroll({
             total={mots.length}
             progress={scrollYProgress}
             couleurSurlignage={c}
+            isDark={isDark}
+            baseTextColor={resolvedTextColor}
           />
         );
       })}

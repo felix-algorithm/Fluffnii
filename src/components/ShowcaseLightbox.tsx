@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { useTheme } from "./CircularRevealToggle";
 
 export interface ShowcaseItem {
   id: string;
@@ -42,6 +43,7 @@ export default function ShowcaseLightbox({
   nextAria,
   ctaLabel,
 }: ShowcaseLightboxProps) {
+  const { isDark } = useTheme();
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -132,7 +134,9 @@ export default function ShowcaseLightbox({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.22, ease: EASE }}
           onClick={() => onChangeIndex(null)}
-          className="fixed inset-0 z-[80] bg-[#111622]/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          className={`fixed inset-0 z-[80] backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto ${
+            isDark ? "bg-[#05080f]/85" : "bg-[#111622]/80"
+          }`}
         >
           <motion.div
             ref={dialogRef}
@@ -144,9 +148,17 @@ export default function ShowcaseLightbox({
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             transition={{ duration: 0.28, ease: EASE }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-[820px] max-h-[92vh] overflow-y-auto rounded-[28px] bg-[#f5f8fc] text-[#111622] border border-[#111622]/15 shadow-[0_28px_70px_rgba(17,22,34,0.45)]"
+            className={`relative w-full max-w-[820px] max-h-[92vh] overflow-y-auto rounded-[28px] border ${
+              isDark
+                ? "bg-[#141b28] text-[#f5f8fc] border-[#f5f8fc]/15 shadow-[0_28px_70px_rgba(0,0,0,0.65)]"
+                : "bg-[#f5f8fc] text-[#111622] border-[#111622]/15 shadow-[0_28px_70px_rgba(17,22,34,0.45)]"
+            }`}
           >
-            <div className="relative w-full bg-[#dce8f5] flex items-center justify-center min-h-[260px] sm:min-h-[380px] max-h-[58vh] overflow-hidden">
+            <div
+              className={`relative w-full flex items-center justify-center min-h-[260px] sm:min-h-[380px] max-h-[58vh] overflow-hidden ${
+                isDark ? "bg-[#1a2436]" : "bg-[#dce8f5]"
+              }`}
+            >
               <img
                 src={activeItem.src}
                 alt={activeItem.alt}
@@ -164,13 +176,23 @@ export default function ShowcaseLightbox({
                 type="button"
                 aria-label={closeAria}
                 onClick={() => onChangeIndex(null)}
-                className="absolute top-3.5 right-3.5 z-10 w-11 h-11 rounded-full bg-[#f5f8fc]/95 border border-[#111622]/20 text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
+                className={`absolute top-3.5 right-3.5 z-10 w-11 h-11 rounded-full border transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                  isDark
+                    ? "bg-[#141b28]/90 border-[#f5f8fc]/25 text-[#f5f8fc] hover:bg-[#fff0a6] hover:!text-[#111622] hover:border-[#fff0a6] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#141b28]"
+                    : "bg-[#f5f8fc]/95 border-[#111622]/20 text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622]"
+                }`}
               >
                 <X className="w-5 h-5" />
               </button>
 
               {items.length > 1 && (
-                <div className="absolute top-3.5 left-3.5 z-10 px-3 py-1.5 rounded-full bg-[#111622]/85 text-[#f5f8fc] font-mono text-[11px] uppercase tracking-[0.06em]">
+                <div
+                  className={`absolute top-3.5 left-3.5 z-10 px-3 py-1.5 rounded-full font-mono text-[11px] uppercase tracking-[0.06em] ${
+                    isDark
+                      ? "bg-[#0b0f17]/90 border border-[#f5f8fc]/15 text-[#f5f8fc]"
+                      : "bg-[#111622]/85 text-[#f5f8fc]"
+                  }`}
+                >
                   {String(activeIndex + 1).padStart(2, "0")} /{" "}
                   {String(items.length).padStart(2, "0")}
                 </div>
@@ -182,7 +204,11 @@ export default function ShowcaseLightbox({
                     type="button"
                     aria-label={prevAria}
                     onClick={handlePrev}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-[#f5f8fc]/90 border border-[#111622]/20 text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
+                    className={`absolute left-3.5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full border transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                      isDark
+                        ? "bg-[#141b28]/90 border-[#f5f8fc]/25 text-[#f5f8fc] hover:bg-[#fff0a6] hover:!text-[#111622] hover:border-[#fff0a6] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#141b28]"
+                        : "bg-[#f5f8fc]/90 border-[#111622]/20 text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622]"
+                    }`}
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
@@ -190,7 +216,11 @@ export default function ShowcaseLightbox({
                     type="button"
                     aria-label={nextAria}
                     onClick={handleNext}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-[#f5f8fc]/90 border border-[#111622]/20 text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
+                    className={`absolute right-3.5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full border transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                      isDark
+                        ? "bg-[#141b28]/90 border-[#f5f8fc]/25 text-[#f5f8fc] hover:bg-[#fff0a6] hover:!text-[#111622] hover:border-[#fff0a6] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#141b28]"
+                        : "bg-[#f5f8fc]/90 border-[#111622]/20 text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622]"
+                    }`}
                   >
                     <ArrowRight className="w-5 h-5" />
                   </button>
@@ -201,10 +231,18 @@ export default function ShowcaseLightbox({
             <div className="p-6 sm:p-8 flex flex-col gap-5">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="flex flex-col gap-2">
-                  <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/70">
+                  <span
+                    className={`font-mono text-[11px] uppercase tracking-[0.06em] ${
+                      isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                    }`}
+                  >
                     {activeItem.eyebrow}
                   </span>
-                  <h3 className="font-stagheiz text-[28px] sm:text-[34px] leading-[1] text-[#111622]">
+                  <h3
+                    className={`font-stagheiz text-[28px] sm:text-[34px] leading-[1] ${
+                      isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                    }`}
+                  >
                     {activeItem.title}
                   </h3>
                   {activeItem.tags.length > 0 && (
@@ -212,7 +250,11 @@ export default function ShowcaseLightbox({
                       {activeItem.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="px-3 py-1 rounded-full bg-[#dce8f5] border border-[#111622]/15 font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622]"
+                          className={`px-3 py-1 rounded-full border font-mono text-[11px] uppercase tracking-[0.05em] ${
+                            isDark
+                              ? "bg-[#1a2436] border-[#f5f8fc]/15 text-[#f5f8fc]"
+                              : "bg-[#dce8f5] border-[#111622]/15 text-[#111622]"
+                          }`}
                         >
                           {tag}
                         </span>
@@ -224,19 +266,27 @@ export default function ShowcaseLightbox({
                 <button
                   type="button"
                   onClick={() => onRequestSimilar(activeItem)}
-                  className="group shrink-0 inline-flex items-center justify-center gap-3 rounded-full bg-[#111622] hover:bg-[#1e3557] text-[#f5f8fc] px-6 py-3.5 font-sans text-[15px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
+                  className={`group shrink-0 inline-flex items-center justify-center gap-3 rounded-full px-6 py-3.5 font-sans text-[15px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                    isDark
+                      ? "bg-[#f5f8fc] border border-[#f5f8fc] hover:bg-[#fff0a6] hover:border-[#fff0a6] text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#141b28]"
+                      : "bg-[#111622] hover:bg-[#1e3557] text-[#f5f8fc] focus-visible:ring-[#111622]"
+                  }`}
                 >
                   <span>{ctaLabel}</span>
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </button>
               </div>
 
-              <p className="font-sans text-[16px] leading-[1.55] text-[#111622]/80">
+              <p
+                className={`font-sans text-[16px] leading-[1.55] ${
+                  isDark ? "text-[#f5f8fc]/80" : "text-[#111622]/80"
+                }`}
+              >
                 {activeItem.description}
               </p>
 
               {activeItem.review && (
-                <div className="rounded-[18px] bg-[#fff0a6] border border-[#111622]/15 p-4 sm:p-5">
+                <div className="theme-butter-card rounded-[18px] bg-[#fff0a6] border border-[#111622]/15 p-4 sm:p-5">
                   <p className="font-sans text-[15px] leading-[1.5] text-[#111622] mb-2">
                     &ldquo;{activeItem.review}&rdquo;
                   </p>

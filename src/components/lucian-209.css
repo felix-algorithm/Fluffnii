@@ -1,0 +1,334 @@
+/* Lucian UX/UI Prompt #209 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#209 */
+.u209 {
+  position: relative;
+  width: 100%;
+  color: #f5f8fc;
+}
+
+.u209.is-open {
+  z-index: 40;
+}
+
+.u209-fd {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  border-radius: 14px;
+  background: rgba(245, 248, 252, 0.08);
+  box-shadow: inset 0 0 0 1.5px rgba(245, 248, 252, 0.2);
+  transition: box-shadow 0.22s ease, background-color 0.22s ease, transform 0.18s ease;
+}
+
+.u209-fd:hover {
+  background: rgba(245, 248, 252, 0.1);
+}
+
+.u209-fd:focus-within {
+  background: rgba(245, 248, 252, 0.11);
+  box-shadow: inset 0 0 0 2px #fff0a6, 0 0 0 4px rgba(255, 240, 166, 0.14);
+}
+
+.u209.is-typing .u209-fd:focus-within {
+  box-shadow: inset 0 0 0 2px #fff0a6, 0 0 0 5px rgba(255, 240, 166, 0.22);
+}
+
+.u209.is-ok .u209-fd {
+  box-shadow: inset 0 0 0 2px #10b981;
+}
+
+.u209.is-ok .u209-fd:focus-within {
+  box-shadow: inset 0 0 0 2px #10b981, 0 0 0 4px rgba(16, 185, 129, 0.18);
+}
+
+.u209.is-ok.is-typing .u209-fd:focus-within {
+  box-shadow: inset 0 0 0 2px #10b981, 0 0 0 5px rgba(16, 185, 129, 0.26);
+}
+
+.u209.is-bad .u209-fd {
+  box-shadow: inset 0 0 0 2px #f59e0b;
+}
+
+.u209.is-bad .u209-fd:focus-within {
+  box-shadow: inset 0 0 0 2px #f59e0b, 0 0 0 4px rgba(245, 158, 11, 0.2);
+}
+
+.u209-fd--area {
+  align-items: flex-start;
+  min-height: 128px;
+}
+
+.u209-cc {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 52px;
+  padding: 0 10px 0 13px;
+  border: 0;
+  border-right: 1px solid rgba(245, 248, 252, 0.16);
+  border-radius: 14px 0 0 14px;
+  background: transparent;
+  color: #f5f8fc;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+
+.u209-cc:hover {
+  background: rgba(245, 248, 252, 0.08);
+}
+
+.u209-cc em {
+  display: inline-block;
+  font-style: normal;
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 0.45s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.u209-cc em.is-spin {
+  transform: rotateY(360deg) scale(1.15);
+}
+
+.u209-cc b {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.u209-cc svg {
+  width: 9px;
+  height: 9px;
+  color: rgba(245, 248, 252, 0.6);
+  transition: transform 0.25s ease;
+}
+
+.u209.is-open .u209-cc svg {
+  transform: rotate(180deg);
+}
+
+.u209-in {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  min-height: 52px;
+  padding: 13px 42px 13px 14px;
+  border: 0;
+  background: transparent;
+  color: #f5f8fc;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  outline: none;
+}
+
+.u209-in--phone {
+  padding-left: 12px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.u209-in--area {
+  min-height: 128px;
+  padding: 14px 44px 14px 16px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.u209-in::placeholder {
+  color: rgba(245, 248, 252, 0.52);
+  font-weight: 400;
+}
+
+.u209-ck {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+.u209-fd--area .u209-ck {
+  top: 15px;
+  transform: none;
+}
+
+.u209-ck circle {
+  fill: #10b981;
+  transform: scale(0);
+  transform-origin: center;
+  transform-box: fill-box;
+  transition: transform 0.35s cubic-bezier(0.3, 1.7, 0.5, 1);
+}
+
+.u209-ck path {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 14;
+  stroke-dashoffset: 14;
+  transition: stroke-dashoffset 0.3s ease 0.2s;
+}
+
+.u209.is-ok .u209-ck circle {
+  transform: none;
+}
+
+.u209.is-ok .u209-ck path {
+  stroke-dashoffset: 0;
+}
+
+.u209-ht {
+  max-height: 0;
+  margin-top: 0;
+  overflow: hidden;
+  opacity: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #fbbf24;
+  transition: max-height 0.25s ease, margin-top 0.25s ease, opacity 0.2s ease;
+}
+
+.u209.is-bad .u209-ht {
+  max-height: 48px;
+  margin-top: 6px;
+  opacity: 1;
+}
+
+.u209-dd {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  z-index: 60;
+  width: min(272px, 100%);
+  padding: 6px;
+  border-radius: 16px;
+  background: #182234;
+  color: #f5f8fc;
+  box-shadow: 0 0 0 1px rgba(245, 248, 252, 0.18), 0 22px 44px -12px rgba(0, 0, 0, 0.65);
+  transform-origin: 20% 0;
+  transform: scale(0.94) translateY(-4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.22s cubic-bezier(0.3, 1.5, 0.5, 1), opacity 0.15s ease;
+}
+
+.u209.is-open .u209-dd {
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.u209-sr {
+  width: 100%;
+  height: 34px;
+  margin-bottom: 5px;
+  padding: 0 10px;
+  border: 1px solid rgba(245, 248, 252, 0.14);
+  border-radius: 10px;
+  background: rgba(245, 248, 252, 0.08);
+  color: #f5f8fc;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.u209-sr::placeholder {
+  color: rgba(245, 248, 252, 0.5);
+  font-weight: 500;
+}
+
+.u209-sr:focus {
+  border-color: #fff0a6;
+}
+
+.u209-ls {
+  max-height: 216px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.u209-op {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #f5f8fc;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.u209-op:hover,
+.u209-op[aria-selected="true"] {
+  background: rgba(245, 248, 252, 0.12);
+}
+
+.u209-op[aria-selected="true"] {
+  color: #fff0a6;
+}
+
+.u209-op em {
+  font-style: normal;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.u209-op span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.u209-op small {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(245, 248, 252, 0.65);
+  font-variant-numeric: tabular-nums;
+}
+
+.u209-empty {
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(245, 248, 252, 0.55);
+}
+
+.u209 button:focus-visible {
+  outline: 2px solid #fff0a6;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .u209-fd,
+  .u209-cc em,
+  .u209-cc svg,
+  .u209-dd,
+  .u209-ht,
+  .u209-ck circle,
+  .u209-ck path {
+    transition: none !important;
+  }
+}

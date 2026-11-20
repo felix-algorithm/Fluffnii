@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { useTheme } from "./CircularRevealToggle";
 
 export interface BoutonProps {
   title?: string;
@@ -25,13 +26,16 @@ export default function Bouton({
   type = "button",
   fullWidth = false,
 }: BoutonProps) {
+  const { isDark } = useTheme();
   const variantClasses = {
-    primary:
-      "bg-[#111622] text-[#f5f8fc] border-[#111622] hover:bg-[#1e3557] hover:border-[#1e3557] focus-visible:ring-[#111622] focus-visible:ring-offset-[#f5f8fc]",
-    secondary:
-      "bg-transparent text-[#111622] border-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622] focus-visible:ring-offset-[#f5f8fc]",
+    primary: isDark
+      ? "bg-[#f5f8fc] text-[#111622] border-[#f5f8fc] hover:bg-[#fff0a6] hover:border-[#fff0a6] hover:!text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#0b0f17] [.theme-butter-card_&]:!bg-[#111622] [.theme-butter-card_&]:!text-[#f5f8fc] [.theme-butter-card_&]:!border-[#111622] [.theme-butter-card_&]:hover:!bg-[#1e3557] [.theme-butter-card_&]:hover:!border-[#1e3557] [.theme-butter-card_&]:hover:!text-[#f5f8fc] [.theme-butter-card_&]:focus-visible:!ring-[#111622] [.theme-butter-card_&]:focus-visible:!ring-offset-[#fff0a6]"
+      : "bg-[#111622] text-[#f5f8fc] border-[#111622] hover:bg-[#1e3557] hover:border-[#1e3557] focus-visible:ring-[#111622] focus-visible:ring-offset-[#f5f8fc]",
+    secondary: isDark
+      ? "bg-transparent text-[#f5f8fc] border-[#f5f8fc] hover:bg-[#f5f8fc] hover:!text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#0b0f17] [.theme-butter-card_&]:!border-[#111622] [.theme-butter-card_&]:!text-[#111622] [.theme-butter-card_&]:hover:!bg-[#111622] [.theme-butter-card_&]:hover:!text-[#f5f8fc] [.theme-butter-card_&]:focus-visible:!ring-[#111622] [.theme-butter-card_&]:focus-visible:!ring-offset-[#fff0a6]"
+      : "bg-transparent text-[#111622] border-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622] focus-visible:ring-offset-[#f5f8fc]",
     light:
-      "bg-[#f5f8fc] text-[#111622] border-[#f5f8fc] hover:bg-[#fff0a6] hover:border-[#fff0a6] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#111622]",
+      "bg-[#f5f8fc] text-[#111622] border-[#f5f8fc] hover:bg-[#fff0a6] hover:border-[#fff0a6] hover:!text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#111622]",
   }[variant];
 
   const content = (

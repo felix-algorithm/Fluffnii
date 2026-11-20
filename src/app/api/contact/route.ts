@@ -296,7 +296,7 @@ export async function POST(request: Request) {
       ).slice(0, 20)
     : [];
 
-  if (!name || !species || !email || !message) {
+  if (!name || !species || !email || !refLink || !message) {
     return errorResponse("MISSING_FIELDS", 400);
   }
 

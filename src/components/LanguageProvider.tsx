@@ -1,13 +1,23 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { usePathname } from "next/navigation";
 import { MotionConfig } from "framer-motion";
+import { ThemeProvider } from "./CircularRevealToggle";
 
 export type Lang = "en" | "vi";
+export type SwapPhase = "idle" | "is-go" | "is-in";
 
 interface LanguageContextValue {
   lang: Lang;
+  swapPhase: SwapPhase;
   setLang: (next: Lang) => void;
   toggleLang: () => void;
 }
@@ -33,15 +43,42 @@ const ROUTE_TITLES: Record<string, Record<Lang, string>> = {
 
 const LanguageContext = createContext<LanguageContextValue>({
   lang: "en",
+  swapPhase: "idle",
   setLang: () => {},
   toggleLang: () => {},
 });
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en");
+  const [swapPhase, setSwapPhase] = useState<SwapPhase>("idle");
+  const langRef = useRef<Lang>("en");
+  const targetLangRef = useRef<Lang>("en");
+  const timersRef = useRef<number[]>([]);
+  const mountedRef = useRef(true);
   const pathname = usePathname();
 
+  const clearTimers = useCallback(() => {
+    if (typeof window !== "undefined") {
+      for (const id of timersRef.current) {
+        window.clearTimeout(id);
+      }
+    }
+    timersRef.current = [];
+  }, []);
+
   useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearTimers();
+      if (typeof document !== "undefined") {
+        delete document.documentElement.dataset.langSwap;
+      }
+    };
+  }, [clearTimers]);
+
+  useEffect(() => {
+    langRef.current = lang;
     const html = document.documentElement;
     html.lang = lang;
     html.dataset.lang = lang;
@@ -53,16 +90,79 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }, [lang, pathname]);
 
-  const setLang = (next: Lang) => {
-    setLangState(next);
-  };
+  const setLang = useCallback(
+    (next: Lang) => {
+      if (next === targetLangRef.current) {
+        return;
+      }
 
-  const toggleLang = () =>
-    setLangState((prev) => (prev === "en" ? "vi" : "en"));
+      clearTimers();
+      targetLangRef.current = next;
+
+      if (typeof window === "undefined" || typeof document === "undefined") {
+        langRef.current = next;
+        setLangState(next);
+        setSwapPhase("idle");
+        return;
+      }
+
+      const reducedMotion =
+        window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ??
+        false;
+
+      if (reducedMotion) {
+        langRef.current = next;
+        setLangState(next);
+        setSwapPhase("idle");
+        delete document.documentElement.dataset.langSwap;
+        return;
+      }
+
+      if (next === langRef.current) {
+        setSwapPhase("is-in");
+        document.documentElement.dataset.langSwap = "in";
+        const finishId = window.setTimeout(() => {
+          if (!mountedRef.current) return;
+          setSwapPhase("idle");
+          delete document.documentElement.dataset.langSwap;
+        }, 520);
+        timersRef.current = [finishId];
+        return;
+      }
+
+      setSwapPhase("is-go");
+      document.documentElement.dataset.langSwap = "go";
+
+      const swapId = window.setTimeout(() => {
+        if (!mountedRef.current) return;
+        langRef.current = next;
+        setLangState(next);
+        setSwapPhase("is-in");
+        document.documentElement.dataset.langSwap = "in";
+
+        const finishId = window.setTimeout(() => {
+          if (!mountedRef.current) return;
+          setSwapPhase("idle");
+          delete document.documentElement.dataset.langSwap;
+        }, 520);
+        timersRef.current = [finishId];
+      }, 280);
+
+      timersRef.current = [swapId];
+    },
+    [clearTimers]
+  );
+
+  const toggleLang = useCallback(() => {
+    const next: Lang = targetLangRef.current === "en" ? "vi" : "en";
+    setLang(next);
+  }, [setLang]);
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, toggleLang }}>
-      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+    <LanguageContext.Provider value={{ lang, swapPhase, setLang, toggleLang }}>
+      <ThemeProvider>
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
+      </ThemeProvider>
     </LanguageContext.Provider>
   );
 }

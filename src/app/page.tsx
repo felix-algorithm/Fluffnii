@@ -28,6 +28,12 @@ import Bouton from "@/components/Bouton";
 import Footer from "@/components/Footer";
 import ShowcaseLightbox, { type ShowcaseItem } from "@/components/ShowcaseLightbox";
 import { useLang } from "@/components/LanguageProvider";
+import { useTheme } from "@/components/CircularRevealToggle";
+import {
+  CountryPhoneField209,
+  LucianContactInput,
+  LucianContactTextarea,
+} from "@/components/LucianContactFields";
 import {
   HOME_COPY,
   localizeCommissionNote,
@@ -58,6 +64,27 @@ const EMAIL_REGEX = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]{2,}$/;
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const VIEWPORT = { once: true, amount: 0.15 } as const;
 const RESULT_CELL_DELAYS = [0, 0.04, 0.08, 0.12, 0.2, 0.16, 0.28, 0.24] as const;
+
+function darkSurfaceBg(bg: string, dark: boolean): string {
+  if (!dark) return bg;
+  const normalized = bg.toLowerCase();
+  if (normalized === "#f5f8fc") return "#141b28";
+  if (normalized === "#ffffff") return "#182234";
+  if (normalized === "#dce8f5") return "#1c283d";
+  return bg;
+}
+
+function isValidHttpUrl(raw: string): boolean {
+  try {
+    const parsed = new URL(raw);
+    return (
+      (parsed.protocol === "https:" || parsed.protocol === "http:") &&
+      Boolean(parsed.hostname && parsed.hostname.includes("."))
+    );
+  } catch {
+    return false;
+  }
+}
 
 function galleryItemToShowcase(item: GalleryPhotoCopy): ShowcaseItem {
   return {
@@ -342,6 +369,7 @@ function SmoothTicker({
 
 export default function HomePage() {
   const { lang } = useLang();
+  const { isDark } = useTheme();
   const isVi = lang === "vi";
   const copy = HOME_COPY[lang];
 
@@ -351,6 +379,13 @@ export default function HomePage() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const carouselInView = useInView(carouselRef, { once: true, amount: 0.08 });
   const [activeProjectIdx, setActiveProjectIdx] = useState(0);
+
+  const fanSectionRef = useRef<HTMLElement>(null);
+  const fanInView = useInView(fanSectionRef, { once: false, amount: 0.2 });
+  const [hoveredFanIdx, setHoveredFanIdx] = useState<number | null>(null);
+  const [idleFanIdx, setIdleFanIdx] = useState<number>(1);
+  const idleFanIdxRef = useRef<number>(1);
+  const [idleFanLifted, setIdleFanLifted] = useState<boolean>(false);
 
   const [galleryFilter, setGalleryFilter] = useState<GalleryFilterId>("all");
   const [galleryPaused, setGalleryPaused] = useState(false);
@@ -384,6 +419,7 @@ export default function HomePage() {
     useState<SubmittedSummary | null>(null);
   const [copiedErrorText, setCopiedErrorText] = useState(false);
   const [copyFallbackText, setCopyFallbackText] = useState<string | null>(null);
+  const [showContactValidation, setShowContactValidation] = useState(false);
 
   const draftHydratedRef = useRef(false);
   const isSubmittingRef = useRef(false);
@@ -391,6 +427,7 @@ export default function HomePage() {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const speciesInputRef = useRef<HTMLInputElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
+  const refLinkInputRef = useRef<HTMLInputElement>(null);
   const notesInputRef = useRef<HTMLTextAreaElement>(null);
   const partsGroupRef = useRef<HTMLDivElement>(null);
 
@@ -424,6 +461,46 @@ export default function HomePage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reduced =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+    if (reduced || !fanInView || hoveredFanIdx !== null) {
+      setIdleFanLifted(false);
+      return;
+    }
+
+    const cardCount = copy.fanCards.length;
+    let holdTimer: number | null = null;
+    let nextTimer: number | null = null;
+    let cancelled = false;
+
+    const runCycle = (startIdx: number, initialDelay: number) => {
+      nextTimer = window.setTimeout(() => {
+        if (cancelled) return;
+        idleFanIdxRef.current = startIdx;
+        setIdleFanIdx(startIdx);
+        setIdleFanLifted(true);
+
+        holdTimer = window.setTimeout(() => {
+          if (cancelled) return;
+          setIdleFanLifted(false);
+          const nextIdx = (startIdx + 1) % cardCount;
+          idleFanIdxRef.current = nextIdx;
+          runCycle(nextIdx, 650);
+        }, 1400);
+      }, initialDelay);
+    };
+
+    runCycle(idleFanIdxRef.current, 650);
+
+    return () => {
+      cancelled = true;
+      if (holdTimer !== null) window.clearTimeout(holdTimer);
+      if (nextTimer !== null) window.clearTimeout(nextTimer);
+    };
+  }, [fanInView, hoveredFanIdx, copy.fanCards.length]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -665,7 +742,7 @@ export default function HomePage() {
       `Email: ${emailValue.trim() || "-"}`,
       phoneValue.trim() ? `Phone: ${phoneValue.trim()}` : null,
       facebookValue.trim() ? `Social / DM: ${facebookValue.trim()}` : null,
-      refLinkValue.trim() ? `Ref link: ${refLinkValue.trim()}` : null,
+      `Ref link: ${refLinkValue.trim() || "-"}`,
       `Commission type: ${selectedParts.join(", ") || "-"}`,
       `Notes: ${notesValue.trim() || "-"}`,
     ].filter(Boolean);
@@ -701,18 +778,38 @@ export default function HomePage() {
     setPartsError(null);
     setCopyFallbackText(null);
 
-    if (!trimmedName || !trimmedSpecies || !trimmedEmail || !trimmedNotes) {
+    if (
+      !trimmedName ||
+      !trimmedSpecies ||
+      !trimmedEmail ||
+      !trimmedRefLink ||
+      !trimmedNotes
+    ) {
+      setShowContactValidation(true);
       setFormError(copy.contactErrors.MISSING_FIELDS);
       if (!trimmedName) nameInputRef.current?.focus();
       else if (!trimmedSpecies) speciesInputRef.current?.focus();
       else if (!trimmedEmail) emailInputRef.current?.focus();
+      else if (!trimmedRefLink) refLinkInputRef.current?.focus();
       else notesInputRef.current?.focus();
       return;
     }
 
     if (!EMAIL_REGEX.test(trimmedEmail)) {
+      setShowContactValidation(true);
       setFormError(copy.contactErrors.INVALID_EMAIL);
       emailInputRef.current?.focus();
+      return;
+    }
+
+    if (!isValidHttpUrl(trimmedRefLink)) {
+      setShowContactValidation(true);
+      setFormError(
+        isVi
+          ? "Bạn dán giúp mình link ref sheet đầy đủ (bắt đầu bằng https://) nhé."
+          : "Please enter a valid ref sheet link starting with https://."
+      );
+      refLinkInputRef.current?.focus();
       return;
     }
 
@@ -780,6 +877,7 @@ export default function HomePage() {
       setNotesValue("");
       setSelectedParts([]);
       setWebsiteTrap("");
+      setShowContactValidation(false);
       setFormError(null);
       setPartsError(null);
       try {
@@ -798,24 +896,39 @@ export default function HomePage() {
   const handleResetAfterSubmit = () => {
     setSubmittedSummary(null);
     setFormState("idle");
+    setShowContactValidation(false);
     setFormError(null);
     setPartsError(null);
     startedAtRef.current = Date.now();
   };
 
   const heroStatusClass = !commissionStatus.loaded
-    ? "bg-[#dce8f5]/80 hover:bg-[#dce8f5]"
+    ? isDark
+      ? "bg-[#1a2436]/80 hover:bg-[#1a2436] border-[#f5f8fc]/[0.16] text-[#f5f8fc]"
+      : "bg-[#dce8f5]/80 hover:bg-[#dce8f5] border-[#111622]/[0.16] text-[#111622]"
     : commissionStatus.open
-    ? "bg-[#fff0a6]/85 hover:bg-[#fff0a6]"
-    : "bg-[#dce8f5] hover:bg-[#dce8f5]/80";
+    ? "theme-butter-card bg-[#fff0a6]/85 hover:bg-[#fff0a6] border-[#111622]/[0.16] text-[#111622]"
+    : isDark
+    ? "bg-[#1a2436] hover:bg-[#233047] border-[#f5f8fc]/[0.16] text-[#f5f8fc]"
+    : "bg-[#dce8f5] hover:bg-[#dce8f5]/80 border-[#111622]/[0.16] text-[#111622]";
 
   const mailtoRecoveryHref = `mailto:FluffNii.furries@gmail.com?subject=${encodeURIComponent(
     copy.errorMailSubject
   )}&body=${encodeURIComponent(buildPlainInquiryText())}`;
 
   return (
-    <div id="top" className="min-h-screen flex flex-col bg-[#f5f8fc] text-[#111622]">
-      <Obturateur onComplete={() => setHeroReady(true)} />
+    <div
+      id="top"
+      className={`min-h-screen flex flex-col ${
+        isDark ? "bg-[#0b0f17] text-[#f5f8fc]" : "bg-[#f5f8fc] text-[#111622]"
+      }`}
+    >
+      <Obturateur
+        couleurFond={isDark ? "#0b0f17" : "#F5F8FC"}
+        couleurEncre={isDark ? "#f5f8fc" : "#111622"}
+        couleurAccent={isDark ? "#fff0a6" : "#1E3557"}
+        onComplete={() => setHeroReady(true)}
+      />
 
       <Navbar />
 
@@ -834,7 +947,11 @@ export default function HomePage() {
             >
               <a
                 href="#contact"
-                className={`inline-flex items-center gap-2 rounded-full border border-[#111622]/[0.16] px-3.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2 ${heroStatusClass}`}
+                className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                  isDark
+                    ? "focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#0b0f17]"
+                    : "focus-visible:ring-[#111622] focus-visible:ring-offset-[#f5f8fc]"
+                } ${heroStatusClass}`}
               >
                 <span className="relative flex h-2 w-2 shrink-0">
                   {commissionStatus.loaded && commissionStatus.open && (
@@ -850,7 +967,15 @@ export default function HomePage() {
                     }`}
                   />
                 </span>
-                <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]">
+                <span
+                  className={`font-mono text-[11px] uppercase tracking-[0.06em] ${
+                    commissionStatus.loaded && commissionStatus.open
+                      ? "text-[#111622]"
+                      : isDark
+                      ? "text-[#f5f8fc]"
+                      : "text-[#111622]"
+                  }`}
+                >
                   {!commissionStatus.loaded
                     ? copy.heroStatusChecking
                     : commissionStatus.open
@@ -859,12 +984,18 @@ export default function HomePage() {
                 </span>
               </a>
 
-              <p className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] leading-[1.3] uppercase tracking-[0.06em] text-[#111622]/70">
+              <p
+                className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] leading-[1.3] uppercase tracking-[0.06em] ${
+                  isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                }`}
+              >
                 {copy.heroEyebrow}
               </p>
 
               <h1
-                className={`font-stagheiz text-[#111622] ${
+                className={`font-stagheiz ${
+                  isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                } ${
                   isVi
                     ? "text-[clamp(38px,11.2vw,52px)] sm:text-[70px] md:text-[84px] lg:text-[clamp(56px,6vw,92px)] min-[1400px]:text-[92px] leading-[1.14] tracking-[-0.025em]"
                     : "text-[clamp(44px,13vw,58px)] sm:text-[80px] md:text-[96px] lg:text-[clamp(66px,6.8vw,105px)] min-[1400px]:text-[105px] leading-[0.92] tracking-[-0.01em]"
@@ -874,7 +1005,11 @@ export default function HomePage() {
                 <span className="block whitespace-nowrap">{copy.heroTitle[1]}</span>
               </h1>
 
-              <p className="font-sans font-normal text-[19px] md:text-[22px] min-[1200px]:text-[26px] leading-[1.3] tracking-[-0.025em] text-[#111622]/70 max-w-[540px]">
+              <p
+                className={`font-sans font-normal text-[19px] md:text-[22px] min-[1200px]:text-[26px] leading-[1.3] tracking-[-0.025em] max-w-[540px] ${
+                  isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/70"
+                }`}
+              >
                 {copy.heroDesc}
               </p>
 
@@ -901,7 +1036,9 @@ export default function HomePage() {
 
         <section
           id="studio"
-          className="scroll-mt-24 w-full max-w-[1440px] mx-auto px-5 md:px-[56px] py-[88px] md:py-[140px] border-t border-[#111622]/[0.16]"
+          className={`scroll-mt-24 w-full max-w-[1440px] mx-auto px-5 md:px-[56px] py-[88px] md:py-[140px] border-t ${
+            isDark ? "border-[#f5f8fc]/[0.16]" : "border-[#111622]/[0.16]"
+          }`}
         >
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -910,10 +1047,18 @@ export default function HomePage() {
             transition={{ duration: 0.9, delay: 0, ease: EASE }}
             className="flex items-center justify-between mb-10 md:mb-14"
           >
-            <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+            <span
+              className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+              }`}
+            >
               {copy.studioEyebrow}
             </span>
-            <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+            <span
+              className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+              }`}
+            >
               (001)
             </span>
           </motion.div>
@@ -937,7 +1082,9 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={VIEWPORT}
                 transition={{ duration: 1.1, delay: 0, ease: EASE }}
-                className="lg:col-span-6 relative rounded-[18px] overflow-hidden aspect-[9/10] bg-[#dce8f5]"
+                className={`lg:col-span-6 relative rounded-[18px] overflow-hidden aspect-[9/10] ${
+                  isDark ? "bg-[#1a2436]" : "bg-[#dce8f5]"
+                }`}
               >
                 <img
                   src="/images/formula-fursuit.webp"
@@ -952,11 +1099,17 @@ export default function HomePage() {
 
               <div className="lg:col-span-6 flex flex-col justify-center gap-7">
                 <div className="flex flex-col gap-4">
-                  <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+                  <span
+                    className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                      isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                    }`}
+                  >
                     {copy.formulaEyebrow}
                   </span>
                   <h2
-                    className={`font-stagheiz text-[#111622] ${
+                    className={`font-stagheiz ${
+                      isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                    } ${
                       isVi
                         ? "text-[26px] sm:text-[30px] md:text-[34px] min-[1200px]:text-[32px] leading-[1.14] tracking-[-0.025em]"
                         : "text-[30px] sm:text-[34px] md:text-[38px] min-[1200px]:text-[36px] leading-[1] tracking-[-0.04em]"
@@ -966,19 +1119,35 @@ export default function HomePage() {
                     <br />
                     {copy.formulaTitleLines[1]}
                   </h2>
-                  <p className="font-sans text-[19px] md:text-[22px] min-[1200px]:text-[26px] leading-[1.3] tracking-[-0.025em] text-[#111622] max-w-[560px]">
+                  <p
+                    className={`font-sans text-[19px] md:text-[22px] min-[1200px]:text-[26px] leading-[1.3] tracking-[-0.025em] max-w-[560px] ${
+                      isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                    }`}
+                  >
                     {copy.formulaLead}
                   </p>
-                  <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/70 max-w-[560px]">
+                  <p
+                    className={`font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] max-w-[560px] ${
+                      isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/70"
+                    }`}
+                  >
                     {copy.formulaBodyBefore}
-                    <strong className="font-semibold text-[#111622]">
+                    <strong
+                      className={`font-semibold ${
+                        isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                      }`}
+                    >
                       {copy.formulaBodyStrong}
                     </strong>
                     {copy.formulaBodyAfter}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 pt-6 border-t border-[#111622]/[0.12]">
+                <div
+                  className={`grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 pt-6 border-t ${
+                    isDark ? "border-[#f5f8fc]/[0.12]" : "border-[#111622]/[0.12]"
+                  }`}
+                >
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -986,10 +1155,19 @@ export default function HomePage() {
                     transition={{ duration: 0.9, delay: 0, ease: EASE }}
                     className="flex flex-col justify-between gap-2"
                   >
-                    <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+                    <span
+                      className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                        isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                      }`}
+                    >
                       {copy.statBuilt}
                     </span>
-                    <Compteur valeur={120} prefixe="+" taille={72} />
+                    <Compteur
+                      valeur={120}
+                      prefixe="+"
+                      taille={72}
+                      couleur={isDark ? "#f5f8fc" : "#111622"}
+                    />
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -998,10 +1176,19 @@ export default function HomePage() {
                     transition={{ duration: 0.9, delay: 0.08, ease: EASE }}
                     className="flex flex-col justify-between gap-2"
                   >
-                    <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+                    <span
+                      className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                        isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                      }`}
+                    >
                       {copy.statSpecies}
                     </span>
-                    <Compteur valeur={40} prefixe="+" taille={72} />
+                    <Compteur
+                      valeur={40}
+                      prefixe="+"
+                      taille={72}
+                      couleur={isDark ? "#f5f8fc" : "#111622"}
+                    />
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -1010,10 +1197,20 @@ export default function HomePage() {
                     transition={{ duration: 0.9, delay: 0.24, ease: EASE }}
                     className="flex flex-col justify-between gap-2"
                   >
-                    <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+                    <span
+                      className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                        isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                      }`}
+                    >
                       {copy.statHandmade}
                     </span>
-                    <Compteur valeur={100} prefixe="" suffixe="%" taille={72} />
+                    <Compteur
+                      valeur={100}
+                      prefixe=""
+                      suffixe="%"
+                      taille={72}
+                      couleur={isDark ? "#f5f8fc" : "#111622"}
+                    />
                   </motion.div>
                 </div>
               </div>
@@ -1027,10 +1224,18 @@ export default function HomePage() {
             transition={{ duration: 0.9, delay: 0, ease: EASE }}
             className="flex items-center justify-between mb-8"
           >
-            <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+            <span
+              className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+              }`}
+            >
               {copy.pillarsEyebrow}
             </span>
-            <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+            <span
+              className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+              }`}
+            >
               (002)
             </span>
           </motion.div>
@@ -1043,14 +1248,28 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={VIEWPORT}
                 transition={{ duration: 0.9, delay: idx * 0.1, ease: EASE }}
-                className="rounded-[28px] border border-[#111622]/[0.16] bg-[#f5f8fc] p-8 md:p-9 flex flex-col justify-between gap-8 hover:bg-[#fff0a6] transition-colors duration-300"
+                className={`group rounded-[28px] border p-8 md:p-9 flex flex-col justify-between gap-8 hover:bg-[#fff0a6] transition-colors duration-300 ${
+                  isDark
+                    ? "border-[#f5f8fc]/[0.16] bg-[#141b28] hover:border-[#fff0a6]"
+                    : "border-[#111622]/[0.16] bg-[#f5f8fc]"
+                }`}
               >
-                <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+                <span
+                  className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] transition-colors ${
+                    isDark
+                      ? "text-[#f5f8fc]/70 group-hover:text-[#111622]/75"
+                      : "text-[#111622]/70"
+                  }`}
+                >
                   {pillar.num}
                 </span>
                 <div className="flex flex-col gap-3">
                   <h3
-                    className={`font-stagheiz text-[#111622] ${
+                    className={`font-stagheiz transition-colors ${
+                      isDark
+                        ? "text-[#f5f8fc] group-hover:text-[#111622]"
+                        : "text-[#111622]"
+                    } ${
                       isVi
                         ? "text-[25px] md:text-[31px] min-[1200px]:text-[29px] leading-[1.14] tracking-[-0.025em]"
                         : "text-[30px] md:text-[38px] min-[1200px]:text-[36px] leading-[1] tracking-[-0.04em]"
@@ -1058,7 +1277,13 @@ export default function HomePage() {
                   >
                     {pillar.title}
                   </h3>
-                  <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/75">
+                  <p
+                    className={`font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] transition-colors ${
+                      isDark
+                        ? "text-[#f5f8fc]/75 group-hover:text-[#111622]/80"
+                        : "text-[#111622]/75"
+                    }`}
+                  >
                     {pillar.desc}
                   </p>
                 </div>
@@ -1068,8 +1293,13 @@ export default function HomePage() {
         </section>
 
         <section
+          ref={fanSectionRef}
           id="pour-qui"
-          className="scroll-mt-24 w-full bg-[#dce8f5]/45 border-t border-[#111622]/[0.16] py-[96px] md:py-[140px] overflow-hidden"
+          className={`scroll-mt-24 w-full border-t py-[96px] md:py-[140px] overflow-hidden ${
+            isDark
+              ? "bg-[#121a28] border-[#f5f8fc]/[0.16]"
+              : "bg-[#dce8f5]/45 border-[#111622]/[0.16]"
+          }`}
         >
           <div className="max-w-[1440px] mx-auto px-5 md:px-[56px]">
             <div className="flex flex-col items-center text-center gap-4 mb-14 md:mb-20">
@@ -1078,13 +1308,17 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={VIEWPORT}
                 transition={{ duration: 0.9, delay: 0, ease: EASE }}
-                className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70"
+                className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                  isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                }`}
               >
                 {copy.whoEyebrow}
               </motion.span>
               <WordReveal
                 text={copy.whoTitle}
-                className={`font-stagheiz text-[#111622] max-w-[900px] ${
+                className={`font-stagheiz max-w-[900px] ${
+                  isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                } ${
                   isVi
                     ? "text-[36px] sm:text-[52px] md:text-[64px] leading-[1.14] tracking-[-0.025em]"
                     : "text-[44px] sm:text-[64px] md:text-[80px] leading-[0.92]"
@@ -1095,7 +1329,9 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={VIEWPORT}
                 transition={{ duration: 0.9, delay: 0, ease: EASE }}
-                className="font-sans text-[17px] md:text-[19px] leading-[1.55] text-[#111622]/70 max-w-[640px]"
+                className={`font-sans text-[17px] md:text-[19px] leading-[1.55] max-w-[640px] ${
+                  isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/70"
+                }`}
               >
                 {copy.whoDesc}
               </motion.p>
@@ -1105,6 +1341,12 @@ export default function HomePage() {
               <div className="relative w-[1210px] h-[660px] shrink-0">
                 {copy.fanCards.map((card, i) => {
                   const slotTops = [50, 12, 0, 12, 50];
+                  const isButterCard = card.bg.toLowerCase() === "#fff0a6";
+                  const cardTextLight = !isButterCard && (isDark || card.dark);
+                  const isCardActive =
+                    hoveredFanIdx !== null
+                      ? hoveredFanIdx === i
+                      : idleFanLifted && idleFanIdx === i;
                   return (
                     <motion.div
                       key={card.num}
@@ -1116,6 +1358,14 @@ export default function HomePage() {
                         delay: i * 0.1,
                         ease: EASE,
                       }}
+                      onMouseEnter={() => {
+                        const nextIdx = (i + 1) % copy.fanCards.length;
+                        idleFanIdxRef.current = nextIdx;
+                        setHoveredFanIdx(i);
+                        setIdleFanIdx(nextIdx);
+                        setIdleFanLifted(false);
+                      }}
+                      onMouseLeave={() => setHoveredFanIdx(null)}
                       style={{
                         position: "absolute",
                         left: i * 228,
@@ -1126,14 +1376,29 @@ export default function HomePage() {
                       }}
                     >
                       <motion.div
-                        whileHover={{ scale: 1.03, y: -36 }}
+                        initial={{ rotate: card.rot, y: 0, scale: 1 }}
+                        animate={
+                          isCardActive
+                            ? { rotate: 0, y: -36, scale: 1.03 }
+                            : { rotate: card.rot, y: 0, scale: 1 }
+                        }
                         transition={{ duration: 0.5, ease: EASE }}
-                        style={{ backgroundColor: card.bg, rotate: card.rot }}
-                        className={`w-[300px] h-[560px] rounded-[20px] p-[10px_10px_20px_10px] shadow-[-24px_30px_40px_-24px_rgba(30,53,87,0.48)] flex flex-col justify-start overflow-hidden ${
-                          card.dark ? "text-[#f5f8fc]" : "text-[#111622]"
-                        }`}
+                        style={{
+                          backgroundColor: darkSurfaceBg(card.bg, isDark),
+                        }}
+                        className={`w-[300px] h-[560px] rounded-[20px] p-[10px_10px_20px_10px] flex flex-col justify-start overflow-hidden ${
+                          isButterCard ? "theme-butter-card " : ""
+                        }${
+                          isDark
+                            ? "border border-[#f5f8fc]/15 shadow-[-24px_30px_40px_-24px_rgba(0,0,0,0.65)]"
+                            : "shadow-[-24px_30px_40px_-24px_rgba(30,53,87,0.48)]"
+                        } ${cardTextLight ? "text-[#f5f8fc]" : "text-[#111622]"}`}
                       >
-                        <div className="w-full h-[320px] rounded-[12px] overflow-hidden shrink-0 bg-black/5">
+                        <div
+                          className={`w-full h-[320px] rounded-[12px] overflow-hidden shrink-0 ${
+                            cardTextLight ? "bg-white/5" : "bg-black/5"
+                          }`}
+                        >
                           <img
                             src={card.img}
                             alt={card.title}
@@ -1153,7 +1418,7 @@ export default function HomePage() {
                         >
                           <span
                             className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
-                              card.dark
+                              cardTextLight
                                 ? "text-[#f5f8fc]/75"
                                 : "text-[#111622]/70"
                             }`}
@@ -1171,7 +1436,7 @@ export default function HomePage() {
                           </h3>
                           <p
                             className={`font-sans text-[15px] leading-[1.45] ${
-                              card.dark
+                              cardTextLight
                                 ? "text-[#f5f8fc]/80"
                                 : "text-[#111622]/75"
                             }`}
@@ -1187,62 +1452,91 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:hidden pt-4 pb-8">
-              {copy.fanCards.map((card, i) => (
-                <motion.div
-                  key={card.num}
-                  initial={{ opacity: 0, y: 60, rotate: 0 }}
-                  whileInView={{
-                    opacity: 1,
-                    y: 0,
-                    rotate: i % 2 === 0 ? -2 : 2,
-                  }}
-                  viewport={VIEWPORT}
-                  transition={{ duration: 0.9, delay: i * 0.1, ease: EASE }}
-                  style={{ backgroundColor: card.bg }}
-                  className={`h-[520px] max-w-[320px] w-full mx-auto rounded-[20px] p-[10px_10px_20px_10px] shadow-[-24px_30px_40px_-24px_rgba(30,53,87,0.48)] flex flex-col justify-start overflow-hidden ${
-                    card.dark ? "text-[#f5f8fc]" : "text-[#111622]"
-                  }`}
-                >
-                  <div className="w-full h-[300px] rounded-[12px] overflow-hidden shrink-0 bg-black/5">
-                    <img
-                      src={card.img}
-                      alt={card.title}
-                      loading="lazy"
-                      decoding="async"
-                      width={760}
-                      height={1013}
-                      style={{ objectPosition: card.objectPosition }}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+              {copy.fanCards.map((card, i) => {
+                const isButterCard = card.bg.toLowerCase() === "#fff0a6";
+                const cardTextLight = !isButterCard && (isDark || card.dark);
+                const restRotate = i % 2 === 0 ? -2 : 2;
+                const isMobileCardActive =
+                  hoveredFanIdx === null && idleFanLifted && idleFanIdx === i;
+                return (
+                  <motion.div
+                    key={card.num}
+                    initial={{ opacity: 0, y: 60, rotate: 0 }}
+                    whileInView={{
+                      opacity: 1,
+                      y: 0,
+                      rotate: restRotate,
+                    }}
+                    viewport={VIEWPORT}
+                    transition={{ duration: 0.9, delay: i * 0.1, ease: EASE }}
+                    className="max-w-[320px] w-full mx-auto"
+                  >
+                    <motion.div
+                      animate={
+                        isMobileCardActive
+                          ? { rotate: -restRotate, y: -14, scale: 1.02 }
+                          : { rotate: 0, y: 0, scale: 1 }
+                      }
+                      transition={{ duration: 0.5, ease: EASE }}
+                      style={{ backgroundColor: darkSurfaceBg(card.bg, isDark) }}
+                      className={`h-[520px] w-full rounded-[20px] p-[10px_10px_20px_10px] flex flex-col justify-start overflow-hidden ${
+                        isButterCard ? "theme-butter-card " : ""
+                      }${
+                        isDark
+                          ? "border border-[#f5f8fc]/15 shadow-[-24px_30px_40px_-24px_rgba(0,0,0,0.65)]"
+                          : "shadow-[-24px_30px_40px_-24px_rgba(30,53,87,0.48)]"
+                      } ${cardTextLight ? "text-[#f5f8fc]" : "text-[#111622]"}`}
+                    >
+                    <div
+                      className={`w-full h-[300px] rounded-[12px] overflow-hidden shrink-0 ${
+                        cardTextLight ? "bg-white/5" : "bg-black/5"
+                      }`}
+                    >
+                      <img
+                        src={card.img}
+                        alt={card.title}
+                        loading="lazy"
+                        decoding="async"
+                        width={760}
+                        height={1013}
+                        style={{ objectPosition: card.objectPosition }}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
 
-                  <div className="flex flex-col items-start gap-[10px] w-full pt-[18px] px-[10px]">
-                    <span
-                      className={`font-mono text-[11px] md:text-[12px] uppercase tracking-[0.06em] ${
-                        card.dark ? "text-[#f5f8fc]/75" : "text-[#111622]/70"
-                      }`}
-                    >
-                      {card.num}
-                    </span>
-                    <h3
-                      className={`font-stagheiz uppercase ${
-                        isVi
-                          ? "text-[19px] sm:text-[21px] leading-[1.14] tracking-[-0.02em]"
-                          : "text-[21px] sm:text-[24px] leading-[0.98] tracking-[-0.04em]"
-                      }`}
-                    >
-                      {card.title}
-                    </h3>
-                    <p
-                      className={`font-sans text-[15px] sm:text-[16px] leading-[1.5] ${
-                        card.dark ? "text-[#f5f8fc]/80" : "text-[#111622]/75"
-                      }`}
-                    >
-                      {card.desc}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+                    <div className="flex flex-col items-start gap-[10px] w-full pt-[18px] px-[10px]">
+                      <span
+                        className={`font-mono text-[11px] md:text-[12px] uppercase tracking-[0.06em] ${
+                          cardTextLight
+                            ? "text-[#f5f8fc]/75"
+                            : "text-[#111622]/70"
+                        }`}
+                      >
+                        {card.num}
+                      </span>
+                      <h3
+                        className={`font-stagheiz uppercase ${
+                          isVi
+                            ? "text-[19px] sm:text-[21px] leading-[1.14] tracking-[-0.02em]"
+                            : "text-[21px] sm:text-[24px] leading-[0.98] tracking-[-0.04em]"
+                        }`}
+                      >
+                        {card.title}
+                      </h3>
+                      <p
+                        className={`font-sans text-[15px] sm:text-[16px] leading-[1.5] ${
+                          cardTextLight
+                            ? "text-[#f5f8fc]/80"
+                            : "text-[#111622]/75"
+                        }`}
+                      >
+                        {card.desc}
+                      </p>
+                    </div>
+                    </motion.div>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -1259,10 +1553,18 @@ export default function HomePage() {
             transition={{ duration: 0.9, delay: 0, ease: EASE }}
             className="flex items-center justify-between mb-8"
           >
-            <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+            <span
+              className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+              }`}
+            >
               {copy.resultEyebrow}
             </span>
-            <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+            <span
+              className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+              }`}
+            >
               (004)
             </span>
           </motion.div>
@@ -1270,7 +1572,9 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end mb-14 md:mb-20">
             <WordReveal
               text={copy.resultTitle}
-              className={`lg:col-span-7 font-stagheiz text-[#111622] ${
+              className={`lg:col-span-7 font-stagheiz ${
+                isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+              } ${
                 isVi
                   ? "text-[36px] sm:text-[50px] md:text-[62px] leading-[1.14] tracking-[-0.025em]"
                   : "text-[44px] sm:text-[60px] md:text-[74px] leading-[0.92]"
@@ -1281,7 +1585,9 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={VIEWPORT}
               transition={{ duration: 0.9, delay: 0, ease: EASE }}
-              className="lg:col-span-5 font-sans text-[17px] md:text-[18px] leading-[1.6] text-[#111622]/70"
+              className={`lg:col-span-5 font-sans text-[17px] md:text-[18px] leading-[1.6] ${
+                isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/70"
+              }`}
             >
               {copy.resultDesc}
             </motion.p>
@@ -1298,7 +1604,9 @@ export default function HomePage() {
               <motion.div
                 whileHover={{ scale: 0.98 }}
                 transition={{ duration: 0.5, ease: EASE }}
-                className="w-full h-full rounded-[16px] overflow-hidden bg-[#dce8f5]"
+                className={`w-full h-full rounded-[16px] overflow-hidden ${
+                  isDark ? "bg-[#1a2436]" : "bg-[#dce8f5]"
+                }`}
               >
                 <img
                   src="/images/result-01.webp"
@@ -1322,7 +1630,7 @@ export default function HomePage() {
               <motion.div
                 whileHover={{ scale: 0.98 }}
                 transition={{ duration: 0.5, ease: EASE }}
-                className="w-full h-full rounded-[16px] bg-[#fff0a6] border border-[#111622]/[0.14] p-6 flex flex-col justify-between"
+                className="theme-butter-card w-full h-full rounded-[16px] bg-[#fff0a6] border border-[#111622]/[0.14] p-6 flex flex-col justify-between"
               >
                 <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
                   {copy.resultCards[0].num}
@@ -1354,7 +1662,9 @@ export default function HomePage() {
               <motion.div
                 whileHover={{ scale: 0.98 }}
                 transition={{ duration: 0.5, ease: EASE }}
-                className="w-full h-full rounded-[16px] overflow-hidden bg-[#dce8f5]"
+                className={`w-full h-full rounded-[16px] overflow-hidden ${
+                  isDark ? "bg-[#1a2436]" : "bg-[#dce8f5]"
+                }`}
               >
                 <img
                   src="/images/result-02.webp"
@@ -1378,14 +1688,24 @@ export default function HomePage() {
               <motion.div
                 whileHover={{ scale: 0.98 }}
                 transition={{ duration: 0.5, ease: EASE }}
-                className="w-full h-full rounded-[16px] bg-[#dce8f5] border border-[#111622]/[0.14] p-6 flex flex-col justify-between"
+                className={`w-full h-full rounded-[16px] border p-6 flex flex-col justify-between ${
+                  isDark
+                    ? "bg-[#1c283d] border-[#f5f8fc]/[0.14] text-[#f5f8fc]"
+                    : "bg-[#dce8f5] border-[#111622]/[0.14] text-[#111622]"
+                }`}
               >
-                <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+                <span
+                  className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                    isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                  }`}
+                >
                   {copy.resultCards[1].num}
                 </span>
                 <div className="flex flex-col gap-3">
                   <h3
-                    className={`font-stagheiz text-[#111622] ${
+                    className={`font-stagheiz ${
+                      isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                    } ${
                       isVi
                         ? "text-[25px] md:text-[31px] min-[1200px]:text-[29px] leading-[1.14] tracking-[-0.025em]"
                         : "text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em]"
@@ -1393,7 +1713,11 @@ export default function HomePage() {
                   >
                     {copy.resultCards[1].title}
                   </h3>
-                  <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/75">
+                  <p
+                    className={`font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] ${
+                      isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/75"
+                    }`}
+                  >
                     {copy.resultCards[1].desc}
                   </p>
                 </div>
@@ -1410,7 +1734,9 @@ export default function HomePage() {
               <motion.div
                 whileHover={{ scale: 0.98 }}
                 transition={{ duration: 0.5, ease: EASE }}
-                className="w-full h-full rounded-[16px] bg-[#1e3557] text-[#f5f8fc] p-6 flex flex-col justify-between"
+                className={`w-full h-full rounded-[16px] bg-[#1e3557] text-[#f5f8fc] p-6 flex flex-col justify-between ${
+                  isDark ? "border border-[#f5f8fc]/15" : ""
+                }`}
               >
                 <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/75">
                   {copy.resultCards[2].num}
@@ -1442,7 +1768,9 @@ export default function HomePage() {
               <motion.div
                 whileHover={{ scale: 0.98 }}
                 transition={{ duration: 0.5, ease: EASE }}
-                className="w-full h-full rounded-[16px] overflow-hidden bg-[#dce8f5]"
+                className={`w-full h-full rounded-[16px] overflow-hidden ${
+                  isDark ? "bg-[#1a2436]" : "bg-[#dce8f5]"
+                }`}
               >
                 <img
                   src="/images/result-03.webp"
@@ -1466,14 +1794,24 @@ export default function HomePage() {
               <motion.div
                 whileHover={{ scale: 0.98 }}
                 transition={{ duration: 0.5, ease: EASE }}
-                className="w-full h-full rounded-[16px] bg-[#ffffff] border border-[#111622]/[0.14] p-6 flex flex-col justify-between"
+                className={`w-full h-full rounded-[16px] border p-6 flex flex-col justify-between ${
+                  isDark
+                    ? "bg-[#182234] border-[#f5f8fc]/[0.14] text-[#f5f8fc]"
+                    : "bg-[#ffffff] border-[#111622]/[0.14] text-[#111622]"
+                }`}
               >
-                <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+                <span
+                  className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                    isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                  }`}
+                >
                   {copy.resultCards[3].num}
                 </span>
                 <div className="flex flex-col gap-3">
                   <h3
-                    className={`font-stagheiz text-[#111622] ${
+                    className={`font-stagheiz ${
+                      isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                    } ${
                       isVi
                         ? "text-[25px] md:text-[31px] min-[1200px]:text-[29px] leading-[1.14] tracking-[-0.025em]"
                         : "text-[30px] md:text-[38px] min-[1200px]:text-[34px] leading-[1] tracking-[-0.04em]"
@@ -1481,7 +1819,11 @@ export default function HomePage() {
                   >
                     {copy.resultCards[3].title}
                   </h3>
-                  <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/75">
+                  <p
+                    className={`font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] ${
+                      isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/75"
+                    }`}
+                  >
                     {copy.resultCards[3].desc}
                   </p>
                 </div>
@@ -1498,7 +1840,9 @@ export default function HomePage() {
               <motion.div
                 whileHover={{ scale: 0.98 }}
                 transition={{ duration: 0.5, ease: EASE }}
-                className="w-full h-full rounded-[16px] overflow-hidden bg-[#dce8f5]"
+                className={`w-full h-full rounded-[16px] overflow-hidden ${
+                  isDark ? "bg-[#1a2436]" : "bg-[#dce8f5]"
+                }`}
               >
                 <img
                   src="/images/result-04.webp"
@@ -1516,7 +1860,9 @@ export default function HomePage() {
 
         <section
           id="methode"
-          className="scroll-mt-24 w-full max-w-[1440px] mx-auto px-5 md:px-[56px] py-[96px] md:py-[140px] border-t border-[#111622]/[0.16]"
+          className={`scroll-mt-24 w-full max-w-[1440px] mx-auto px-5 md:px-[56px] py-[96px] md:py-[140px] border-t ${
+            isDark ? "border-[#f5f8fc]/[0.16]" : "border-[#111622]/[0.16]"
+          }`}
         >
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -1525,10 +1871,18 @@ export default function HomePage() {
             transition={{ duration: 0.9, delay: 0, ease: EASE }}
             className="flex items-center justify-between mb-8"
           >
-            <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+            <span
+              className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+              }`}
+            >
               {copy.methodEyebrow}
             </span>
-            <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+            <span
+              className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+              }`}
+            >
               (005)
             </span>
           </motion.div>
@@ -1536,7 +1890,9 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end mb-16">
             <WordReveal
               text={copy.methodTitle}
-              className={`lg:col-span-7 font-stagheiz text-[#111622] ${
+              className={`lg:col-span-7 font-stagheiz ${
+                isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+              } ${
                 isVi
                   ? "text-[36px] sm:text-[50px] md:text-[64px] leading-[1.14] tracking-[-0.025em]"
                   : "text-[44px] sm:text-[60px] md:text-[74px] leading-[0.92]"
@@ -1547,102 +1903,126 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={VIEWPORT}
               transition={{ duration: 0.9, delay: 0, ease: EASE }}
-              className="lg:col-span-5 font-sans text-[17px] md:text-[18px] leading-[1.6] text-[#111622]/70"
+              className={`lg:col-span-5 font-sans text-[17px] md:text-[18px] leading-[1.6] ${
+                isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/70"
+              }`}
             >
               {copy.methodDesc}
             </motion.p>
           </div>
 
           <div className="flex flex-col gap-10">
-            {copy.methodSteps.map((step) => (
-              <div
-                key={step.counter}
-                style={{
-                  backgroundColor: step.bg,
-                  top: `${step.top}px`,
-                }}
-                className={`lg:sticky rounded-[32px] border ${
-                  step.dark
-                    ? "border-[#f5f8fc]/20 text-[#f5f8fc]"
-                    : "border-[#111622]/[0.16] text-[#111622]"
-                } p-7 sm:p-10 md:p-14 shadow-[0_-10px_40px_rgba(17,22,34,0.06)]`}
-              >
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-                  <div className="lg:col-span-7 flex flex-col justify-between gap-8">
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`font-mono text-[12px] uppercase tracking-[0.06em] ${
-                          step.dark ? "text-[#f5f8fc]/75" : "text-[#111622]/70"
-                        }`}
-                      >
-                        {step.tag}
-                      </span>
-                      <span
-                        className={`font-mono text-[12px] uppercase tracking-[0.06em] ${
-                          step.dark ? "text-[#f5f8fc]/75" : "text-[#111622]/70"
-                        }`}
-                      >
-                        {step.counter}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col gap-4">
-                      <h3
-                        className={`font-stagheiz ${
-                          isVi
-                            ? "text-[28px] sm:text-[38px] md:text-[46px] leading-[1.14] tracking-[-0.02em]"
-                            : "text-[34px] sm:text-[46px] md:text-[56px] leading-[0.95]"
-                        }`}
-                      >
-                        {step.title}
-                      </h3>
-                      <p
-                        className={`font-sans text-[17px] md:text-[19px] leading-[1.55] max-w-[540px] ${
-                          step.dark ? "text-[#f5f8fc]/85" : "text-[#111622]/75"
-                        }`}
-                      >
-                        {step.desc}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2.5 pt-2">
-                      {step.pills.map((pill) => (
+            {copy.methodSteps.map((step) => {
+              const isButterStep = step.bg.toLowerCase() === "#fff0a6";
+              const stepTextLight = !isButterStep && (isDark || step.dark);
+              return (
+                <div
+                  key={step.counter}
+                  style={{
+                    backgroundColor: darkSurfaceBg(step.bg, isDark),
+                    top: `${step.top}px`,
+                  }}
+                  className={`lg:sticky rounded-[32px] border ${
+                    isButterStep ? "theme-butter-card " : ""
+                  }${
+                    stepTextLight
+                      ? "border-[#f5f8fc]/20 text-[#f5f8fc]"
+                      : "border-[#111622]/[0.16] text-[#111622]"
+                  } p-7 sm:p-10 md:p-14 ${
+                    isDark
+                      ? "shadow-[0_-10px_40px_rgba(0,0,0,0.45)]"
+                      : "shadow-[0_-10px_40px_rgba(17,22,34,0.06)]"
+                  }`}
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+                    <div className="lg:col-span-7 flex flex-col justify-between gap-8">
+                      <div className="flex items-center justify-between">
                         <span
-                          key={pill}
-                          className={`px-4 py-1.5 rounded-full font-mono text-[12px] uppercase tracking-[0.05em] border ${
-                            step.dark
-                              ? "border-[#f5f8fc]/25 bg-[#f5f8fc]/10 text-[#f5f8fc]"
-                              : "border-[#111622]/20 bg-white/70 text-[#111622]"
+                          className={`font-mono text-[12px] uppercase tracking-[0.06em] ${
+                            stepTextLight
+                              ? "text-[#f5f8fc]/75"
+                              : "text-[#111622]/70"
                           }`}
                         >
-                          {pill}
+                          {step.tag}
                         </span>
-                      ))}
-                    </div>
-                  </div>
+                        <span
+                          className={`font-mono text-[12px] uppercase tracking-[0.06em] ${
+                            stepTextLight
+                              ? "text-[#f5f8fc]/75"
+                              : "text-[#111622]/70"
+                          }`}
+                        >
+                          {step.counter}
+                        </span>
+                      </div>
 
-                  <div className="lg:col-span-5">
-                    <div className="w-full aspect-[4/3] rounded-[24px] overflow-hidden bg-black/10">
-                      <img
-                        src={step.img}
-                        alt={step.title}
-                        loading="lazy"
-                        decoding="async"
-                        width={960}
-                        height={720}
-                        className="w-full h-full object-cover"
-                      />
+                      <div className="flex flex-col gap-4">
+                        <h3
+                          className={`font-stagheiz ${
+                            isVi
+                              ? "text-[28px] sm:text-[38px] md:text-[46px] leading-[1.14] tracking-[-0.02em]"
+                              : "text-[34px] sm:text-[46px] md:text-[56px] leading-[0.95]"
+                          }`}
+                        >
+                          {step.title}
+                        </h3>
+                        <p
+                          className={`font-sans text-[17px] md:text-[19px] leading-[1.55] max-w-[540px] ${
+                            stepTextLight
+                              ? "text-[#f5f8fc]/85"
+                              : "text-[#111622]/75"
+                          }`}
+                        >
+                          {step.desc}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2.5 pt-2">
+                        {step.pills.map((pill) => (
+                          <span
+                            key={pill}
+                            className={`px-4 py-1.5 rounded-full font-mono text-[12px] uppercase tracking-[0.05em] border ${
+                              stepTextLight
+                                ? "border-[#f5f8fc]/25 bg-[#f5f8fc]/10 text-[#f5f8fc]"
+                                : isDark
+                                ? "border-[#111622]/20 bg-[#f5f8fc]/75 text-[#111622]"
+                                : "border-[#111622]/20 bg-white/70 text-[#111622]"
+                            }`}
+                          >
+                            {pill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="lg:col-span-5">
+                      <div className="w-full aspect-[4/3] rounded-[24px] overflow-hidden bg-black/10">
+                        <img
+                          src={step.img}
+                          alt={step.title}
+                          loading="lazy"
+                          decoding="async"
+                          width={960}
+                          height={720}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
         <section
           id="projets"
-          className="scroll-mt-24 w-full bg-[#dce8f5] py-[96px] md:py-[140px] border-t border-[#111622]/[0.16] overflow-hidden"
+          className={`scroll-mt-24 w-full py-[96px] md:py-[140px] border-t overflow-hidden ${
+            isDark
+              ? "bg-[#101724] border-[#f5f8fc]/[0.16]"
+              : "bg-[#dce8f5] border-[#111622]/[0.16]"
+          }`}
           onKeyDown={(e) => {
             if (e.key === "ArrowLeft") {
               scrollCarousel(-1);
@@ -1659,10 +2039,18 @@ export default function HomePage() {
               transition={{ duration: 0.9, delay: 0, ease: EASE }}
               className="flex items-center justify-between mb-6"
             >
-              <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+              <span
+                className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                  isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                }`}
+              >
                 {copy.projectsEyebrow}
               </span>
-              <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+              <span
+                className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                  isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                }`}
+              >
                 (006)
               </span>
             </motion.div>
@@ -1670,14 +2058,20 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-10">
               <WordReveal
                 text={copy.projectsTitle}
-                className={`font-stagheiz text-[#111622] ${
+                className={`font-stagheiz ${
+                  isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                } ${
                   isVi
                     ? "text-[36px] sm:text-[52px] md:text-[66px] leading-[1.14] tracking-[-0.025em]"
                     : "text-[44px] sm:text-[64px] md:text-[80px] leading-[0.92]"
                 }`}
               />
               <div className="flex items-center gap-4">
-                <span className="font-mono text-[12px] uppercase tracking-[0.06em] text-[#111622]/75">
+                <span
+                  className={`font-mono text-[12px] uppercase tracking-[0.06em] ${
+                    isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/75"
+                  }`}
+                >
                   {String(activeProjectIdx + 1).padStart(2, "0")} /{" "}
                   {String(copy.projects.length).padStart(2, "0")}
                 </span>
@@ -1687,7 +2081,11 @@ export default function HomePage() {
                     onClick={() => scrollCarousel(-1)}
                     disabled={activeProjectIdx === 0}
                     aria-label={copy.prevProjectAria}
-                    className="w-[52px] h-[52px] sm:w-[56px] sm:h-[56px] rounded-full border-[1.5px] border-[#111622] flex items-center justify-center text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2 focus-visible:ring-offset-[#dce8f5]"
+                    className={`w-[52px] h-[52px] sm:w-[56px] sm:h-[56px] rounded-full border-[1.5px] flex items-center justify-center transition-colors cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                      isDark
+                        ? "border-[#f5f8fc] text-[#f5f8fc] hover:bg-[#fff0a6] hover:border-[#fff0a6] hover:!text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#101724]"
+                        : "border-[#111622] text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622] focus-visible:ring-offset-[#dce8f5]"
+                    }`}
                   >
                     <ArrowLeft className="w-5 h-5" strokeWidth={1.75} />
                   </button>
@@ -1696,7 +2094,11 @@ export default function HomePage() {
                     onClick={() => scrollCarousel(1)}
                     disabled={activeProjectIdx >= copy.projects.length - 1}
                     aria-label={copy.nextProjectAria}
-                    className="w-[52px] h-[52px] sm:w-[56px] sm:h-[56px] rounded-full border-[1.5px] border-[#111622] flex items-center justify-center text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] transition-colors cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2 focus-visible:ring-offset-[#dce8f5]"
+                    className={`w-[52px] h-[52px] sm:w-[56px] sm:h-[56px] rounded-full border-[1.5px] flex items-center justify-center transition-colors cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                      isDark
+                        ? "border-[#f5f8fc] text-[#f5f8fc] hover:bg-[#fff0a6] hover:border-[#fff0a6] hover:!text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#101724]"
+                        : "border-[#111622] text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622] focus-visible:ring-offset-[#dce8f5]"
+                    }`}
                   >
                     <ArrowRight className="w-5 h-5" strokeWidth={1.75} />
                   </button>
@@ -1725,7 +2127,11 @@ export default function HomePage() {
                   delay: idx * 0.08,
                   ease: EASE,
                 }}
-                className="snap-start w-[320px] sm:w-[420px] md:w-[460px] shrink-0 rounded-[28px] bg-[#f5f8fc] border border-[#111622]/[0.16] p-5 sm:p-6 flex flex-col justify-between gap-5"
+                className={`snap-start w-[320px] sm:w-[420px] md:w-[460px] shrink-0 rounded-[28px] border p-5 sm:p-6 flex flex-col justify-between gap-5 ${
+                  isDark
+                    ? "bg-[#182234] border-[#f5f8fc]/[0.16]"
+                    : "bg-[#f5f8fc] border-[#111622]/[0.16]"
+                }`}
               >
                 <div className="flex flex-col gap-5">
                   <button
@@ -1734,7 +2140,11 @@ export default function HomePage() {
                       setLightboxState({ source: "projects", index: idx })
                     }
                     aria-label={`${proj.client} · ${proj.inspectLabel}`}
-                    className="group relative w-full aspect-[3/4] rounded-[20px] overflow-hidden bg-[#111622]/10 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
+                    className={`group relative w-full aspect-[3/4] rounded-[20px] overflow-hidden text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                      isDark
+                        ? "bg-[#0b0f17]/40 focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#182234]"
+                        : "bg-[#111622]/10 focus-visible:ring-[#111622]"
+                    }`}
                   >
                     <img
                       src={proj.img}
@@ -1747,7 +2157,7 @@ export default function HomePage() {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                     />
                     <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2">
-                      <span className="px-3 py-1 rounded-full bg-[#fff0a6]/95 border border-[#111622]/15 font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622]">
+                      <span className="theme-butter-card px-3 py-1 rounded-full bg-[#fff0a6]/95 border border-[#111622]/15 font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622]">
                         {proj.category}
                       </span>
                       <span className="px-3 py-1 rounded-full bg-[#111622]/85 backdrop-blur-sm font-mono text-[11px] md:text-[12px] uppercase tracking-[0.06em] text-[#f5f8fc]">
@@ -1755,7 +2165,13 @@ export default function HomePage() {
                       </span>
                     </div>
 
-                    <span className="absolute bottom-3.5 right-3.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#f5f8fc]/90 border border-[#111622]/15 font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622] opacity-90 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                    <span
+                      className={`absolute bottom-3.5 right-3.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-mono text-[11px] uppercase tracking-[0.05em] opacity-90 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity ${
+                        isDark
+                          ? "bg-[#141b28]/90 border-[#f5f8fc]/20 text-[#f5f8fc]"
+                          : "bg-[#f5f8fc]/90 border-[#111622]/15 text-[#111622]"
+                      }`}
+                    >
                       <ZoomIn className="w-3.5 h-3.5" />
                       <span>{proj.inspectLabel}</span>
                     </span>
@@ -1763,7 +2179,9 @@ export default function HomePage() {
 
                   <div className="flex flex-col gap-2">
                     <h3
-                      className={`font-stagheiz text-[30px] md:text-[38px] min-[1200px]:text-[34px] text-[#111622] ${
+                      className={`font-stagheiz text-[30px] md:text-[38px] min-[1200px]:text-[34px] ${
+                        isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                      } ${
                         isVi
                           ? "leading-[1.14] tracking-[-0.02em]"
                           : "leading-[1] tracking-[-0.04em]"
@@ -1771,14 +2189,18 @@ export default function HomePage() {
                     >
                       {proj.client}
                     </h3>
-                    <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/75">
+                    <p
+                      className={`font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] ${
+                        isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/75"
+                      }`}
+                    >
                       {proj.summary}
                     </p>
                   </div>
                 </div>
 
                 {proj.review && (
-                  <div className="rounded-[18px] bg-[#fff0a6] border border-[#111622]/[0.16] p-4">
+                  <div className="theme-butter-card rounded-[18px] bg-[#fff0a6] border border-[#111622]/[0.16] p-4">
                     <p className="font-sans text-[14px] leading-[1.48] text-[#111622]/90 mb-2">
                       &ldquo;{proj.review}&rdquo;
                     </p>
@@ -1801,11 +2223,21 @@ export default function HomePage() {
                   aria-label={`${copy.projectDotAria} ${idx + 1}: ${proj.client}`}
                   aria-current={isActive ? "true" : undefined}
                   onClick={() => scrollToProjectIndex(idx)}
-                  className="min-w-[36px] min-h-[44px] flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] rounded-full"
+                  className={`min-w-[36px] min-h-[44px] flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 rounded-full ${
+                    isDark
+                      ? "focus-visible:ring-[#fff0a6]"
+                      : "focus-visible:ring-[#111622]"
+                  }`}
                 >
                   <span
                     className={`h-2 rounded-full transition-all duration-300 ${
-                      isActive ? "w-7 bg-[#111622]" : "w-2 bg-[#111622]/30"
+                      isActive
+                        ? isDark
+                          ? "w-7 bg-[#fff0a6]"
+                          : "w-7 bg-[#111622]"
+                        : isDark
+                        ? "w-2 bg-[#f5f8fc]/30"
+                        : "w-2 bg-[#111622]/30"
                     }`}
                   />
                 </button>
@@ -1816,7 +2248,9 @@ export default function HomePage() {
 
         <section
           id="galerie"
-          className="scroll-mt-24 w-full py-[96px] md:py-[140px] border-t border-[#111622]/[0.16] overflow-hidden"
+          className={`scroll-mt-24 w-full py-[96px] md:py-[140px] border-t overflow-hidden ${
+            isDark ? "border-[#f5f8fc]/[0.16]" : "border-[#111622]/[0.16]"
+          }`}
         >
           <div className="max-w-[1440px] mx-auto px-5 md:px-[56px] mb-10">
             <motion.div
@@ -1826,10 +2260,18 @@ export default function HomePage() {
               transition={{ duration: 0.9, delay: 0, ease: EASE }}
               className="flex items-center justify-between mb-6"
             >
-              <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+              <span
+                className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                  isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                }`}
+              >
                 {copy.galleryEyebrow}
               </span>
-              <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+              <span
+                className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                  isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                }`}
+              >
                 (007)
               </span>
             </motion.div>
@@ -1837,7 +2279,9 @@ export default function HomePage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
               <WordReveal
                 text={copy.galleryTitle}
-                className={`font-stagheiz uppercase text-[#111622] max-w-[820px] ${
+                className={`font-stagheiz uppercase max-w-[820px] ${
+                  isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                } ${
                   isVi
                     ? "text-[36px] md:text-[56px] leading-[1.14] tracking-[-0.02em]"
                     : "text-[44px] md:text-[68px] leading-[0.95] tracking-[-0.005em]"
@@ -1848,7 +2292,9 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={VIEWPORT}
                 transition={{ duration: 0.9, delay: 0.2, ease: EASE }}
-                className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/70 max-w-[390px] shrink-0"
+                className={`font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] max-w-[390px] shrink-0 ${
+                  isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/70"
+                }`}
               >
                 {copy.galleryDesc}
               </motion.p>
@@ -1864,10 +2310,14 @@ export default function HomePage() {
                       type="button"
                       aria-pressed={active}
                       onClick={() => setGalleryFilter(chip.id)}
-                      className={`min-h-[40px] px-4 py-2 rounded-full border font-mono text-[12px] uppercase tracking-[0.05em] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2 ${
-                        active
-                          ? "bg-[#111622] border-[#111622] text-[#f5f8fc]"
-                          : "bg-[#f5f8fc] border-[#111622]/25 text-[#111622] hover:bg-[#dce8f5]"
+                      className={`min-h-[40px] px-4 py-2 rounded-full border font-mono text-[12px] uppercase tracking-[0.05em] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                        isDark
+                          ? active
+                            ? "theme-butter-card bg-[#fff0a6] border-[#fff0a6] text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#0b0f17]"
+                            : "bg-[#141b28] border-[#f5f8fc]/25 text-[#f5f8fc] hover:bg-[#1a2436] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#0b0f17]"
+                          : active
+                          ? "bg-[#111622] border-[#111622] text-[#f5f8fc] focus-visible:ring-[#111622]"
+                          : "bg-[#f5f8fc] border-[#111622]/25 text-[#111622] hover:bg-[#dce8f5] focus-visible:ring-[#111622]"
                       }`}
                     >
                       {chip.label}
@@ -1884,7 +2334,11 @@ export default function HomePage() {
                     galleryPaused ? copy.galleryPlayAria : copy.galleryPauseAria
                   }
                   onClick={() => setGalleryPaused((p) => !p)}
-                  className="inline-flex items-center gap-2 min-h-[40px] px-4 py-2 rounded-full border-[1.5px] border-[#111622] bg-[#fff0a6]/80 hover:bg-[#fff0a6] text-[#111622] font-mono text-[12px] uppercase tracking-[0.05em] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
+                  className={`theme-butter-card inline-flex items-center gap-2 min-h-[40px] px-4 py-2 rounded-full border-[1.5px] bg-[#fff0a6]/80 hover:bg-[#fff0a6] text-[#111622] font-mono text-[12px] uppercase tracking-[0.05em] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                    isDark
+                      ? "border-[#fff0a6] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#0b0f17]"
+                      : "border-[#111622] focus-visible:ring-[#111622]"
+                  }`}
                 >
                   {galleryPaused ? (
                     <Play className="w-3.5 h-3.5 fill-current" />
@@ -1919,7 +2373,11 @@ export default function HomePage() {
                         setLightboxState({ source: "gallery", index: idx })
                       }
                       aria-label={item.title}
-                      className={`group relative ${item.widthClass} h-[312px] sm:h-[380px] rounded-[20px] overflow-hidden shrink-0 bg-[#dce8f5] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2`}
+                      className={`group relative ${item.widthClass} h-[312px] sm:h-[380px] rounded-[20px] overflow-hidden shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                        isDark
+                          ? "bg-[#1a2436] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#0b0f17]"
+                          : "bg-[#dce8f5] focus-visible:ring-[#111622]"
+                      }`}
                     >
                       <img
                         src={item.src}
@@ -1937,7 +2395,11 @@ export default function HomePage() {
                       />
                       <span
                         aria-hidden="true"
-                        className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-[#f5f8fc]/90 border border-[#111622]/15 text-[#111622] flex items-center justify-center opacity-85 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
+                        className={`absolute bottom-3 right-3 w-9 h-9 rounded-full border flex items-center justify-center opacity-85 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity ${
+                          isDark
+                            ? "bg-[#141b28]/90 border-[#f5f8fc]/20 text-[#f5f8fc]"
+                            : "bg-[#f5f8fc]/90 border-[#111622]/15 text-[#111622]"
+                        }`}
                       >
                         <ZoomIn className="w-4 h-4" />
                       </span>
@@ -1957,7 +2419,9 @@ export default function HomePage() {
                   copy.galleryWords.map((word, idx) => (
                     <React.Fragment key={idx}>
                       <span
-                        className={`font-stagheiz text-[44px] md:text-[68px] uppercase text-[#111622] whitespace-nowrap select-none shrink-0 ${
+                        className={`font-stagheiz text-[44px] md:text-[68px] uppercase whitespace-nowrap select-none shrink-0 ${
+                          isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                        } ${
                           isVi
                             ? "leading-[1.14] tracking-[-0.02em]"
                             : "leading-[0.95] tracking-[-0.005em]"
@@ -1965,7 +2429,11 @@ export default function HomePage() {
                       >
                         {word}
                       </span>
-                      <span className="w-[14px] h-[14px] rounded-full bg-[#111622] shrink-0" />
+                      <span
+                        className={`w-[14px] h-[14px] rounded-full shrink-0 ${
+                          isDark ? "bg-[#fff0a6]" : "bg-[#111622]"
+                        }`}
+                      />
                     </React.Fragment>
                   ))
                 }
@@ -1990,7 +2458,11 @@ export default function HomePage() {
                         })
                       }
                       aria-label={item.title}
-                      className={`group relative ${item.widthClass} h-[312px] sm:h-[380px] rounded-[20px] overflow-hidden shrink-0 bg-[#dce8f5] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2`}
+                      className={`group relative ${item.widthClass} h-[312px] sm:h-[380px] rounded-[20px] overflow-hidden shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                        isDark
+                          ? "bg-[#1a2436] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#0b0f17]"
+                          : "bg-[#dce8f5] focus-visible:ring-[#111622]"
+                      }`}
                     >
                       <img
                         src={item.src}
@@ -2008,7 +2480,11 @@ export default function HomePage() {
                       />
                       <span
                         aria-hidden="true"
-                        className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-[#f5f8fc]/90 border border-[#111622]/15 text-[#111622] flex items-center justify-center opacity-85 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
+                        className={`absolute bottom-3 right-3 w-9 h-9 rounded-full border flex items-center justify-center opacity-85 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity ${
+                          isDark
+                            ? "bg-[#141b28]/90 border-[#f5f8fc]/20 text-[#f5f8fc]"
+                            : "bg-[#f5f8fc]/90 border-[#111622]/15 text-[#111622]"
+                        }`}
                       >
                         <ZoomIn className="w-4 h-4" />
                       </span>
@@ -2026,7 +2502,11 @@ export default function HomePage() {
                   onClick={() =>
                     setLightboxState({ source: "gallery", index: idx })
                   }
-                  className="group relative aspect-[4/5] rounded-[20px] overflow-hidden bg-[#dce8f5] text-left cursor-pointer border border-[#111622]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
+                  className={`group relative aspect-[4/5] rounded-[20px] overflow-hidden text-left cursor-pointer border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                    isDark
+                      ? "bg-[#1a2436] border-[#f5f8fc]/15 focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#0b0f17]"
+                      : "bg-[#dce8f5] border-[#111622]/15 focus-visible:ring-[#111622]"
+                  }`}
                 >
                   <img
                     src={item.src}
@@ -2051,7 +2531,13 @@ export default function HomePage() {
                         {item.title}
                       </div>
                     </div>
-                    <span className="w-9 h-9 rounded-full bg-[#f5f8fc]/90 text-[#111622] flex items-center justify-center shrink-0">
+                    <span
+                      className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                        isDark
+                          ? "bg-[#141b28]/90 text-[#f5f8fc]"
+                          : "bg-[#f5f8fc]/90 text-[#111622]"
+                      }`}
+                    >
                       <ZoomIn className="w-4 h-4" />
                     </span>
                   </div>
@@ -2060,16 +2546,26 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="max-w-[1440px] mx-auto px-5 md:px-[56px]">
-              <div className="rounded-[28px] bg-[#dce8f5] border border-[#111622]/[0.16] p-8 sm:p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div
+                className={`rounded-[28px] border p-8 sm:p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 ${
+                  isDark
+                    ? "bg-[#141b28] border-[#f5f8fc]/[0.16]"
+                    : "bg-[#dce8f5] border-[#111622]/[0.16]"
+                }`}
+              >
                 <div className="flex flex-col gap-3 max-w-[680px]">
                   <h3
-                    className={`font-stagheiz text-[28px] sm:text-[34px] text-[#111622] ${
-                      isVi ? "leading-[1.14]" : "leading-[1.02]"
-                    }`}
+                    className={`font-stagheiz text-[28px] sm:text-[34px] ${
+                      isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                    } ${isVi ? "leading-[1.14]" : "leading-[1.02]"}`}
                   >
                     {copy.galleryEmptyFullsuit.title}
                   </h3>
-                  <p className="font-sans text-[16px] leading-[1.55] text-[#111622]/80">
+                  <p
+                    className={`font-sans text-[16px] leading-[1.55] ${
+                      isDark ? "text-[#f5f8fc]/80" : "text-[#111622]/80"
+                    }`}
+                  >
                     {copy.galleryEmptyFullsuit.desc}
                   </p>
                 </div>
@@ -2077,21 +2573,33 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => jumpToContactWithParts(["Fullsuit"])}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#111622] hover:bg-[#1e3557] text-[#f5f8fc] px-5 py-3 font-sans text-[14px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
+                    className={`inline-flex items-center gap-2 rounded-full px-5 py-3 font-sans text-[14px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                      isDark
+                        ? "theme-butter-card bg-[#fff0a6] hover:!bg-[#f5f8fc] text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#141b28]"
+                        : "bg-[#111622] hover:bg-[#1e3557] text-[#f5f8fc] focus-visible:ring-[#111622]"
+                    }`}
                   >
                     <span>{copy.galleryEmptyFullsuit.ctaQuote}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                   <a
                     href="#offres"
-                    className="inline-flex items-center rounded-full border-[1.5px] border-[#111622] text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] px-5 py-3 font-sans text-[14px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2"
+                    className={`inline-flex items-center rounded-full border-[1.5px] px-5 py-3 font-sans text-[14px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                      isDark
+                        ? "border-[#f5f8fc] text-[#f5f8fc] hover:bg-[#f5f8fc] hover:!text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#141b28]"
+                        : "border-[#111622] text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622]"
+                    }`}
                   >
                     {copy.galleryEmptyFullsuit.ctaSpecs}
                   </a>
                   <button
                     type="button"
                     onClick={() => setGalleryFilter("all")}
-                    className="font-mono text-[12px] uppercase tracking-[0.05em] text-[#111622] underline underline-offset-4 px-2 py-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] rounded"
+                    className={`font-mono text-[12px] uppercase tracking-[0.05em] underline underline-offset-4 px-2 py-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 rounded ${
+                      isDark
+                        ? "text-[#f5f8fc] focus-visible:ring-[#fff0a6]"
+                        : "text-[#111622] focus-visible:ring-[#111622]"
+                    }`}
                   >
                     {copy.galleryEmptyFullsuit.ctaShowAll}
                   </button>
@@ -2103,7 +2611,11 @@ export default function HomePage() {
 
         <section
           id="offres"
-          className="scroll-mt-24 w-full bg-[#1e3557] text-[#f5f8fc] py-[96px] md:py-[140px]"
+          className={`scroll-mt-24 w-full text-[#f5f8fc] py-[96px] md:py-[140px] ${
+            isDark
+              ? "bg-[#0e1522] border-y border-[#f5f8fc]/[0.12]"
+              : "bg-[#1e3557]"
+          }`}
         >
           <div className="max-w-[1440px] mx-auto px-5 md:px-[56px]">
             <motion.div
@@ -2147,15 +2659,27 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={VIEWPORT}
                 transition={{ duration: 0.9, delay: 0, ease: EASE }}
-                className="rounded-[32px] bg-[#f5f8fc] text-[#111622] p-7 sm:p-10 flex flex-col justify-between gap-8"
+                className={`rounded-[32px] p-7 sm:p-10 flex flex-col justify-between gap-8 ${
+                  isDark
+                    ? "bg-[#141b28] text-[#f5f8fc] border border-[#f5f8fc]/[0.16]"
+                    : "bg-[#f5f8fc] text-[#111622]"
+                }`}
               >
                 <div className="flex flex-col gap-6">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+                    <span
+                      className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                        isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                      }`}
+                    >
                       {copy.offer1Tag}
                     </span>
                   </div>
-                  <div className="w-full aspect-[5/4] rounded-[20px] overflow-hidden bg-[#dce8f5]">
+                  <div
+                    className={`w-full aspect-[5/4] rounded-[20px] overflow-hidden ${
+                      isDark ? "bg-[#1a2436]" : "bg-[#dce8f5]"
+                    }`}
+                  >
                     <img
                       src="/images/offer-01.webp"
                       alt={copy.offer1Alt}
@@ -2174,25 +2698,51 @@ export default function HomePage() {
                     >
                       {copy.offer1Title}
                     </h3>
-                    <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/75">
+                    <p
+                      className={`font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] ${
+                        isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/75"
+                      }`}
+                    >
                       {copy.offer1Desc}
                     </p>
                   </div>
-                  <ul className="flex flex-col gap-3 pt-2 border-t border-[#111622]/[0.14]">
+                  <ul
+                    className={`flex flex-col gap-3 pt-2 border-t ${
+                      isDark
+                        ? "border-[#f5f8fc]/[0.14]"
+                        : "border-[#111622]/[0.14]"
+                    }`}
+                  >
                     {copy.offer1Bullets.map((bullet) => (
                       <li
                         key={bullet}
-                        className="flex items-start gap-3 font-sans text-[16px] md:text-[17px] leading-[1.5] text-[#111622]/85"
+                        className={`flex items-start gap-3 font-sans text-[16px] md:text-[17px] leading-[1.5] ${
+                          isDark ? "text-[#f5f8fc]/85" : "text-[#111622]/85"
+                        }`}
                       >
-                        <Check className="w-4 h-4 mt-1 shrink-0 text-[#111622]" />
+                        <Check
+                          className={`w-4 h-4 mt-1 shrink-0 ${
+                            isDark ? "text-[#fff0a6]" : "text-[#111622]"
+                          }`}
+                        />
                         <span>{bullet}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="pt-6 border-t border-[#111622]/[0.14] flex flex-wrap items-center justify-between gap-4">
-                  <div className="font-mono text-[11px] md:text-[12px] uppercase tracking-[0.06em] text-[#111622]/70">
+                <div
+                  className={`pt-6 border-t flex flex-wrap items-center justify-between gap-4 ${
+                    isDark
+                      ? "border-[#f5f8fc]/[0.14]"
+                      : "border-[#111622]/[0.14]"
+                  }`}
+                >
+                  <div
+                    className={`font-mono text-[11px] md:text-[12px] uppercase tracking-[0.06em] ${
+                      isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                    }`}
+                  >
                     {copy.offer1Sub}
                   </div>
                   <Bouton
@@ -2212,7 +2762,7 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={VIEWPORT}
                 transition={{ duration: 0.9, delay: 0.1, ease: EASE }}
-                className="rounded-[32px] bg-[#fff0a6] text-[#111622] p-7 sm:p-10 flex flex-col justify-between gap-8"
+                className="theme-butter-card rounded-[32px] bg-[#fff0a6] text-[#111622] p-7 sm:p-10 flex flex-col justify-between gap-8"
               >
                 <div className="flex flex-col gap-6">
                   <div className="flex items-center justify-between">
@@ -2291,86 +2841,128 @@ export default function HomePage() {
               </motion.div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-[28px] gap-y-[130px] pt-[90px]">
-                {copy.packages.map((pkg, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, y: 40 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={VIEWPORT}
-                    transition={{
-                      duration: 0.9,
-                      delay: (idx % 3) * 0.1,
-                      ease: EASE,
-                    }}
-                    className="h-full"
-                  >
+                {copy.packages.map((pkg, idx) => {
+                  const isButterPkg = pkg.bg.toLowerCase() === "#fff0a6";
+                  const pkgTextLight = isDark && !isButterPkg;
+                  return (
                     <motion.div
-                      whileHover={{ y: -10, scale: 1 }}
-                      transition={{ duration: 0.5, ease: EASE }}
-                      style={{ backgroundColor: pkg.bg }}
-                      className="relative h-full rounded-[28px] text-[#111622] px-[26px] pb-[28px] pt-[152px] flex flex-col justify-between gap-6 shadow-[0_24px_60px_rgba(0,0,0,0.22)]"
+                      key={idx}
+                      initial={{ opacity: 0, y: 40 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={VIEWPORT}
+                      transition={{
+                        duration: 0.9,
+                        delay: (idx % 3) * 0.1,
+                        ease: EASE,
+                      }}
+                      className="h-full"
                     >
-                      <div
-                        style={{ transform: `translateX(-50%) rotate(${pkg.rot}deg)` }}
-                        className="absolute -top-[80px] left-1/2 w-[190px] h-[210px] bg-white border-[8px] border-white rounded-[2px] shadow-[0_18px_30px_-16px_rgba(0,0,0,0.55)] overflow-hidden"
+                      <motion.div
+                        whileHover={{ y: -10, scale: 1 }}
+                        transition={{ duration: 0.5, ease: EASE }}
+                        style={{ backgroundColor: darkSurfaceBg(pkg.bg, isDark) }}
+                        className={`relative h-full rounded-[28px] px-[26px] pb-[28px] pt-[152px] flex flex-col justify-between gap-6 shadow-[0_24px_60px_rgba(0,0,0,0.22)] ${
+                          isButterPkg
+                            ? "theme-butter-card text-[#111622]"
+                            : pkgTextLight
+                            ? "text-[#f5f8fc] border border-[#f5f8fc]/[0.14]"
+                            : "text-[#111622]"
+                        }`}
                       >
-                        <img
-                          src={pkg.img}
-                          alt={pkg.title}
-                          loading="lazy"
-                          decoding="async"
-                          width={684}
-                          height={684}
-                          style={{ objectPosition: pkg.imgPos }}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-4">
-                        <h3
-                          className={`font-stagheiz text-[30px] lg:text-[34px] text-center ${
-                            isVi ? "leading-[1.14]" : "leading-none"
-                          }`}
+                        <div
+                          style={{
+                            transform: `translateX(-50%) rotate(${pkg.rot}deg)`,
+                            backgroundColor: "#ffffff",
+                            borderColor: "#ffffff",
+                          }}
+                          className="absolute -top-[80px] left-1/2 w-[190px] h-[210px] border-[8px] rounded-[2px] shadow-[0_18px_30px_-16px_rgba(0,0,0,0.55)] overflow-hidden"
                         >
-                          {pkg.title}
-                        </h3>
-
-                        <div className="flex flex-col border-t border-dashed border-[#111622]/30">
-                          {pkg.rows.map((row) => (
-                            <div
-                              key={row.label}
-                              className="flex items-center justify-between gap-3 py-3 border-b border-dashed border-[#111622]/30"
-                            >
-                              <span className="font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622]/70">
-                                {row.label}
-                              </span>
-                              <span className="font-mono text-[12px] lg:text-[13px] font-bold text-[#111622] text-right shrink-0">
-                                {row.value}
-                              </span>
-                            </div>
-                          ))}
+                          <img
+                            src={pkg.img}
+                            alt={pkg.title}
+                            loading="lazy"
+                            decoding="async"
+                            width={684}
+                            height={684}
+                            style={{ objectPosition: pkg.imgPos }}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
 
-                        <p className="font-sans text-[13px] leading-[1.5] text-[#111622]/75">
-                          {pkg.note}
-                        </p>
-                      </div>
+                        <div className="flex flex-col gap-4">
+                          <h3
+                            className={`font-stagheiz text-[30px] lg:text-[34px] text-center ${
+                              isVi ? "leading-[1.14]" : "leading-none"
+                            }`}
+                          >
+                            {pkg.title}
+                          </h3>
 
-                      <div className="flex flex-col items-center pt-2">
-                        <Bouton
-                          title={copy.packageCta}
-                          href="/#contact"
-                          variant="primary"
-                          fullWidth
-                          onClick={(e) => {
-                            e.preventDefault();
-                            jumpToContactWithParts([pkg.optionValue]);
-                          }}
-                        />
-                      </div>
+                          <div
+                            className={`flex flex-col border-t border-dashed ${
+                              pkgTextLight
+                                ? "border-[#f5f8fc]/25"
+                                : "border-[#111622]/30"
+                            }`}
+                          >
+                            {pkg.rows.map((row) => (
+                              <div
+                                key={row.label}
+                                className={`flex items-center justify-between gap-3 py-3 border-b border-dashed ${
+                                  pkgTextLight
+                                    ? "border-[#f5f8fc]/25"
+                                    : "border-[#111622]/30"
+                                }`}
+                              >
+                                <span
+                                  className={`font-mono text-[11px] uppercase tracking-[0.05em] ${
+                                    pkgTextLight
+                                      ? "text-[#f5f8fc]/70"
+                                      : "text-[#111622]/70"
+                                  }`}
+                                >
+                                  {row.label}
+                                </span>
+                                <span
+                                  className={`font-mono text-[12px] lg:text-[13px] font-bold text-right shrink-0 ${
+                                    pkgTextLight
+                                      ? "text-[#f5f8fc]"
+                                      : "text-[#111622]"
+                                  }`}
+                                >
+                                  {row.value}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <p
+                            className={`font-sans text-[13px] leading-[1.5] ${
+                              pkgTextLight
+                                ? "text-[#f5f8fc]/75"
+                                : "text-[#111622]/75"
+                            }`}
+                          >
+                            {pkg.note}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col items-center pt-2">
+                          <Bouton
+                            title={copy.packageCta}
+                            href="/#contact"
+                            variant="primary"
+                            fullWidth
+                            onClick={(e) => {
+                              e.preventDefault();
+                              jumpToContactWithParts([pkg.optionValue]);
+                            }}
+                          />
+                        </div>
+                      </motion.div>
                     </motion.div>
-                  </motion.div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-14">
@@ -2379,35 +2971,65 @@ export default function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={VIEWPORT}
                   transition={{ duration: 0.75, ease: EASE }}
-                  className="rounded-[28px] bg-[#f5f8fc] text-[#111622] p-7 sm:p-8 flex flex-col gap-5"
+                  className={`rounded-[28px] p-7 sm:p-8 flex flex-col gap-5 ${
+                    isDark
+                      ? "bg-[#141b28] text-[#f5f8fc] border border-[#f5f8fc]/[0.14]"
+                      : "bg-[#f5f8fc] text-[#111622]"
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/70">
+                    <span
+                      className={`font-mono text-[11px] uppercase tracking-[0.06em] ${
+                        isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                      }`}
+                    >
                       {copy.extraOptionsEyebrow}
                     </span>
-                    <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#111622]/70">
+                    <span
+                      className={`font-mono text-[11px] uppercase tracking-[0.06em] ${
+                        isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+                      }`}
+                    >
                       {copy.extraOptionsTag}
                     </span>
                   </div>
-                  <div className="flex flex-col divide-y divide-dashed divide-[#111622]/20 border-t border-b border-dashed border-[#111622]/20">
+                  <div
+                    className={`flex flex-col divide-y divide-dashed border-t border-b border-dashed ${
+                      isDark
+                        ? "divide-[#f5f8fc]/20 border-[#f5f8fc]/20"
+                        : "divide-[#111622]/20 border-[#111622]/20"
+                    }`}
+                  >
                     {copy.extraOptions.map((opt) => (
                       <div
                         key={opt.label}
                         className="py-3.5 flex flex-col sm:flex-row sm:items-baseline justify-between gap-2"
                       >
-                        <span className="font-sans text-[15px] font-medium text-[#111622] shrink-0">
+                        <span
+                          className={`font-sans text-[15px] font-medium shrink-0 ${
+                            isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                          }`}
+                        >
                           {opt.label}
                         </span>
                         {opt.href ? (
                           <Link
                             href={opt.href}
-                            className="inline-flex items-center gap-1.5 font-sans text-[14px] font-semibold text-[#1e3557] hover:text-[#111622] underline underline-offset-4 sm:text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] rounded"
+                            className={`inline-flex items-center gap-1.5 font-sans text-[14px] font-semibold underline underline-offset-4 sm:text-right focus-visible:outline-none focus-visible:ring-2 rounded ${
+                              isDark
+                                ? "text-[#fff0a6] hover:text-[#f5f8fc] focus-visible:ring-[#fff0a6]"
+                                : "text-[#1e3557] hover:text-[#111622] focus-visible:ring-[#111622]"
+                            }`}
                           >
                             <span>{opt.value}</span>
                             <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                           </Link>
                         ) : (
-                          <span className="font-sans text-[14px] text-[#111622]/75 sm:text-right">
+                          <span
+                            className={`font-sans text-[14px] sm:text-right ${
+                              isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/75"
+                            }`}
+                          >
                             {opt.value}
                           </span>
                         )}
@@ -2421,7 +3043,7 @@ export default function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={VIEWPORT}
                   transition={{ duration: 0.75, delay: 0.08, ease: EASE }}
-                  className="rounded-[28px] bg-[#fff0a6] text-[#111622] p-7 sm:p-8 flex flex-col justify-between gap-5"
+                  className="theme-butter-card rounded-[28px] bg-[#fff0a6] text-[#111622] p-7 sm:p-8 flex flex-col justify-between gap-5"
                 >
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between gap-3">
@@ -2470,10 +3092,18 @@ export default function HomePage() {
             transition={{ duration: 0.9, delay: 0, ease: EASE }}
             className="w-full flex items-center justify-between mb-12 md:mb-16"
           >
-            <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+            <span
+              className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+              }`}
+            >
               {copy.timelineEyebrow}
             </span>
-            <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+            <span
+              className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+              }`}
+            >
               (009)
             </span>
           </motion.div>
@@ -2482,7 +3112,9 @@ export default function HomePage() {
             <div className="w-full lg:w-[520px] lg:shrink-0 lg:sticky lg:top-[140px] flex flex-col items-start gap-[28px]">
               <WordReveal
                 text={copy.timelineTitle}
-                className={`font-stagheiz text-[#111622] ${
+                className={`font-stagheiz ${
+                  isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                } ${
                   isVi
                     ? "text-[36px] sm:text-[50px] md:text-[58px] leading-[1.14] tracking-[-0.02em]"
                     : "text-[44px] sm:text-[60px] md:text-[68px] leading-[0.95] tracking-[-0.005em]"
@@ -2493,7 +3125,9 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={VIEWPORT}
                 transition={{ duration: 0.9, delay: 0.2, ease: EASE }}
-                className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/70"
+                className={`font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] ${
+                  isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/70"
+                }`}
               >
                 {copy.timelineDesc}
               </motion.p>
@@ -2520,7 +3154,9 @@ export default function HomePage() {
 
         <section
           id="faq"
-          className="scroll-mt-24 w-full max-w-[1440px] mx-auto px-5 md:px-[56px] py-[96px] md:py-[140px] border-t border-[#111622]/[0.16]"
+          className={`scroll-mt-24 w-full max-w-[1440px] mx-auto px-5 md:px-[56px] py-[96px] md:py-[140px] border-t ${
+            isDark ? "border-[#f5f8fc]/[0.16]" : "border-[#111622]/[0.16]"
+          }`}
         >
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -2529,10 +3165,18 @@ export default function HomePage() {
             transition={{ duration: 0.9, delay: 0, ease: EASE }}
             className="w-full flex items-center justify-between mb-12 md:mb-16"
           >
-            <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+            <span
+              className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+              }`}
+            >
               {copy.faqEyebrow}
             </span>
-            <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#111622]/70">
+            <span
+              className={`font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] ${
+                isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
+              }`}
+            >
               (010)
             </span>
           </motion.div>
@@ -2541,13 +3185,19 @@ export default function HomePage() {
             <div className="w-full lg:w-[480px] lg:shrink-0 lg:sticky lg:top-[120px] flex flex-col items-start gap-[28px]">
               <WordReveal
                 text={copy.faqTitle}
-                className={`font-stagheiz text-[#111622] ${
+                className={`font-stagheiz ${
+                  isDark ? "text-[#f5f8fc]" : "text-[#111622]"
+                } ${
                   isVi
                     ? "text-[36px] sm:text-[50px] md:text-[58px] leading-[1.14] tracking-[-0.02em]"
                     : "text-[44px] sm:text-[60px] md:text-[68px] leading-[0.95] tracking-[-0.005em]"
                 }`}
               />
-              <p className="font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] text-[#111622]/70">
+              <p
+                className={`font-sans text-[16px] md:text-[17px] leading-[1.55] tracking-[-0.01em] ${
+                  isDark ? "text-[#f5f8fc]/75" : "text-[#111622]/70"
+                }`}
+              >
                 {copy.faqDesc}
               </p>
               <div className="flex flex-wrap items-center gap-3">
@@ -2577,7 +3227,9 @@ export default function HomePage() {
 
         <section
           id="contact"
-          className="scroll-mt-24 w-full bg-[#111622] text-[#f5f8fc] py-[96px] md:py-[140px] px-5 md:px-[56px]"
+          className={`scroll-mt-24 w-full bg-[#111622] text-[#f5f8fc] py-[96px] md:py-[140px] px-5 md:px-[56px] ${
+            isDark ? "border-t border-[#f5f8fc]/[0.12]" : ""
+          }`}
         >
           <div className="max-w-[1328px] mx-auto">
             <motion.div
@@ -2653,7 +3305,7 @@ export default function HomePage() {
                   className="lg:col-span-7 flex flex-col gap-6 bg-[#f5f8fc]/[0.06] border border-[#fff0a6]/40 rounded-[28px] p-6 sm:p-10"
                 >
                   <div className="flex items-start gap-4">
-                    <span className="w-12 h-12 rounded-full bg-[#fff0a6] text-[#111622] flex items-center justify-center shrink-0">
+                    <span className="theme-butter-card w-12 h-12 rounded-full bg-[#fff0a6] text-[#111622] flex items-center justify-center shrink-0">
                       <Check className="w-6 h-6 stroke-[2.5]" />
                     </span>
                     <div className="flex flex-col gap-2">
@@ -2713,7 +3365,7 @@ export default function HomePage() {
                     <button
                       type="button"
                       onClick={handleResetAfterSubmit}
-                      className="inline-flex items-center justify-center gap-3 w-full sm:w-auto sm:min-w-[260px] px-[26px] py-[17px] rounded-full bg-[#f5f8fc] text-[#111622] hover:bg-[#fff0a6] transition-colors font-sans text-[15px] font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622]"
+                      className="inline-flex items-center justify-center gap-3 w-full sm:w-auto sm:min-w-[260px] px-[26px] py-[17px] rounded-full bg-[#f5f8fc] text-[#111622] hover:!bg-[#fff0a6] transition-colors font-sans text-[15px] font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622]"
                     >
                       <span>{copy.submitAnother}</span>
                       <ArrowRight className="w-[18px] h-[18px] shrink-0" />
@@ -2789,7 +3441,7 @@ export default function HomePage() {
                       <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/80">
                         {copy.fieldName}
                       </span>
-                      <input
+                      <LucianContactInput
                         ref={nameInputRef}
                         type="text"
                         name="name"
@@ -2797,25 +3449,39 @@ export default function HomePage() {
                         required
                         maxLength={120}
                         value={nameValue}
-                        onChange={(e) => setNameValue(e.target.value)}
+                        onChange={setNameValue}
                         placeholder={copy.placeholderName}
-                        className="w-full rounded-[14px] bg-[#f5f8fc]/[0.08] border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:border-[#fff0a6]"
+                        isValid={nameValue.trim().length >= 2}
+                        isInvalid={nameValue.trim().length < 2}
+                        forceShowError={showContactValidation}
+                        hint={
+                          isVi
+                            ? "Nhập tên hoặc nickname của bạn."
+                            : "Add your name or handle."
+                        }
                       />
                     </label>
                     <label className="flex flex-col gap-2">
                       <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/80">
                         {copy.fieldSpecies}
                       </span>
-                      <input
+                      <LucianContactInput
                         ref={speciesInputRef}
                         type="text"
                         name="species"
                         required
                         maxLength={120}
                         value={speciesValue}
-                        onChange={(e) => setSpeciesValue(e.target.value)}
+                        onChange={setSpeciesValue}
                         placeholder={copy.placeholderSpecies}
-                        className="w-full rounded-[14px] bg-[#f5f8fc]/[0.08] border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:border-[#fff0a6]"
+                        isValid={speciesValue.trim().length >= 2}
+                        isInvalid={speciesValue.trim().length < 2}
+                        forceShowError={showContactValidation}
+                        hint={
+                          isVi
+                            ? "Nhập loài nhân vật (sói, mèo, shiba...)."
+                            : "Tell us your character's species."
+                        }
                       />
                     </label>
                   </div>
@@ -2825,7 +3491,7 @@ export default function HomePage() {
                       <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/80">
                         {copy.fieldEmail}
                       </span>
-                      <input
+                      <LucianContactInput
                         ref={emailInputRef}
                         type="email"
                         name="email"
@@ -2833,26 +3499,29 @@ export default function HomePage() {
                         required
                         maxLength={200}
                         value={emailValue}
-                        onChange={(e) => setEmailValue(e.target.value)}
+                        onChange={setEmailValue}
                         placeholder={copy.placeholderEmail}
-                        className="w-full rounded-[14px] bg-[#f5f8fc]/[0.08] border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:border-[#fff0a6]"
+                        isValid={EMAIL_REGEX.test(emailValue.trim())}
+                        isInvalid={!EMAIL_REGEX.test(emailValue.trim())}
+                        forceShowError={showContactValidation}
+                        hint={
+                          isVi
+                            ? "Nhập email đúng định dạng, ví dụ ten@email.com."
+                            : "Enter a valid email like name@domain.com."
+                        }
                       />
                     </label>
-                    <label className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2">
                       <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/80">
                         {copy.fieldPhone}
                       </span>
-                      <input
-                        type="tel"
-                        name="phone"
-                        autoComplete="tel"
-                        maxLength={60}
+                      <CountryPhoneField209
                         value={phoneValue}
-                        onChange={(e) => setPhoneValue(e.target.value)}
-                        placeholder={copy.placeholderPhone}
-                        className="w-full rounded-[14px] bg-[#f5f8fc]/[0.08] border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:border-[#fff0a6]"
+                        onChange={setPhoneValue}
+                        lang={lang}
+                        label={copy.fieldPhone}
                       />
-                    </label>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -2860,28 +3529,52 @@ export default function HomePage() {
                       <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/80">
                         {copy.fieldFacebook}
                       </span>
-                      <input
+                      <LucianContactInput
                         type="text"
                         name="facebook"
                         maxLength={300}
                         value={facebookValue}
-                        onChange={(e) => setFacebookValue(e.target.value)}
+                        onChange={setFacebookValue}
                         placeholder={copy.placeholderFacebook}
-                        className="w-full rounded-[14px] bg-[#f5f8fc]/[0.08] border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:border-[#fff0a6]"
+                        isValid={facebookValue.trim().length >= 2}
+                        isInvalid={
+                          facebookValue.trim().length > 0 &&
+                          facebookValue.trim().length < 2
+                        }
+                        hint={
+                          isVi
+                            ? "Nhập ít nhất 2 ký tự hoặc để trống."
+                            : "Add at least 2 characters or leave blank."
+                        }
                       />
                     </label>
                     <label className="flex flex-col gap-2">
                       <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/80">
                         {copy.fieldRefLink}
                       </span>
-                      <input
+                      <LucianContactInput
+                        ref={refLinkInputRef}
                         type="url"
                         name="refLink"
+                        required
                         maxLength={500}
                         value={refLinkValue}
-                        onChange={(e) => setRefLinkValue(e.target.value)}
+                        onChange={setRefLinkValue}
                         placeholder={copy.placeholderRefLink}
-                        className="w-full rounded-[14px] bg-[#f5f8fc]/[0.08] border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:border-[#fff0a6]"
+                        isValid={
+                          refLinkValue.trim().length > 0 &&
+                          isValidHttpUrl(refLinkValue.trim())
+                        }
+                        isInvalid={
+                          !refLinkValue.trim() ||
+                          !isValidHttpUrl(refLinkValue.trim())
+                        }
+                        forceShowError={showContactValidation}
+                        hint={
+                          isVi
+                            ? "Dán link ref sheet bắt đầu bằng https://."
+                            : "Paste your ref sheet link starting with https://."
+                        }
                       />
                     </label>
                   </div>
@@ -2928,7 +3621,7 @@ export default function HomePage() {
                                     aria-hidden="true"
                                     className={`w-[18px] h-[18px] rounded-[5px] border flex items-center justify-center shrink-0 transition-colors ${
                                       checked
-                                        ? "bg-[#fff0a6] border-[#fff0a6] text-[#111622]"
+                                        ? "theme-butter-card bg-[#fff0a6] border-[#fff0a6] text-[#111622]"
                                         : "border-[#f5f8fc]/40 bg-transparent"
                                     }`}
                                   >
@@ -2986,16 +3679,23 @@ export default function HomePage() {
                     <span className="font-mono text-[11px] md:text-[12px] min-[1200px]:text-[13px] uppercase tracking-[0.06em] text-[#f5f8fc]/80">
                       {copy.fieldNotes}
                     </span>
-                    <textarea
+                    <LucianContactTextarea
                       ref={notesInputRef}
                       name="message"
                       rows={4}
                       required
                       maxLength={4000}
                       value={notesValue}
-                      onChange={(e) => setNotesValue(e.target.value)}
+                      onChange={setNotesValue}
                       placeholder={copy.placeholderNotes}
-                      className="w-full rounded-[14px] bg-[#f5f8fc]/[0.08] border border-[#f5f8fc]/20 px-4 py-3.5 font-sans text-[15px] text-[#f5f8fc] placeholder:text-[#f5f8fc]/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:border-[#fff0a6]"
+                      isValid={notesValue.trim().length >= 4}
+                      isInvalid={notesValue.trim().length < 4}
+                      forceShowError={showContactValidation}
+                      hint={
+                        isVi
+                          ? "Ghi vài dòng về yêu cầu hoặc ý tưởng của bạn."
+                          : "Write a short note about what you'd like built."
+                      }
                     />
                   </label>
 
@@ -3015,7 +3715,7 @@ export default function HomePage() {
                     <button
                       type="submit"
                       disabled={formState === "sending"}
-                      className="group inline-flex items-center justify-between gap-4 w-full sm:w-auto sm:min-w-[280px] px-[26px] py-[19px] rounded-full bg-[#f5f8fc] text-[#111622] hover:bg-[#fff0a6] transition-colors font-sans text-[15px] font-semibold cursor-pointer disabled:opacity-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622]"
+                      className="group inline-flex items-center justify-between gap-4 w-full sm:w-auto sm:min-w-[280px] px-[26px] py-[19px] rounded-full bg-[#f5f8fc] text-[#111622] hover:!bg-[#fff0a6] transition-colors font-sans text-[15px] font-semibold cursor-pointer disabled:opacity-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622]"
                     >
                       <span>
                         {formState === "sending"
@@ -3040,7 +3740,7 @@ export default function HomePage() {
                           <button
                             type="button"
                             onClick={handleCopyInquiry}
-                            className="inline-flex items-center gap-2 min-h-[40px] px-4 py-2 rounded-full bg-[#f5f8fc] text-[#111622] hover:bg-[#fff0a6] font-sans text-[13px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6]"
+                            className="inline-flex items-center gap-2 min-h-[40px] px-4 py-2 rounded-full bg-[#f5f8fc] text-[#111622] hover:!bg-[#fff0a6] font-sans text-[13px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff0a6]"
                           >
                             {copiedErrorText ? (
                               <Check className="w-4 h-4" />

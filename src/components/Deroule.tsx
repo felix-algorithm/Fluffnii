@@ -9,6 +9,7 @@ import {
   useTransform,
 } from "framer-motion";
 import { useLang } from "./LanguageProvider";
+import { useTheme } from "./CircularRevealToggle";
 
 export interface TimelineStep {
   num: string;
@@ -104,6 +105,7 @@ interface StepItemProps {
   couleurAccent: string;
   couleurFondPastille: string;
   trackColor: string;
+  isDark: boolean;
 }
 
 function StepItem({
@@ -115,6 +117,7 @@ function StepItem({
   couleurAccent,
   couleurFondPastille,
   trackColor,
+  isDark,
 }: StepItemProps) {
   const at = total > 1 ? index / (total - 1) : 0;
   const on = useTransform(progress, [Math.max(0, at - 0.06), at + 0.02], [0, 1]);
@@ -122,6 +125,19 @@ function StepItem({
   const textX = useTransform(on, [0, 1], [-10, 0]);
   const dotScale = useTransform(on, [0, 1], [0.6, 1]);
   const displayNum = String(index + 1).padStart(2, "0");
+  const inactiveNumColor = isDark
+    ? "rgba(245, 248, 252, 0.7)"
+    : "rgba(17, 22, 34, 0.72)";
+  const activeNumColor =
+    isDark && couleurAccent.toLowerCase() === "#fff0a6"
+      ? "#111622"
+      : couleurFondPastille;
+  const tagColor = isDark
+    ? "rgba(245, 248, 252, 0.7)"
+    : "rgba(17, 22, 34, 0.72)";
+  const descColor = isDark
+    ? "rgba(245, 248, 252, 0.75)"
+    : "rgba(17, 22, 34, 0.72)";
 
   return (
     <div
@@ -149,7 +165,7 @@ function StepItem({
           style={{
             fontFamily: 'var(--font-space-mono), "Space Mono", monospace',
             fontSize: 13,
-            color: "rgba(17, 22, 34, 0.72)",
+            color: inactiveNumColor,
             zIndex: 1,
             userSelect: "none",
           }}
@@ -175,7 +191,7 @@ function StepItem({
             style={{
               fontFamily: 'var(--font-space-mono), "Space Mono", monospace',
               fontSize: 13,
-              color: couleurFondPastille,
+              color: activeNumColor,
               userSelect: "none",
             }}
           >
@@ -201,7 +217,7 @@ function StepItem({
               fontSize: 13,
               letterSpacing: "0.06em",
               textTransform: "uppercase",
-              color: "rgba(17, 22, 34, 0.72)",
+              color: tagColor,
             }}
           >
             [{item.tag}]
@@ -227,7 +243,7 @@ function StepItem({
             fontSize: 16.5,
             lineHeight: 1.55,
             letterSpacing: "-0.01em",
-            color: "rgba(17, 22, 34, 0.72)",
+            color: descColor,
             maxWidth: 540,
             margin: 0,
           }}
@@ -255,8 +271,25 @@ export default function Deroule({
   trackColor = "rgba(17, 22, 34, 0.16)",
 }: DerouleProps) {
   const { lang } = useLang();
+  const { isDark } = useTheme();
   const activeEtapes =
     etapes ?? (lang === "vi" ? DEFAULT_ETAPES_VI : DEFAULT_ETAPES_EN);
+  const resolvedTextColor =
+    isDark && couleurTexte.toLowerCase() === "#111622"
+      ? "#f5f8fc"
+      : couleurTexte;
+  const resolvedAccentColor =
+    isDark && couleurAccent.toLowerCase() === "#111622"
+      ? "#fff0a6"
+      : couleurAccent;
+  const resolvedPastilleBg =
+    isDark && couleurFondPastille.toLowerCase() === "#f5f8fc"
+      ? "#1a2436"
+      : couleurFondPastille;
+  const resolvedTrackColor =
+    isDark && trackColor === "rgba(17, 22, 34, 0.16)"
+      ? "rgba(245, 248, 252, 0.18)"
+      : trackColor;
   const ref = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll({
@@ -283,7 +316,7 @@ export default function Deroule({
           top: "calc(var(--node) / 2)",
           bottom: "calc(var(--node) / 2)",
           width: 2,
-          background: trackColor,
+          background: resolvedTrackColor,
           borderRadius: 2,
         }}
       />
@@ -296,7 +329,7 @@ export default function Deroule({
           top: "calc(var(--node) / 2)",
           bottom: "calc(var(--node) / 2)",
           width: 2,
-          background: couleurAccent,
+          background: resolvedAccentColor,
           borderRadius: 2,
           transformOrigin: "top center",
           scaleY: progress,
@@ -311,10 +344,11 @@ export default function Deroule({
             index={index}
             total={activeEtapes.length}
             progress={progress}
-            couleurTexte={couleurTexte}
-            couleurAccent={couleurAccent}
-            couleurFondPastille={couleurFondPastille}
-            trackColor={trackColor}
+            couleurTexte={resolvedTextColor}
+            couleurAccent={resolvedAccentColor}
+            couleurFondPastille={resolvedPastilleBg}
+            trackColor={resolvedTrackColor}
+            isDark={isDark}
           />
         ))}
       </div>

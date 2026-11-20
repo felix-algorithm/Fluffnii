@@ -3,7 +3,7 @@ import AccessoriesShop from "./AccessoriesShop";
 
 const TITLE = "Accessories & 3D Gear | FluffNii Studio";
 const DESCRIPTION =
-  "3D-printed cooling fans, oversized fursuit glasses, custom horns, magnetic tongues, and ear charms sized for fursuiters.";
+  "Custom 3D-printed fursuit cooling fans (Internal, STD & PLUS editions), fursuit glasses, and custom fan shells.";
 
 export const metadata: Metadata = {
   title: TITLE,

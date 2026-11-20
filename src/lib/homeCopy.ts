@@ -1000,9 +1000,9 @@ export const HOME_COPY: Record<Lang, HomeLocaleCopy> = {
     placeholderPhone: "+1 / +44 / +84 ...",
     fieldFacebook: "[Social / DM handle (FB, IG, Discord, X) (optional)]",
     placeholderFacebook: "@username or profile URL",
-    fieldRefLink: "[Ref sheet link (optional)]",
+    fieldRefLink: "[Ref sheet link *]",
     placeholderRefLink:
-      "Google Drive, Toyhouse, Imgur... or attach pics when we reply",
+      "https://drive.google.com/... (Google Drive, Toyhouse, Imgur...)",
     fieldType: "[Commission type *]",
     commissionGroups: [
       {
@@ -1086,7 +1086,7 @@ export const HOME_COPY: Record<Lang, HomeLocaleCopy> = {
       TOO_FAST:
         "That went through a bit fast. Wait two seconds and click send again.",
       MISSING_FIELDS:
-        "Please fill in your name/handle, character species, email, and project notes.",
+        "Please fill in your name/handle, character species, email, ref sheet link, and project notes.",
       INVALID_EMAIL:
         "Please enter a valid email address so we know where to send your quote.",
       MISSING_TYPES:
@@ -1811,9 +1811,9 @@ export const HOME_COPY: Record<Lang, HomeLocaleCopy> = {
     placeholderPhone: "+84 9xx xxx xxx",
     fieldFacebook: "[MXH / DM liên hệ (FB, IG, Discord...) (không bắt buộc)]",
     placeholderFacebook: "Tên tài khoản hoặc link trang cá nhân",
-    fieldRefLink: "[Link ref sheet (không bắt buộc)]",
+    fieldRefLink: "[Link ref sheet *]",
     placeholderRefLink:
-      "Google Drive, Toyhouse, Imgur... hoặc gửi ảnh khi mình rep mail",
+      "https://drive.google.com/... (Google Drive, Toyhouse, Imgur...)",
     fieldType: "[Loại đơn muốn đặt *]",
     commissionGroups: [
       {
@@ -1897,7 +1897,7 @@ export const HOME_COPY: Record<Lang, HomeLocaleCopy> = {
       TOO_FAST:
         "Bạn bấm gửi hơi nhanh một chút. Đợi khoảng hai giây rồi bấm gửi lại nhé.",
       MISSING_FIELDS:
-        "Bạn điền giúp mình đủ Tên/nickname, Loài nhân vật, Email và Ghi chú đơn nhé.",
+        "Bạn điền giúp mình đủ Tên/nickname, Loài nhân vật, Email, Link ref sheet và Ghi chú đơn nhé.",
       INVALID_EMAIL:
         "Bạn nhập lại email đúng định dạng để mình có địa chỉ gửi báo giá lại nhé.",
       MISSING_TYPES:

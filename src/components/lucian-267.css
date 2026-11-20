@@ -1,0 +1,214 @@
+/* Lucian UX/UI Prompt #267 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#267 */
+.u267 {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 40;
+}
+
+.u267-gb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--ux-surface-2);
+  box-shadow: inset 0 0 0 1px var(--ux-line);
+  color: var(--ux-ink);
+  font-family: var(--font-mono, var(--font-space-mono)), "Space Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background-color 0.22s ease, box-shadow 0.22s ease, transform 0.2s ease;
+}
+
+.u267-gb:hover {
+  background: var(--ux-surface-3);
+}
+
+.u267-gb:active {
+  transform: scale(0.97);
+}
+
+@media (min-width: 640px) {
+  .u267-gb {
+    height: 38px;
+    padding: 0 12px;
+  }
+}
+
+.u267-gb svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.u267-gb:focus-visible,
+.u267-op:focus-visible {
+  outline: 2px solid var(--ux-accent);
+  outline-offset: 2px;
+}
+
+.u267-dd {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 158px;
+  padding: 5px;
+  border-radius: 16px;
+  background: var(--ux-surface);
+  box-shadow: 0 0 0 1px var(--ux-line), 0 18px 36px -14px var(--ux-shadow-strong);
+  transform-origin: 90% 0;
+  transform: scale(0.9) translateY(-4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.25s cubic-bezier(0.3, 1.5, 0.5, 1), opacity 0.15s ease;
+  z-index: 60;
+}
+
+.u267.is-open .u267-dd {
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.u267-op {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ux-ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.u267-op:hover {
+  background: var(--ux-surface-2);
+}
+
+.u267-op em {
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.u267-op svg {
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  color: var(--ux-accent);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.u267-op.is-on svg {
+  opacity: 1;
+}
+
+.u267-sw {
+  display: inline-block;
+  vertical-align: top;
+  overflow: hidden;
+  padding-block: 0.08em;
+  margin-block: -0.08em;
+}
+
+.u267-sw > span {
+  display: block;
+}
+
+.u267-sw.is-go > span {
+  animation: u267-out 0.16s ease-in var(--u267-d, 0ms) forwards;
+}
+
+.u267-sw.is-in > span {
+  animation: u267-in 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.2) var(--u267-d, 0ms) both;
+}
+
+.u267-cta a,
+.u267-cta button {
+  overflow: hidden;
+}
+
+.u267-cta.is-go a > span:first-child,
+.u267-cta.is-go button > span:first-child {
+  animation: u267-out 0.16s ease-in var(--u267-d, 0ms) forwards;
+}
+
+.u267-cta.is-in a > span:first-child,
+.u267-cta.is-in button > span:first-child {
+  animation: u267-in 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.2) var(--u267-d, 0ms) both;
+}
+
+html[data-lang-swap="go"] main {
+  animation: u267-page-out 0.26s ease-in forwards;
+}
+
+html[data-lang-swap="in"] main {
+  animation: u267-page-in 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+@keyframes u267-out {
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes u267-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes u267-page-out {
+  to {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+}
+
+@keyframes u267-page-in {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .u267-sw > span,
+  .u267-cta a > span:first-child,
+  .u267-cta button > span:first-child,
+  html[data-lang-swap] main {
+    animation: none !important;
+  }
+
+  .u267-dd {
+    transition: none !important;
+  }
+}
