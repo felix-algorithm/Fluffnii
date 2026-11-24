@@ -8,7 +8,6 @@ import React, {
   useCallback,
 } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
   motion,
@@ -19,16 +18,12 @@ import {
 import {
   ArrowRight,
   ArrowUpRight,
-  Box,
-  Camera,
   Check,
   Copy,
-  Cpu,
   Mail,
   Minus,
   Plus,
   ShoppingBag,
-  Sparkles,
   Trash2,
   X,
   ZoomIn,
@@ -38,7 +33,6 @@ import Footer from "@/components/Footer";
 import ScrollWordReveal from "@/components/motion/ScrollWordReveal";
 import MagneticButton from "@/components/motion/MagneticButton";
 import { useLang, type Lang } from "@/components/LanguageProvider";
-import { useDeviceTier } from "@/lib/deviceTier";
 import { useSmoothScroll } from "@/lib/smoothScroll";
 import { isModifiedClick } from "@/lib/sectionScroll";
 import { cn } from "@/lib/cn";
@@ -48,24 +42,10 @@ import {
   type AccessoryItem,
   type AccessoryStatus,
   type AccessoriesLocaleCopy,
-  type BlueprintVariant,
 } from "@/lib/accessoriesCopy";
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const INTRO_SEEN_KEY = "fluffnii-intro-seen";
-
-type VisualMode = "photo" | "blueprint" | "3d" | "wear";
-
-const REAL_WEAR_PHOTO = {
-  src: "/images/hero-14.webp",
-  width: 840,
-  height: 840,
-  position: "50% 35%",
-  alt: {
-    en: "Shiba Inu fursuit head holding the portable yellow and black 3D-printed cooling fan on a lanyard",
-    vi: "Ảnh đeo thực tế quạt tản nhiệt in 3D vàng đen cầm tay cùng Head fursuit Shiba Inu",
-  },
-} as const;
 
 const DIRECT_CONTACTS = [
   {
@@ -103,45 +83,15 @@ const DIRECT_CONTACTS = [
 const SHOP_UI_COPY: Record<
   Lang,
   {
-    heroStageTag: string;
-    mode3d: string;
-    modeBlueprint: string;
-    modePhoto: string;
-    modeRealWear: string;
-    interactHint3d: string;
-    fallbackBlueprintHint: string;
-    inspectCta: string;
-    realWearCaption: string;
-    realWearBadge: string;
     editionBannerTag: string;
     stepSpecsLabel: string;
   }
 > = {
   en: {
-    heroStageTag: "Fan Hardware",
-    mode3d: "3D Model",
-    modeBlueprint: "Blueprint",
-    modePhoto: "Studio",
-    modeRealWear: "In Wear",
-    interactHint3d: "Hover or drag gently to tilt rotor · Live airflow",
-    fallbackBlueprintHint: "Technical schematic shown (low-power / reduced motion)",
-    inspectCta: "Inspect specs",
-    realWearCaption: "Real con wear check: Fursuit Fan STD carried on lanyard",
-    realWearBadge: "Real Wear · 1:1",
     editionBannerTag: "FLUFFNII × @CROSSTALK_F",
     stepSpecsLabel: "Key Specs",
   },
   vi: {
-    heroStageTag: "Phần cứng tản nhiệt",
-    mode3d: "Mô hình 3D",
-    modeBlueprint: "Bản vẽ",
-    modePhoto: "Ảnh mẫu",
-    modeRealWear: "Đeo thực tế",
-    interactHint3d: "Rê chuột hoặc chạm để xoay quạt · Mô phỏng luồng gió",
-    fallbackBlueprintHint: "Hiển thị bản vẽ kỹ thuật (chế độ tiết kiệm / giảm chuyển động)",
-    inspectCta: "Xem chi tiết",
-    realWearCaption: "Ảnh thực tế: Quạt Fursuit Fan STD đeo cùng dây khi đi fes",
-    realWearBadge: "Ảnh thực tế · 1:1",
     editionBannerTag: "FLUFFNII × @CROSSTALK_F",
     stepSpecsLabel: "Thông số chính",
   },
@@ -156,28 +106,6 @@ const NOTE_BADGE_CLASS =
 const SPEC_ITEM_CLASS =
   "flex items-start gap-2 font-sans text-[13px] leading-[1.48] text-fg/85";
 
-const BLUEPRINT_SCREW_POSITIONS = [
-  "top-2.5 left-2.5",
-  "top-2.5 right-2.5",
-  "bottom-2.5 left-2.5",
-  "bottom-2.5 right-2.5",
-];
-
-const FanRotorCanvas3D = dynamic(
-  () => import("@/components/three/FanRotorCanvas3D"),
-  {
-    ssr: false,
-    loading: () => (
-      <div
-        aria-hidden="true"
-        className="w-full h-full flex items-center justify-center"
-      >
-        <div className="w-24 h-24 rounded-full border-2 border-dashed border-fg/25 animate-pulse" />
-      </div>
-    ),
-  }
-);
-
 function getStatusBadgeClass(status: AccessoryStatus): string {
   if (status === "coming-soon") {
     return "bg-ink text-butter font-bold border-ink dark:border-butter/45";
@@ -186,13 +114,6 @@ function getStatusBadgeClass(status: AccessoryStatus): string {
     return "theme-butter-card bg-butter/95 text-ink border-ink/20 font-medium";
   }
   return "bg-cream/95 text-ink border-ink/15 dark:bg-night-surface/95 dark:text-cream dark:border-cream/20 font-medium";
-}
-
-function getBlueprintStageBackdrop(variant: BlueprintVariant): string {
-  if (variant === "plus-fan") {
-    return "bg-ink text-butter [background-image:radial-gradient(rgba(255,240,166,0.16)_1px,transparent_1px)] [background-size:18px_18px]";
-  }
-  return "bg-taupe/80 dark:bg-night-elevated [background-image:radial-gradient(rgba(17,22,34,0.13)_1px,transparent_1px)] dark:[background-image:radial-gradient(rgba(245,248,252,0.13)_1px,transparent_1px)] [background-size:18px_18px]";
 }
 
 async function writeToClipboard(text: string): Promise<boolean> {
@@ -285,537 +206,13 @@ function ClipboardFallbackBox({
   );
 }
 
-function BlueprintVisual({
-  variant,
-  compact = false,
-  badges,
-}: {
-  variant: BlueprintVariant;
-  compact?: boolean;
-  badges: Record<BlueprintVariant, string>;
-}) {
-  const isPlus = variant === "plus-fan";
-
-  if (compact) {
-    return (
-      <div
-        className={cn(
-          "relative w-full h-full flex items-center justify-center overflow-hidden",
-          isPlus
-            ? "bg-ink dark:border dark:border-butter/25"
-            : "bg-surface-alt"
-        )}
-      >
-        {variant === "internal-fan" && (
-          <svg viewBox="0 0 40 40" className="w-7 h-7 text-fg" fill="none">
-            <rect
-              x="4"
-              y="4"
-              width="32"
-              height="32"
-              rx="8"
-              className="fill-cream dark:fill-night-surface"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-            <circle cx="20" cy="20" r="10" stroke="currentColor" strokeWidth="1.5" />
-            <circle
-              cx="20"
-              cy="20"
-              r="3.5"
-              className="fill-butter stroke-ink"
-              strokeWidth="1.5"
-            />
-          </svg>
-        )}
-        {variant === "std-fan" && (
-          <svg viewBox="0 0 40 40" className="w-7 h-7 text-fg" fill="none">
-            <rect
-              x="5"
-              y="12"
-              width="20"
-              height="20"
-              rx="6"
-              className="fill-cream dark:fill-night-surface"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-            <path
-              d="M25 16 L35 12 L35 24 L25 26 Z"
-              className="fill-butter"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinejoin="round"
-            />
-            <circle cx="15" cy="22" r="5" stroke="currentColor" strokeWidth="1.6" />
-          </svg>
-        )}
-        {variant === "plus-fan" && (
-          <svg viewBox="0 0 40 40" className="w-7 h-7 text-butter" fill="none">
-            <circle cx="20" cy="20" r="14" stroke="currentColor" strokeWidth="2" />
-            <circle cx="20" cy="20" r="8" className="stroke-cream" strokeWidth="1.6" />
-            <circle cx="20" cy="20" r="3.5" className="fill-butter" />
-          </svg>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={cn(
-        "relative w-full h-full flex items-center justify-center overflow-hidden p-5 sm:p-6 [background-size:18px_18px]",
-        isPlus
-          ? "bg-espresso/[0.14] [background-image:radial-gradient(rgba(30,53,87,0.2)_1px,transparent_1px)] dark:bg-night-surface dark:[background-image:radial-gradient(rgba(255,240,166,0.16)_1px,transparent_1px)]"
-          : "bg-taupe [background-image:radial-gradient(rgba(17,22,34,0.14)_1px,transparent_1px)] dark:bg-night-elevated dark:[background-image:radial-gradient(rgba(245,248,252,0.14)_1px,transparent_1px)]"
-      )}
-    >
-      <div
-        className={cn(
-          "absolute inset-3 rounded-[14px] border pointer-events-none",
-          isPlus
-            ? "border-ink/20 dark:border-butter/20"
-            : "border-ink/10 dark:border-cream/15"
-        )}
-      />
-
-      {variant === "internal-fan" && (
-        <div className="relative flex flex-col items-center justify-center">
-          <div className="relative flex items-center">
-            <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl border-2 flex items-center justify-center border-ink/85 bg-cream/85 shadow-[0_10px_28px_rgba(17,22,34,0.08)] dark:border-cream/75 dark:bg-night-surface/90 dark:shadow-[0_10px_28px_rgba(0,0,0,0.35)]">
-              {BLUEPRINT_SCREW_POSITIONS.map((pos) => (
-                <span
-                  key={pos}
-                  className={cn(
-                    "absolute w-2 h-2 rounded-full border border-fg/50 bg-surface-alt",
-                    pos
-                  )}
-                />
-              ))}
-              <svg
-                viewBox="0 0 120 120"
-                className="w-20 h-20 sm:w-24 sm:h-24 transition-transform duration-1000 ease-out group-hover:rotate-[165deg] text-fg"
-                fill="none"
-              >
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="48"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeDasharray="5 4"
-                />
-                <circle cx="60" cy="60" r="40" stroke="currentColor" strokeWidth="2" />
-                <path
-                  d="M60 60 C55 37, 69 24, 79 30 C86 35, 75 52, 60 60Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M60 60 C83 55, 96 69, 90 79 C85 86, 68 75, 60 60Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M60 60 C65 83, 51 96, 41 90 C34 85, 45 68, 60 60Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M60 60 C37 65, 24 51, 30 41 C35 34, 52 45, 60 60Z"
-                  fill="currentColor"
-                />
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="10"
-                  className="fill-butter stroke-ink"
-                  strokeWidth="2.5"
-                />
-              </svg>
-            </div>
-            <div className="flex items-center -ml-0.5">
-              <div className="w-3.5 h-2 bg-fg/80" />
-              <div className="w-6 h-4 rounded-r-[6px] border-2 border-l-0 flex items-center justify-center border-ink/85 bg-cream dark:border-cream/75 dark:bg-night-surface">
-                <div className="w-3 h-1 rounded-full bg-ink dark:bg-butter" />
-              </div>
-            </div>
-          </div>
-          <span className="mt-3 px-2.5 py-0.5 rounded-full font-mono text-[10px] uppercase tracking-eyebrow bg-ink text-butter dark:bg-night dark:border dark:border-butter/35">
-            {badges["internal-fan"]}
-          </span>
-        </div>
-      )}
-
-      {variant === "std-fan" && (
-        <div className="relative flex flex-col items-center justify-center">
-          <div className="relative flex items-center justify-center">
-            <svg
-              viewBox="0 0 220 132"
-              className="w-[184px] sm:w-[208px] h-auto text-fg drop-shadow-[0_10px_22px_rgba(17,22,34,0.08)] dark:drop-shadow-[0_10px_22px_rgba(0,0,0,0.35)]"
-              fill="none"
-            >
-              <rect
-                x="16"
-                y="18"
-                width="104"
-                height="96"
-                rx="22"
-                className="fill-cream dark:fill-night-surface"
-                stroke="currentColor"
-                strokeWidth="2.4"
-              />
-              <path
-                d="M120 34 L172 22 C179 20.5 184 25.5 184 32.5 L184 68.5 C184 75.5 179 80.5 172 79 L120 72 Z"
-                className="fill-butter"
-                stroke="currentColor"
-                strokeWidth="2.4"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M170 25 L170 76"
-                className="stroke-ink"
-                strokeWidth="1.6"
-                strokeDasharray="3 3"
-              />
-              <path
-                d="M192 38 C200 38, 204 34, 210 34"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeDasharray="4 4"
-              />
-              <path
-                d="M192 50 C201 50, 205 50, 214 50"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeDasharray="4 4"
-              />
-              <path
-                d="M192 62 C200 62, 204 66, 210 66"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeDasharray="4 4"
-              />
-              <g className="origin-[64px_64px] transition-transform duration-1000 ease-out group-hover:rotate-[150deg]">
-                <circle
-                  cx="64"
-                  cy="64"
-                  r="31"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeDasharray="4 3"
-                />
-                <circle cx="64" cy="64" r="24" stroke="currentColor" strokeWidth="1.8" />
-                <path
-                  d="M64 64 C61 50, 70 41, 77 45 C81 48, 74 59, 64 64Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M64 64 C78 61, 87 70, 83 77 C80 81, 69 74, 64 64Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M64 64 C67 78, 58 87, 51 83 C47 80, 54 69, 64 64Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M64 64 C50 67, 41 58, 45 51 C48 47, 59 54, 64 64Z"
-                  fill="currentColor"
-                />
-                <circle
-                  cx="64"
-                  cy="64"
-                  r="6.5"
-                  className="fill-butter stroke-ink"
-                  strokeWidth="2"
-                />
-              </g>
-              <g>
-                <circle
-                  cx="104"
-                  cy="96"
-                  r="11"
-                  className="fill-taupe dark:fill-night-elevated"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                />
-                <circle cx="104" cy="96" r="5" className="fill-ink dark:fill-night" />
-                <line
-                  x1="104"
-                  y1="96"
-                  x2="110"
-                  y2="90"
-                  className="stroke-butter"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </g>
-              <rect
-                x="28"
-                y="97"
-                width="26"
-                height="5"
-                rx="2.5"
-                fill="currentColor"
-                fillOpacity="0.22"
-              />
-            </svg>
-          </div>
-          <span className="mt-2 px-2.5 py-0.5 rounded-full font-mono text-[10px] uppercase tracking-eyebrow bg-ink text-butter dark:bg-night dark:border dark:border-butter/35">
-            {badges["std-fan"]}
-          </span>
-        </div>
-      )}
-
-      {variant === "plus-fan" && (
-        <div className="relative flex flex-col items-center justify-center">
-          <div className="relative flex items-center justify-center">
-            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-2 border-butter bg-ink p-1.5 flex items-center justify-center shadow-[0_14px_34px_rgba(17,22,34,0.22)] ring-4 ring-ink/15 dark:ring-butter/15">
-              <svg
-                viewBox="0 0 120 120"
-                className="w-24 h-24 sm:w-28 sm:h-28 text-cream transition-transform duration-1000 ease-out group-hover:rotate-[210deg]"
-                fill="none"
-              >
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="52"
-                  className="stroke-butter"
-                  strokeWidth="1.6"
-                  strokeDasharray="4 4"
-                />
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="43"
-                  className="stroke-cream"
-                  strokeOpacity="0.35"
-                  strokeWidth="1.5"
-                />
-                {[0, 60, 120, 180, 240, 300].map((deg) => (
-                  <path
-                    key={deg}
-                    d="M60 60 C55 38, 67 21, 77 27 C84 31, 73 49, 60 60Z"
-                    className="fill-cream"
-                    transform={`rotate(${deg} 60 60)`}
-                  />
-                ))}
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="13"
-                  className="fill-ink stroke-butter"
-                  strokeWidth="2.5"
-                />
-                <circle cx="60" cy="60" r="5" className="fill-butter" />
-              </svg>
-            </div>
-            <span className="theme-butter-card absolute -top-1.5 -right-1.5 w-7 h-7 rounded-full bg-butter border-2 border-ink text-ink font-mono text-[13px] font-bold flex items-center justify-center shadow-sm">
-              +
-            </span>
-          </div>
-          <span className="theme-butter-card mt-3 px-2.5 py-0.5 rounded-full bg-butter border border-ink/25 text-ink font-mono text-[10px] font-bold uppercase tracking-eyebrow">
-            {badges["plus-fan"]}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * Unified media renderer for fan hardware: renders live Three.js `FanRotorCanvas3D`
- * when WebGL is enabled and mode is `3d`, falling back smoothly to `BlueprintVisual`.
- */
-function FanVisualStage({
-  item,
-  mode,
-  enableWebGL,
-  badges,
-  lang,
-  interactive = true,
-  badgePositionClass = "top-[44px] left-3",
-}: {
-  item: AccessoryItem;
-  mode: VisualMode;
-  enableWebGL: boolean;
-  badges: Record<BlueprintVariant, string>;
-  lang: Lang;
-  interactive?: boolean;
-  badgePositionClass?: string;
-}) {
-  const variant = item.blueprint ?? "internal-fan";
-  const showWearPhoto = mode === "wear" && item.id === "fursuit-fan-std";
-
-  if (showWearPhoto) {
-    return (
-      <div className="relative w-full h-full bg-surface-alt overflow-hidden">
-        <img
-          src={REAL_WEAR_PHOTO.src}
-          alt={REAL_WEAR_PHOTO.alt[lang]}
-          width={REAL_WEAR_PHOTO.width}
-          height={REAL_WEAR_PHOTO.height}
-          loading="lazy"
-          decoding="async"
-          style={{ objectPosition: REAL_WEAR_PHOTO.position }}
-          className="w-full h-full object-cover transition-transform duration-700 ease-studio group-hover:scale-[1.04]"
-        />
-      </div>
-    );
-  }
-
-  if (mode === "photo" && item.image) {
-    return (
-      <div className="relative w-full h-full bg-surface-alt overflow-hidden">
-        <img
-          src={item.image}
-          alt={item.imageAlt}
-          width={item.imageWidth}
-          height={item.imageHeight}
-          loading="lazy"
-          decoding="async"
-          style={{ objectPosition: item.imagePosition || "center center" }}
-          className="w-full h-full object-cover transition-transform duration-700 ease-studio group-hover:scale-[1.04]"
-        />
-      </div>
-    );
-  }
-
-  if (mode === "3d" && item.blueprint && enableWebGL) {
-    return (
-      <div
-        className={cn(
-          "relative w-full h-full overflow-hidden",
-          getBlueprintStageBackdrop(variant)
-        )}
-      >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              variant === "plus-fan"
-                ? "radial-gradient(circle at 50% 45%, rgba(255,240,166,0.16), transparent 62%)"
-                : "radial-gradient(circle at 50% 45%, rgba(255,240,166,0.22), transparent 65%)",
-          }}
-        />
-        <FanRotorCanvas3D
-          variant={variant}
-          interactive={interactive}
-          className="relative z-10 w-full h-full"
-        />
-        <span
-          className={cn(
-            "pointer-events-none absolute z-20 px-2.5 py-0.5 rounded-full font-mono text-[10px] uppercase tracking-eyebrow whitespace-nowrap shadow-sm",
-            badgePositionClass,
-            variant === "plus-fan"
-              ? "theme-butter-card bg-butter text-ink font-bold"
-              : "bg-ink/90 text-butter border border-butter/30"
-          )}
-        >
-          {badges[variant]}
-        </span>
-      </div>
-    );
-  }
-
-  return <BlueprintVisual variant={variant} badges={badges} />;
-}
-
-function ModePillBar({
-  item,
-  mode,
-  onChange,
-  enableWebGL,
-  ui,
-  compact = false,
-}: {
-  item: AccessoryItem;
-  mode: VisualMode;
-  onChange: (next: VisualMode) => void;
-  enableWebGL: boolean;
-  ui: (typeof SHOP_UI_COPY)[Lang];
-  compact?: boolean;
-}) {
-  const hasBlueprint = Boolean(item.blueprint);
-  const hasRealWear = item.id === "fursuit-fan-std";
-  if (!hasBlueprint && !hasRealWear) return null;
-
-  const options: { id: VisualMode; label: string; icon: React.ReactNode }[] = [];
-
-  if (hasBlueprint && enableWebGL) {
-    options.push({
-      id: "3d",
-      label: ui.mode3d,
-      icon: <Box className="w-3 h-3 shrink-0" />,
-    });
-  }
-  if (hasBlueprint) {
-    options.push({
-      id: "blueprint",
-      label: ui.modeBlueprint,
-      icon: <Cpu className="w-3 h-3 shrink-0" />,
-    });
-  }
-  if (item.image) {
-    options.push({
-      id: "photo",
-      label: ui.modePhoto,
-      icon: <Camera className="w-3 h-3 shrink-0" />,
-    });
-  }
-  if (hasRealWear) {
-    options.push({
-      id: "wear",
-      label: ui.modeRealWear,
-      icon: <Sparkles className="w-3 h-3 shrink-0" />,
-    });
-  }
-
-  return (
-    <div
-      role="tablist"
-      aria-label={ui.heroStageTag}
-      className={cn(
-        "inline-flex flex-wrap items-center gap-1 rounded-full border p-1 backdrop-blur-md",
-        "bg-cream/90 border-ink/15 dark:bg-night/85 dark:border-cream/20"
-      )}
-    >
-      {options.map((opt) => {
-        const active = mode === opt.id;
-        return (
-          <button
-            key={opt.id}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(opt.id)}
-            className={cn(
-              "inline-flex items-center gap-1 rounded-full font-mono uppercase tracking-wider transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink dark:focus-visible:ring-butter",
-              compact ? "px-2 py-1 text-[10px]" : "px-2.5 py-1 text-[10px]",
-              active
-                ? "bg-ink text-cream dark:bg-butter dark:text-ink font-bold"
-                : "text-ink/75 hover:text-ink dark:text-cream/80 dark:hover:text-cream"
-            )}
-          >
-            {opt.icon}
-            <span>{opt.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function AccessoryCard({
   item,
   qty,
   idx,
   isVi,
-  lang,
   copy,
   ui,
-  enableWebGL,
   onQtyChange,
   onPreview,
 }: {
@@ -823,18 +220,14 @@ function AccessoryCard({
   qty: number;
   idx: number;
   isVi: boolean;
-  lang: Lang;
   copy: AccessoriesLocaleCopy;
   ui: (typeof SHOP_UI_COPY)[Lang];
-  enableWebGL: boolean;
   onQtyChange: (id: string, delta: number) => void;
-  onPreview: (id: string, mode: VisualMode) => void;
+  onPreview: (id: string) => void;
 }) {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const spotlightBg = useMotionTemplate`radial-gradient(420px circle at ${mouseX}px ${mouseY}px, rgba(255, 240, 166, 0.22), transparent 72%)`;
-
-  const [manualMode, setManualMode] = useState<VisualMode | null>(null);
 
   const handlePointerMove = (e: React.PointerEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -845,17 +238,6 @@ function AccessoryCard({
   const selected = qty > 0;
   const addCtaLabel =
     item.status === "available" ? copy.addToEstimate : copy.addInterestCta;
-  const defaultCardMode: VisualMode =
-    item.id === "fursuit-fan-std"
-      ? "wear"
-      : item.image
-      ? "photo"
-      : enableWebGL
-      ? "3d"
-      : "blueprint";
-  const rawMode = manualMode ?? defaultCardMode;
-  const effectiveMode: VisualMode =
-    rawMode === "3d" && !enableWebGL ? "blueprint" : rawMode;
 
   return (
     <motion.article
@@ -882,58 +264,26 @@ function AccessoryCard({
       />
 
       <div className="relative aspect-[5/4] w-full shrink-0 overflow-hidden bg-surface-alt">
-        {effectiveMode === "3d" && item.blueprint ? (
-          <div
-            data-cursor-kind="inspect"
-            className="relative w-full h-full"
-          >
-            <FanVisualStage
-              item={item}
-              mode={effectiveMode}
-              enableWebGL={enableWebGL}
-              badges={copy.blueprintBadges}
-              lang={lang}
-              interactive
-            />
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onPreview(item.id, effectiveMode)}
-            aria-label={copy.previewAria(item.name)}
-            data-cursor-kind="inspect"
-            className="relative w-full h-full block text-left cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink dark:focus-visible:ring-butter"
-          >
-            {item.blueprint ? (
-              <FanVisualStage
-                item={item}
-                mode={effectiveMode}
-                enableWebGL={enableWebGL}
-                badges={copy.blueprintBadges}
-                lang={lang}
-                interactive={false}
-              />
-            ) : item.image ? (
-              <img
-                src={item.image}
-                alt={item.imageAlt}
-                width={item.imageWidth}
-                height={item.imageHeight}
-                loading="lazy"
-                decoding="async"
-                style={{
-                  objectPosition: item.imagePosition || "center center",
-                }}
-                className="w-full h-full object-cover transition-transform duration-700 ease-studio group-hover:scale-[1.05]"
-              />
-            ) : (
-              <BlueprintVisual
-                variant="internal-fan"
-                badges={copy.blueprintBadges}
-              />
-            )}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => onPreview(item.id)}
+          aria-label={copy.previewAria(item.name)}
+          data-cursor-kind="inspect"
+          className="relative w-full h-full block text-left cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink dark:focus-visible:ring-butter"
+        >
+          <img
+            src={item.image}
+            alt={item.imageAlt}
+            width={item.imageWidth}
+            height={item.imageHeight}
+            loading="lazy"
+            decoding="async"
+            style={{
+              objectPosition: item.imagePosition || "center center",
+            }}
+            className="w-full h-full object-cover transition-transform duration-700 ease-studio group-hover:scale-[1.05]"
+          />
+        </button>
 
         <span
           className={cn(
@@ -950,21 +300,11 @@ function AccessoryCard({
           </span>
         )}
 
-        <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between gap-2 pointer-events-none">
-          <div className="pointer-events-auto">
-            <ModePillBar
-              item={item}
-              mode={effectiveMode}
-              onChange={setManualMode}
-              enableWebGL={enableWebGL}
-              ui={ui}
-              compact
-            />
-          </div>
+        <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-end gap-2 pointer-events-none">
           <button
             type="button"
             aria-label={copy.previewAria(item.name)}
-            onClick={() => onPreview(item.id, effectiveMode)}
+            onClick={() => onPreview(item.id)}
             className="pointer-events-auto w-9 h-9 rounded-full border flex items-center justify-center opacity-90 lg:opacity-0 lg:translate-y-1.5 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 transition-all duration-300 bg-cream/90 border-ink/15 text-ink hover:bg-ink hover:text-cream dark:bg-night-surface/90 dark:border-cream/20 dark:text-cream dark:hover:bg-butter dark:hover:text-ink cursor-pointer"
           >
             <ZoomIn className="w-4 h-4" />
@@ -1067,7 +407,6 @@ function AccessoryCard({
 export default function AccessoriesShop() {
   const router = useRouter();
   const { lang } = useLang();
-  const { enableWebGL } = useDeviceTier();
   const { scrollTo } = useSmoothScroll();
 
   const isVi = lang === "vi";
@@ -1081,10 +420,7 @@ export default function AccessoriesShop() {
     source: "estimator" | "contact" | "discord";
     text: string;
   } | null>(null);
-  const [previewState, setPreviewState] = useState<{
-    id: string;
-    mode: VisualMode;
-  } | null>(null);
+  const [previewItemId, setPreviewItemId] = useState<string | null>(null);
 
   const modalRef = useRef<HTMLDivElement | null>(null);
   const closeModalBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -1092,41 +428,29 @@ export default function AccessoriesShop() {
 
   const previewItem = useMemo(
     () =>
-      previewState
-        ? copy.items.find((item) => item.id === previewState.id) ?? null
+      previewItemId
+        ? copy.items.find((item) => item.id === previewItemId) ?? null
         : null,
-    [copy.items, previewState]
+    [copy.items, previewItemId]
   );
 
-  const openPreview = useCallback(
-    (id: string, preferredMode?: VisualMode) => {
-      lastFocusedRef.current =
-        document.activeElement instanceof HTMLElement
-          ? document.activeElement
-          : null;
-      const targetItem = copy.items.find((item) => item.id === id);
-      const fallbackMode: VisualMode = targetItem?.blueprint
-        ? enableWebGL
-          ? "3d"
-          : "blueprint"
-        : "photo";
-      setPreviewState({
-        id,
-        mode: preferredMode ?? fallbackMode,
-      });
-    },
-    [copy.items, enableWebGL]
-  );
+  const openPreview = useCallback((id: string) => {
+    lastFocusedRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    setPreviewItemId(id);
+  }, []);
 
   const closePreview = useCallback(() => {
-    setPreviewState(null);
+    setPreviewItemId(null);
     window.requestAnimationFrame(() => {
       lastFocusedRef.current?.focus();
     });
   }, []);
 
   useEffect(() => {
-    if (!previewState) return;
+    if (!previewItemId) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -1168,7 +492,7 @@ export default function AccessoriesShop() {
       window.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = prevOverflow;
     };
-  }, [previewState, closePreview]);
+  }, [previewItemId, closePreview]);
 
   const cartItems = useMemo(
     () =>
@@ -1350,14 +674,6 @@ export default function AccessoriesShop() {
     scrollTo("#accessories-estimator", { offset: -108 });
   };
 
-  const modalEffectiveMode: VisualMode = previewItem
-    ? previewState?.mode === "3d" && (!enableWebGL || !previewItem.blueprint)
-      ? previewItem.blueprint
-        ? "blueprint"
-        : "photo"
-      : previewState?.mode ?? "photo"
-    : "photo";
-
   return (
     <div
       id="top"
@@ -1482,40 +798,19 @@ export default function AccessoriesShop() {
                         >
                           <div className="flex items-center gap-2.5 min-w-0 flex-1">
                             <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-surface-alt">
-                              {item.id === "fursuit-fan-std" ? (
-                                <img
-                                  src={REAL_WEAR_PHOTO.src}
-                                  alt={REAL_WEAR_PHOTO.alt[lang]}
-                                  width={REAL_WEAR_PHOTO.width}
-                                  height={REAL_WEAR_PHOTO.height}
-                                  loading="lazy"
-                                  decoding="async"
-                                  style={{
-                                    objectPosition: REAL_WEAR_PHOTO.position,
-                                  }}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : item.image ? (
-                                <img
-                                  src={item.image}
-                                  alt={item.imageAlt}
-                                  width={item.imageWidth}
-                                  height={item.imageHeight}
-                                  loading="lazy"
-                                  decoding="async"
-                                  style={{
-                                    objectPosition:
-                                      item.imagePosition || "center center",
-                                  }}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <BlueprintVisual
-                                  variant={item.blueprint || "internal-fan"}
-                                  compact
-                                  badges={copy.blueprintBadges}
-                                />
-                              )}
+                              <img
+                                src={item.image}
+                                alt={item.imageAlt}
+                                width={item.imageWidth}
+                                height={item.imageHeight}
+                                loading="lazy"
+                                decoding="async"
+                                style={{
+                                  objectPosition:
+                                    item.imagePosition || "center center",
+                                }}
+                                className="w-full h-full object-cover"
+                              />
                             </div>
                             <div className="min-w-0">
                               <div className="font-sans text-[13px] font-medium truncate text-fg">
@@ -1694,10 +989,8 @@ export default function AccessoriesShop() {
                       qty={quantities[item.id] ?? 0}
                       idx={idx}
                       isVi={isVi}
-                      lang={lang}
                       copy={copy}
                       ui={ui}
-                      enableWebGL={enableWebGL}
                       onQtyChange={setItemQty}
                       onPreview={openPreview}
                     />
@@ -1933,7 +1226,7 @@ export default function AccessoriesShop() {
         </div>
       )}
 
-      {/* Lightbox Image / 3D / Blueprint Preview */}
+      {/* Lightbox Image Preview */}
       <AnimatePresence>
         {previewItem && (
           <motion.div
@@ -1968,35 +1261,18 @@ export default function AccessoriesShop() {
               </button>
 
               <div className="relative aspect-[5/4] w-full overflow-hidden bg-surface-alt group">
-                {previewItem.blueprint ? (
-                  <FanVisualStage
-                    item={previewItem}
-                    mode={modalEffectiveMode}
-                    enableWebGL={enableWebGL}
-                    badges={copy.blueprintBadges}
-                    lang={lang}
-                    interactive
-                    badgePositionClass="top-[48px] left-4"
-                  />
-                ) : previewItem.image ? (
-                  <img
-                    src={previewItem.image}
-                    alt={previewItem.imageAlt}
-                    width={previewItem.imageWidth}
-                    height={previewItem.imageHeight}
-                    decoding="async"
-                    style={{
-                      objectPosition:
-                        previewItem.imagePosition || "center center",
-                    }}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <BlueprintVisual
-                    variant="internal-fan"
-                    badges={copy.blueprintBadges}
-                  />
-                )}
+                <img
+                  src={previewItem.image}
+                  alt={previewItem.imageAlt}
+                  width={previewItem.imageWidth}
+                  height={previewItem.imageHeight}
+                  decoding="async"
+                  style={{
+                    objectPosition:
+                      previewItem.imagePosition || "center center",
+                  }}
+                  className="w-full h-full object-cover"
+                />
 
                 <span
                   className={cn(
@@ -2006,28 +1282,6 @@ export default function AccessoriesShop() {
                 >
                   {previewItem.code} · {previewItem.statusBadge}
                 </span>
-
-                {modalEffectiveMode === "wear" && (
-                  <span className="pointer-events-none theme-butter-card absolute top-[48px] left-4 z-20 px-2.5 py-1 rounded-full bg-butter/95 border border-ink/20 font-mono text-[10px] font-bold uppercase tracking-eyebrow text-ink">
-                    {ui.realWearBadge}
-                  </span>
-                )}
-
-                {previewItem.blueprint && (
-                  <div className="absolute bottom-4 left-4 z-20">
-                    <ModePillBar
-                      item={previewItem}
-                      mode={modalEffectiveMode}
-                      onChange={(next) =>
-                        setPreviewState((prev) =>
-                          prev ? { ...prev, mode: next } : null
-                        )
-                      }
-                      enableWebGL={enableWebGL}
-                      ui={ui}
-                    />
-                  </div>
-                )}
               </div>
 
               <div className="p-6 flex flex-col gap-5">

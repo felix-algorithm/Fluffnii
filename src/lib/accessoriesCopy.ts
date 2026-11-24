@@ -1,6 +1,5 @@
 import type { Lang } from "@/components/LanguageProvider";
 
-export type BlueprintVariant = "internal-fan" | "std-fan" | "plus-fan";
 export type AccessoryStatus = "available" | "coming-soon" | "custom";
 
 export interface AccessoryItem {
@@ -15,11 +14,10 @@ export interface AccessoryItem {
   priceLabel: string;
   note: string;
   specs: string[];
-  image?: string;
-  imageWidth?: number;
-  imageHeight?: number;
+  image: string;
+  imageWidth: number;
+  imageHeight: number;
   imagePosition?: string;
-  blueprint?: BlueprintVariant;
   imageAlt: string;
   description: string;
 }
@@ -80,7 +78,6 @@ export interface AccessoriesLocaleCopy {
   dmSubtotalFromQuoted: (subtotal: string) => string;
   dmSubtotalExact: (subtotal: string) => string;
   dmSubtotalByQuote: string;
-  blueprintBadges: Record<BlueprintVariant, string>;
   items: AccessoryItem[];
 }
 
@@ -176,11 +173,6 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
       `Estimated subtotal: From ${subtotal} + quoted`,
     dmSubtotalExact: (subtotal) => `Estimated subtotal: ${subtotal}`,
     dmSubtotalByQuote: "Estimated subtotal: By quote",
-    blueprintBadges: {
-      "internal-fan": "USB-C · INTERNAL FIT",
-      "std-fan": "STD · 15W QC · TPU",
-      "plus-fan": "PLUS · HIGH AIRFLOW",
-    },
     items: [
       {
         id: "internal-fan",
@@ -202,7 +194,6 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imageWidth: 840,
         imageHeight: 672,
         imagePosition: "center 28%",
-        blueprint: "internal-fan",
         imageAlt:
           "Sky-blue horned Kemono fursuit head preview for custom internal fan fitting",
         description:
@@ -228,7 +219,6 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imageWidth: 840,
         imageHeight: 672,
         imagePosition: "center 32%",
-        blueprint: "std-fan",
         imageAlt:
           "Sy Tray and Minny Minnie Kemono fursuits preview for Fursuit Fan STD Edition",
         description:
@@ -253,7 +243,6 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imageWidth: 840,
         imageHeight: 672,
         imagePosition: "center 26%",
-        blueprint: "plus-fan",
         imageAlt:
           "White cat fursuit partial preview for upcoming Fursuit Fan PLUS Edition",
         description:
@@ -369,11 +358,6 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
       `Tạm tính: Từ ${subtotal} + báo giá riêng`,
     dmSubtotalExact: (subtotal) => `Tạm tính: ${subtotal}`,
     dmSubtotalByQuote: "Tạm tính: Báo giá riêng theo mẫu",
-    blueprintBadges: {
-      "internal-fan": "USB-C · GẮN TRONG HEAD",
-      "std-fan": "STD · SẠC NHANH 15W · TPU",
-      "plus-fan": "PLUS · GIÓ MẠNH HƠN",
-    },
     items: [
       {
         id: "internal-fan",
@@ -395,7 +379,6 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imageWidth: 840,
         imageHeight: 672,
         imagePosition: "center 28%",
-        blueprint: "internal-fan",
         imageAlt: "Ảnh minh họa Head fursuit Kemono xanh cho quạt gắn trong Head",
         description:
           "Quạt tản nhiệt gắn gọn bên trong Head fursuit. Cấp nguồn qua cổng USB-C, chạy êm và mát đều khi bạn đội liên tục nhiều giờ.",
@@ -420,7 +403,6 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imageWidth: 840,
         imageHeight: 672,
         imagePosition: "center 32%",
-        blueprint: "std-fan",
         imageAlt:
           "Ảnh minh họa fursuit Sy Tray và Minny Minnie cho Fursuit Fan STD Edition",
         description:
@@ -445,7 +427,6 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imageWidth: 840,
         imageHeight: 672,
         imagePosition: "center 26%",
-        blueprint: "plus-fan",
         imageAlt:
           "Ảnh minh họa fursuit mèo trắng cho Fursuit Fan PLUS Edition sắp ra mắt",
         description:
