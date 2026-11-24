@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, startTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   motion,
   AnimatePresence,
@@ -12,14 +13,14 @@ import {
 } from "framer-motion";
 import { playShutterSound } from "./Obturateur";
 import { useLang } from "./LanguageProvider";
+import {
+  extractHomeSection,
+  isModifiedClick,
+  navigateToHomeSection,
+} from "@/lib/sectionScroll";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
-const CREME = "#F5F8FC";
-const NOIR = "#111622";
-const BEURRE = "#FFF0A6";
-const MONO = 'var(--font-space-mono), "Space Mono", ui-monospace, monospace';
-const SANS = 'var(--font-dm-sans), "Plus Jakarta Sans", "DM Sans", system-ui, sans-serif';
-const DISPLAY = 'var(--font-display), "Be Vietnam Pro", sans-serif';
+const BEURRE = "#fff0a6";
 
 const HOLD = 500;
 const ZONE = 0.035;
@@ -58,6 +59,10 @@ export default function MiseAuPoint({
   sound = true,
 }: MiseAuPointProps) {
   const { lang } = useLang();
+  const pathname = usePathname();
+  const router = useRouter();
+  const linkSection = extractHomeSection(link);
+  const resolvedHref = linkSection ? "/" : link;
   const activeLabel =
     label ?? (lang === "vi" ? "Thử thách · đến lượt bạn" : "Bonus · your turn to play");
   const activeTitle =
@@ -239,7 +244,7 @@ export default function MiseAuPoint({
       onTouchEnd={() => {
         touchStartRef.current = null;
       }}
-      className="relative w-full h-[100svh] min-h-[600px] bg-[#111622] overflow-hidden text-[#F5F8FC] select-none"
+      className="relative w-full h-[100svh] min-h-[600px] bg-ink overflow-hidden text-cream select-none"
       style={{
         cursor: sharp ? "default" : "ew-resize",
         touchAction: "pan-y",
@@ -316,19 +321,19 @@ export default function MiseAuPoint({
 
       <span
         aria-hidden="true"
-        className="hidden sm:block absolute left-8 top-[88px] lg:top-[112px] w-[26px] h-[26px] border-t-[1.5px] border-l-[1.5px] border-[#F5F8FC] pointer-events-none"
+        className="hidden sm:block absolute left-8 top-[88px] lg:top-[112px] w-[26px] h-[26px] border-t-[1.5px] border-l-[1.5px] border-cream pointer-events-none"
       />
       <span
         aria-hidden="true"
-        className="hidden sm:block absolute right-8 top-[88px] lg:top-[112px] w-[26px] h-[26px] border-t-[1.5px] border-r-[1.5px] border-[#F5F8FC] pointer-events-none"
+        className="hidden sm:block absolute right-8 top-[88px] lg:top-[112px] w-[26px] h-[26px] border-t-[1.5px] border-r-[1.5px] border-cream pointer-events-none"
       />
       <span
         aria-hidden="true"
-        className="hidden sm:block absolute left-8 bottom-8 w-[26px] h-[26px] border-b-[1.5px] border-l-[1.5px] border-[#F5F8FC] pointer-events-none"
+        className="hidden sm:block absolute left-8 bottom-8 w-[26px] h-[26px] border-b-[1.5px] border-l-[1.5px] border-cream pointer-events-none"
       />
       <span
         aria-hidden="true"
-        className="hidden sm:block absolute right-8 bottom-8 w-[26px] h-[26px] border-b-[1.5px] border-r-[1.5px] border-[#F5F8FC] pointer-events-none"
+        className="hidden sm:block absolute right-8 bottom-8 w-[26px] h-[26px] border-b-[1.5px] border-r-[1.5px] border-cream pointer-events-none"
       />
 
       <motion.div
@@ -353,25 +358,20 @@ export default function MiseAuPoint({
       />
 
       <div
-        className="absolute left-6 right-6 sm:left-[64px] sm:right-[64px] top-24 lg:top-28 flex justify-between items-center gap-3 flex-wrap pointer-events-none"
+        className="absolute left-6 right-6 sm:left-16 sm:right-16 top-24 lg:top-28 flex justify-between items-center gap-3 flex-wrap pointer-events-none font-mono text-xs tracking-eyebrow uppercase"
         style={{
-          fontFamily: MONO,
-          fontSize: 12,
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
           textShadow: "0 2px 12px rgba(17,22,34,0.5)",
         }}
       >
         <span>[{activeLabel}]</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span className="flex items-center gap-2">
           <span
             aria-hidden="true"
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: 99,
-              background: sharp || inZone ? BEURRE : "rgba(245,248,252,0.4)",
-            }}
+            className={
+              sharp || inZone
+                ? "w-2 h-2 rounded-full bg-butter"
+                : "w-2 h-2 rounded-full bg-cream/40"
+            }
           />
           {sharp
             ? lang === "vi"
@@ -417,26 +417,10 @@ export default function MiseAuPoint({
                 gap: 14,
               }}
             >
-              <div
-                className="font-stagheiz"
-                style={{
-                  fontFamily: DISPLAY,
-                  textTransform: "uppercase",
-                  fontSize: "clamp(34px, 5.4vw, 82px)",
-                  lineHeight: lang === "vi" ? 1.14 : 1.04,
-                  letterSpacing: lang === "vi" ? "-0.02em" : "-0.03em",
-                }}
-              >
+              <div className="font-stagheiz text-[clamp(34px,5.4vw,82px)] leading-[1.04] tracking-[-0.03em] vi:leading-[1.14] vi:tracking-[-0.02em]">
                 {activeTitle}
               </div>
-              <div
-                style={{
-                  fontFamily: SANS,
-                  fontSize: 18,
-                  letterSpacing: "-0.01em",
-                  opacity: 0.9,
-                }}
-              >
+              <div className="font-sans text-[18px] tracking-[-0.01em] opacity-90">
                 {inZone
                   ? lang === "vi"
                     ? "Nét rồi! Giữ yên…"
@@ -456,10 +440,9 @@ export default function MiseAuPoint({
                 }}
               >
                 <motion.div
+                  className="h-full bg-butter"
                   style={{
-                    height: "100%",
                     width: holdW,
-                    background: BEURRE,
                   }}
                 />
               </div>
@@ -482,28 +465,10 @@ export default function MiseAuPoint({
                 pointerEvents: "auto",
               }}
             >
-              <div
-                className="font-stagheiz"
-                style={{
-                  fontFamily: DISPLAY,
-                  textTransform: "uppercase",
-                  fontSize:
-                    lang === "vi"
-                      ? "clamp(34px, 5.4vw, 82px)"
-                      : "clamp(48px, 7vw, 104px)",
-                  lineHeight: lang === "vi" ? 1.14 : 0.92,
-                  letterSpacing: lang === "vi" ? "-0.02em" : "-0.04em",
-                }}
-              >
+              <div className="font-stagheiz text-[clamp(48px,7vw,104px)] leading-[0.92] tracking-[-0.04em] vi:text-[clamp(34px,5.4vw,82px)] vi:leading-[1.14] vi:tracking-[-0.02em]">
                 {lang === "vi" ? "SẮC NÉT TỪNG ĐƯỜNG MAY." : "SHARP. EVERY STITCH."}
               </div>
-              <div
-                style={{
-                  fontFamily: SANS,
-                  fontSize: 20,
-                  letterSpacing: "-0.01em",
-                }}
-              >
+              <div className="font-sans text-[20px] tracking-[-0.01em]">
                 {activeText}
               </div>
               <div
@@ -515,23 +480,15 @@ export default function MiseAuPoint({
                 }}
               >
                 <motion.a
-                  href={link}
-                  whileHover="h"
-                  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFF0A6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622]"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "17px 24px",
-                    borderRadius: 999,
-                    background: CREME,
-                    color: NOIR,
-                    fontFamily: SANS,
-                    fontWeight: 600,
-                    fontSize: 15,
-                    textDecoration: "none",
-                    textShadow: "none",
+                  href={resolvedHref}
+                  onClick={(e) => {
+                    if (linkSection && !isModifiedClick(e)) {
+                      e.preventDefault();
+                      navigateToHomeSection(linkSection, pathname, router);
+                    }
                   }}
+                  whileHover="h"
+                  className="inline-flex items-center gap-3 px-6 py-[17px] rounded-full bg-cream text-ink font-sans font-semibold text-[15px] no-underline [text-shadow:none] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-butter focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
                 >
                   {activeButton}
                   <span
@@ -570,19 +527,7 @@ export default function MiseAuPoint({
                 <button
                   type="button"
                   onClick={replay}
-                  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFF0A6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622]"
-                  style={{
-                    appearance: "none",
-                    cursor: "pointer",
-                    padding: "16px 22px",
-                    borderRadius: 999,
-                    border: `1.5px solid ${CREME}`,
-                    background: "transparent",
-                    color: CREME,
-                    fontFamily: SANS,
-                    fontWeight: 600,
-                    fontSize: 15,
-                  }}
+                  className="appearance-none cursor-pointer px-[22px] py-4 rounded-full border-[1.5px] border-cream bg-transparent text-cream font-sans font-semibold text-[15px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-butter focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
                 >
                   {lang === "vi" ? "Chơi lại" : "Play again"}
                 </button>
@@ -611,7 +556,7 @@ export default function MiseAuPoint({
             moveClientX(e.clientX);
           }
         }}
-        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFF0A6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111622]"
+        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-butter focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
         style={{
           position: "absolute",
           left: "50%",
@@ -653,34 +598,21 @@ export default function MiseAuPoint({
               }}
             >
               <span
-                style={{
-                  width: 1.5,
-                  height: i % 10 === 0 ? 14 : 7,
-                  background: CREME,
-                  opacity: i % 10 === 0 ? 1 : 0.5,
-                }}
+                className={
+                  i % 10 === 0
+                    ? "w-[1.5px] h-3.5 bg-cream opacity-100"
+                    : "w-[1.5px] h-[7px] bg-cream opacity-50"
+                }
               />
               {i % 10 === 0 && (
-                <span style={{ fontFamily: MONO, fontSize: 10 }}>
-                  {MARKS[i / 10]}
-                </span>
+                <span className="font-mono text-[10px]">{MARKS[i / 10]}</span>
               )}
             </div>
           ))}
         </motion.div>
         <span
           aria-hidden="true"
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: 6,
-            bottom: 6,
-            width: 2,
-            marginLeft: -1,
-            background: BEURRE,
-            borderRadius: 2,
-            pointerEvents: "none",
-          }}
+          className="absolute left-1/2 top-1.5 bottom-1.5 w-0.5 -ml-[1px] bg-butter rounded-[2px] pointer-events-none"
         />
       </div>
 
@@ -693,12 +625,7 @@ export default function MiseAuPoint({
               initial={{ opacity: 0.9 }}
               animate={{ opacity: 0 }}
               transition={{ duration: 0.6 }}
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: "#fff",
-                pointerEvents: "none",
-              }}
+              className="absolute inset-0 bg-white pointer-events-none"
             />
           )}
         </AnimatePresence>

@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
-import { useTheme } from "./CircularRevealToggle";
+import MagneticButton from "@/components/motion/MagneticButton";
+import { useDeviceTier } from "@/lib/deviceTier";
+import { useSmoothScroll } from "@/lib/smoothScroll";
+import { cn } from "@/lib/cn";
 
 export interface ShowcaseItem {
   id: string;
@@ -18,6 +21,8 @@ export interface ShowcaseItem {
   author?: string;
   role?: string;
   objectPosition?: string;
+  width?: number;
+  height?: number;
 }
 
 interface ShowcaseLightboxProps {
@@ -32,6 +37,8 @@ interface ShowcaseLightboxProps {
 }
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const LIGHTBOX_ICON_BTN_CLASS =
+  "absolute z-10 w-11 h-11 rounded-full border border-ink/20 bg-cream/90 text-ink hover:bg-ink hover:text-cream transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-cream dark:bg-night-surface/90 dark:border-cream/25 dark:text-cream dark:hover:bg-butter dark:hover:text-ink dark:hover:border-butter dark:focus-visible:ring-butter dark:focus-visible:ring-offset-night";
 
 export default function ShowcaseLightbox({
   items,
@@ -43,21 +50,30 @@ export default function ShowcaseLightbox({
   nextAria,
   ctaLabel,
 }: ShowcaseLightboxProps) {
-  const { isDark } = useTheme();
+  const { tier, isReducedMotion } = useDeviceTier();
+  const { stop: stopScroll, start: startScroll } = useSmoothScroll();
+
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const isOpen = activeIndex !== null && activeIndex >= 0 && activeIndex < items.length;
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const isOpen =
+    activeIndex !== null && activeIndex >= 0 && activeIndex < items.length;
   const activeItem = isOpen ? items[activeIndex] : null;
+  const lowPower = tier === "low" || isReducedMotion;
 
   useEffect(() => {
     if (!isOpen) return;
 
     previousFocusRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    stopScroll();
 
     const focusTimer = window.setTimeout(() => {
       closeButtonRef.current?.focus();
@@ -66,9 +82,20 @@ export default function ShowcaseLightbox({
     return () => {
       window.clearTimeout(focusTimer);
       document.body.style.overflow = prevOverflow;
+      startScroll();
       previousFocusRef.current?.focus();
     };
-  }, [isOpen]);
+  }, [isOpen, stopScroll, startScroll]);
+
+  const handlePrev = useCallback(() => {
+    if (activeIndex === null || items.length <= 1) return;
+    onChangeIndex((activeIndex - 1 + items.length) % items.length);
+  }, [activeIndex, items.length, onChangeIndex]);
+
+  const handleNext = useCallback(() => {
+    if (activeIndex === null || items.length <= 1) return;
+    onChangeIndex((activeIndex + 1) % items.length);
+  }, [activeIndex, items.length, onChangeIndex]);
 
   useEffect(() => {
     if (!isOpen || activeIndex === null) return;
@@ -82,13 +109,13 @@ export default function ShowcaseLightbox({
 
       if (e.key === "ArrowLeft" && items.length > 1) {
         e.preventDefault();
-        onChangeIndex((activeIndex - 1 + items.length) % items.length);
+        handlePrev();
         return;
       }
 
       if (e.key === "ArrowRight" && items.length > 1) {
         e.preventDefault();
-        onChangeIndex((activeIndex + 1) % items.length);
+        handleNext();
         return;
       }
 
@@ -113,86 +140,100 @@ export default function ShowcaseLightbox({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, activeIndex, items.length, onChangeIndex]);
-
-  const handlePrev = () => {
-    if (activeIndex === null || items.length <= 1) return;
-    onChangeIndex((activeIndex - 1 + items.length) % items.length);
-  };
-
-  const handleNext = () => {
-    if (activeIndex === null || items.length <= 1) return;
-    onChangeIndex((activeIndex + 1) % items.length);
-  };
+  }, [isOpen, activeIndex, items.length, onChangeIndex, handlePrev, handleNext]);
 
   return (
     <AnimatePresence>
       {activeItem && activeIndex !== null && (
         <motion.div
+          data-lenis-prevent
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.22, ease: EASE }}
+          transition={{ duration: isReducedMotion ? 0.05 : 0.24, ease: EASE }}
           onClick={() => onChangeIndex(null)}
-          className={`fixed inset-0 z-[80] backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto ${
-            isDark ? "bg-[#05080f]/85" : "bg-[#111622]/80"
-          }`}
+          className={cn(
+            "fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-6 overflow-y-auto",
+            lowPower
+              ? "bg-ink/90 dark:bg-black/92"
+              : "backdrop-blur-md bg-ink/80 dark:bg-black/85"
+          )}
         >
           <motion.div
             ref={dialogRef}
+            data-lenis-prevent
             role="dialog"
             aria-modal="true"
             aria-label={activeItem.title}
-            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            initial={
+              isReducedMotion
+                ? { opacity: 1 }
+                : { opacity: 0, scale: 0.96, y: 14 }
+            }
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 10 }}
-            transition={{ duration: 0.28, ease: EASE }}
+            exit={
+              isReducedMotion
+                ? { opacity: 0 }
+                : { opacity: 0, scale: 0.96, y: 10 }
+            }
+            transition={{ duration: isReducedMotion ? 0.05 : 0.3, ease: EASE }}
             onClick={(e) => e.stopPropagation()}
-            className={`relative w-full max-w-[820px] max-h-[92vh] overflow-y-auto rounded-[28px] border ${
-              isDark
-                ? "bg-[#141b28] text-[#f5f8fc] border-[#f5f8fc]/15 shadow-[0_28px_70px_rgba(0,0,0,0.65)]"
-                : "bg-[#f5f8fc] text-[#111622] border-[#111622]/15 shadow-[0_28px_70px_rgba(17,22,34,0.45)]"
-            }`}
+            className="relative w-full max-w-[840px] max-h-[92vh] overflow-y-auto rounded-card-lg border bg-cream text-ink border-ink/15 shadow-modal dark:bg-night-surface dark:text-cream dark:border-cream/15"
           >
             <div
-              className={`relative w-full flex items-center justify-center min-h-[260px] sm:min-h-[380px] max-h-[58vh] overflow-hidden ${
-                isDark ? "bg-[#1a2436]" : "bg-[#dce8f5]"
-              }`}
-            >
-              <img
-                src={activeItem.src}
-                alt={activeItem.alt}
-                decoding="async"
-                style={
-                  activeItem.objectPosition
-                    ? { objectPosition: activeItem.objectPosition }
-                    : undefined
+              onTouchStart={(e) => {
+                const t = e.touches[0];
+                if (!t) return;
+                touchStartRef.current = { x: t.clientX, y: t.clientY };
+              }}
+              onTouchEnd={(e) => {
+                const start = touchStartRef.current;
+                touchStartRef.current = null;
+                if (!start || items.length <= 1) return;
+                const t = e.changedTouches[0];
+                if (!t) return;
+                const dx = t.clientX - start.x;
+                const dy = t.clientY - start.y;
+                if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+                  if (dx < 0) handleNext();
+                  else handlePrev();
                 }
-                className="w-full max-h-[58vh] object-contain"
-              />
+              }}
+              className="relative w-full flex items-center justify-center min-h-[260px] sm:min-h-[380px] max-h-[58vh] overflow-hidden bg-taupe dark:bg-night-elevated"
+            >
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={activeItem.id}
+                  src={activeItem.src}
+                  alt={activeItem.alt}
+                  width={activeItem.width}
+                  height={activeItem.height}
+                  decoding="async"
+                  initial={isReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.985 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={isReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 1.01 }}
+                  transition={{ duration: isReducedMotion ? 0.05 : 0.22, ease: EASE }}
+                  style={
+                    activeItem.objectPosition
+                      ? { objectPosition: activeItem.objectPosition }
+                      : undefined
+                  }
+                  className="w-auto max-w-full max-h-[58vh] object-contain select-none"
+                />
+              </AnimatePresence>
 
               <button
                 ref={closeButtonRef}
                 type="button"
                 aria-label={closeAria}
                 onClick={() => onChangeIndex(null)}
-                className={`absolute top-3.5 right-3.5 z-10 w-11 h-11 rounded-full border transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-                  isDark
-                    ? "bg-[#141b28]/90 border-[#f5f8fc]/25 text-[#f5f8fc] hover:bg-[#fff0a6] hover:!text-[#111622] hover:border-[#fff0a6] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#141b28]"
-                    : "bg-[#f5f8fc]/95 border-[#111622]/20 text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622]"
-                }`}
+                className={cn(LIGHTBOX_ICON_BTN_CLASS, "top-3.5 right-3.5")}
               >
                 <X className="w-5 h-5" />
               </button>
 
               {items.length > 1 && (
-                <div
-                  className={`absolute top-3.5 left-3.5 z-10 px-3 py-1.5 rounded-full font-mono text-[11px] uppercase tracking-[0.06em] ${
-                    isDark
-                      ? "bg-[#0b0f17]/90 border border-[#f5f8fc]/15 text-[#f5f8fc]"
-                      : "bg-[#111622]/85 text-[#f5f8fc]"
-                  }`}
-                >
+                <div className="absolute top-3.5 left-3.5 z-10 px-3 py-1.5 rounded-full font-mono text-[11px] uppercase tracking-eyebrow bg-ink/85 text-cream border border-transparent dark:bg-night/90 dark:border-cream/15">
                   {String(activeIndex + 1).padStart(2, "0")} /{" "}
                   {String(items.length).padStart(2, "0")}
                 </div>
@@ -204,11 +245,10 @@ export default function ShowcaseLightbox({
                     type="button"
                     aria-label={prevAria}
                     onClick={handlePrev}
-                    className={`absolute left-3.5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full border transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-                      isDark
-                        ? "bg-[#141b28]/90 border-[#f5f8fc]/25 text-[#f5f8fc] hover:bg-[#fff0a6] hover:!text-[#111622] hover:border-[#fff0a6] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#141b28]"
-                        : "bg-[#f5f8fc]/90 border-[#111622]/20 text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622]"
-                    }`}
+                    className={cn(
+                      LIGHTBOX_ICON_BTN_CLASS,
+                      "left-3.5 top-1/2 -translate-y-1/2"
+                    )}
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
@@ -216,11 +256,10 @@ export default function ShowcaseLightbox({
                     type="button"
                     aria-label={nextAria}
                     onClick={handleNext}
-                    className={`absolute right-3.5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full border transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-                      isDark
-                        ? "bg-[#141b28]/90 border-[#f5f8fc]/25 text-[#f5f8fc] hover:bg-[#fff0a6] hover:!text-[#111622] hover:border-[#fff0a6] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#141b28]"
-                        : "bg-[#f5f8fc]/90 border-[#111622]/20 text-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622]"
-                    }`}
+                    className={cn(
+                      LIGHTBOX_ICON_BTN_CLASS,
+                      "right-3.5 top-1/2 -translate-y-1/2"
+                    )}
                   >
                     <ArrowRight className="w-5 h-5" />
                   </button>
@@ -231,18 +270,10 @@ export default function ShowcaseLightbox({
             <div className="p-6 sm:p-8 flex flex-col gap-5">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="flex flex-col gap-2">
-                  <span
-                    className={`font-mono text-[11px] uppercase tracking-[0.06em] ${
-                      isDark ? "text-[#f5f8fc]/70" : "text-[#111622]/70"
-                    }`}
-                  >
+                  <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink/70 dark:text-cream/70">
                     {activeItem.eyebrow}
                   </span>
-                  <h3
-                    className={`font-stagheiz text-[28px] sm:text-[34px] leading-[1] ${
-                      isDark ? "text-[#f5f8fc]" : "text-[#111622]"
-                    }`}
-                  >
+                  <h3 className="font-stagheiz text-[28px] sm:text-[34px] leading-none vi:leading-[1.16] tracking-[-0.015em] text-ink dark:text-cream py-[0.04em]">
                     {activeItem.title}
                   </h3>
                   {activeItem.tags.length > 0 && (
@@ -250,11 +281,7 @@ export default function ShowcaseLightbox({
                       {activeItem.tags.map((tag) => (
                         <span
                           key={tag}
-                          className={`px-3 py-1 rounded-full border font-mono text-[11px] uppercase tracking-[0.05em] ${
-                            isDark
-                              ? "bg-[#1a2436] border-[#f5f8fc]/15 text-[#f5f8fc]"
-                              : "bg-[#dce8f5] border-[#111622]/15 text-[#111622]"
-                          }`}
+                          className="px-3 py-1 rounded-full border font-mono text-[11px] uppercase tracking-wider bg-taupe border-ink/15 text-ink dark:bg-night-elevated dark:border-cream/15 dark:text-cream"
                         >
                           {tag}
                         </span>
@@ -263,35 +290,29 @@ export default function ShowcaseLightbox({
                   )}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => onRequestSimilar(activeItem)}
-                  className={`group shrink-0 inline-flex items-center justify-center gap-3 rounded-full px-6 py-3.5 font-sans text-[15px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-                    isDark
-                      ? "bg-[#f5f8fc] border border-[#f5f8fc] hover:bg-[#fff0a6] hover:border-[#fff0a6] text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#141b28]"
-                      : "bg-[#111622] hover:bg-[#1e3557] text-[#f5f8fc] focus-visible:ring-[#111622]"
-                  }`}
-                >
-                  <span>{ctaLabel}</span>
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </button>
+                <MagneticButton as="span" strength={0.18} innerStrength={0.08}>
+                  <button
+                    type="button"
+                    onClick={() => onRequestSimilar(activeItem)}
+                    className="group shrink-0 inline-flex items-center justify-center gap-3 rounded-full border px-6 py-3.5 font-sans text-[15px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 bg-ink border-ink hover:bg-espresso hover:border-espresso text-cream focus-visible:ring-ink focus-visible:ring-offset-cream dark:bg-cream dark:border-cream dark:hover:bg-butter dark:hover:border-butter dark:text-ink dark:focus-visible:ring-butter dark:focus-visible:ring-offset-night-surface"
+                  >
+                    <span>{ctaLabel}</span>
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </button>
+                </MagneticButton>
               </div>
 
-              <p
-                className={`font-sans text-[16px] leading-[1.55] ${
-                  isDark ? "text-[#f5f8fc]/80" : "text-[#111622]/80"
-                }`}
-              >
+              <p className="font-sans text-base leading-[1.55] text-ink/80 dark:text-cream/80">
                 {activeItem.description}
               </p>
 
               {activeItem.review && (
-                <div className="theme-butter-card rounded-[18px] bg-[#fff0a6] border border-[#111622]/15 p-4 sm:p-5">
-                  <p className="font-sans text-[15px] leading-[1.5] text-[#111622] mb-2">
+                <div className="theme-butter-card rounded-card-sm bg-butter border border-ink/15 p-4 sm:p-5">
+                  <p className="font-sans text-[15px] leading-normal text-ink mb-2">
                     &ldquo;{activeItem.review}&rdquo;
                   </p>
                   {activeItem.author && (
-                    <div className="font-mono text-[11px] uppercase tracking-[0.05em] text-[#111622]/70">
+                    <div className="font-mono text-[11px] uppercase tracking-wider text-ink/70">
                       {activeItem.author}
                       {activeItem.role ? ` · ${activeItem.role}` : ""}
                     </div>

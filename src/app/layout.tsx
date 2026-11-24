@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { LanguageProvider } from "@/components/LanguageProvider";
+import { SmoothScrollProvider } from "@/lib/smoothScroll";
+import PageTransitionShell from "@/components/motion/PageTransitionShell";
+import CustomCursor from "@/components/motion/CustomCursor";
 import "./globals.css";
 
 const RAW_SITE_URL =
@@ -65,7 +68,14 @@ export default function RootLayout({
   return (
     <html lang="en" data-lang="en">
       <body className="bg-cream text-ink antialiased selection:bg-butter selection:text-ink">
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <SmoothScrollProvider>
+            <PageTransitionShell>
+              {children}
+              <CustomCursor />
+            </PageTransitionShell>
+          </SmoothScrollProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -1,8 +1,11 @@
 /* Lucian UX/UI Prompt #209 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#209 */
 .u209 {
+  --u209-ink: theme("colors.cream");
+  --u209-accent: theme("colors.butter");
+  --u209-dd-bg: theme("colors.night-elevated");
   position: relative;
   width: 100%;
-  color: #f5f8fc;
+  color: var(--u209-ink);
 }
 
 .u209.is-open {
@@ -26,11 +29,11 @@
 
 .u209-fd:focus-within {
   background: rgba(245, 248, 252, 0.11);
-  box-shadow: inset 0 0 0 2px #fff0a6, 0 0 0 4px rgba(255, 240, 166, 0.14);
+  box-shadow: inset 0 0 0 2px var(--u209-accent), 0 0 0 4px rgba(255, 240, 166, 0.14);
 }
 
 .u209.is-typing .u209-fd:focus-within {
-  box-shadow: inset 0 0 0 2px #fff0a6, 0 0 0 5px rgba(255, 240, 166, 0.22);
+  box-shadow: inset 0 0 0 2px var(--u209-accent), 0 0 0 5px rgba(255, 240, 166, 0.22);
 }
 
 .u209.is-ok .u209-fd {
@@ -69,7 +72,7 @@
   border-right: 1px solid rgba(245, 248, 252, 0.16);
   border-radius: 14px 0 0 14px;
   background: transparent;
-  color: #f5f8fc;
+  color: var(--u209-ink);
   font: inherit;
   font-size: 13px;
   font-weight: 700;
@@ -117,7 +120,7 @@
   padding: 13px 42px 13px 14px;
   border: 0;
   background: transparent;
-  color: #f5f8fc;
+  color: var(--u209-ink);
   font: inherit;
   font-size: 15px;
   font-weight: 500;
@@ -168,7 +171,7 @@
 
 .u209-ck path {
   fill: none;
-  stroke: #ffffff;
+  stroke: white;
   stroke-width: 2.2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -211,8 +214,8 @@
   width: min(272px, 100%);
   padding: 6px;
   border-radius: 16px;
-  background: #182234;
-  color: #f5f8fc;
+  background: var(--u209-dd-bg);
+  color: var(--u209-ink);
   box-shadow: 0 0 0 1px rgba(245, 248, 252, 0.18), 0 22px 44px -12px rgba(0, 0, 0, 0.65);
   transform-origin: 20% 0;
   transform: scale(0.94) translateY(-4px);
@@ -235,7 +238,7 @@
   border: 1px solid rgba(245, 248, 252, 0.14);
   border-radius: 10px;
   background: rgba(245, 248, 252, 0.08);
-  color: #f5f8fc;
+  color: var(--u209-ink);
   font: inherit;
   font-size: 12.5px;
   font-weight: 600;
@@ -249,7 +252,7 @@
 }
 
 .u209-sr:focus {
-  border-color: #fff0a6;
+  border-color: var(--u209-accent);
 }
 
 .u209-ls {
@@ -270,7 +273,7 @@
   border: 0;
   border-radius: 9px;
   background: transparent;
-  color: #f5f8fc;
+  color: var(--u209-ink);
   font: inherit;
   font-size: 12.5px;
   font-weight: 600;
@@ -285,7 +288,7 @@
 }
 
 .u209-op[aria-selected="true"] {
-  color: #fff0a6;
+  color: var(--u209-accent);
 }
 
 .u209-op em {
@@ -317,7 +320,7 @@
 }
 
 .u209 button:focus-visible {
-  outline: 2px solid #fff0a6;
+  outline: 2px solid var(--u209-accent);
   outline-offset: 2px;
 }
 

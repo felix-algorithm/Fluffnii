@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useLang } from "./LanguageProvider";
 
 export interface PolaroidSlide {
@@ -24,26 +23,12 @@ export interface PolaroidsDefileProps {
 }
 
 const EASE = [0.22, 1, 0.36, 1] as const;
-const MONO = 'var(--font-space-mono), "Space Mono", ui-monospace, monospace';
 const ROT = [-4, 3, -2, 5, -3, 2, -5, 4] as const;
 const num = (i: number) => `(${String(i + 1).padStart(3, "0")})`;
 
 const HERO_POLAROIDS: PolaroidSlide[] = [
   { src: "/images/hero-01.webp", legende: "(001)", alt: "FluffNii Studio fursuit head" },
   { src: "/images/hero-02.webp", legende: "(002)", alt: "FluffNii Studio custom fursuit photo 2" },
-  { src: "/images/hero-03.webp", legende: "(003)", alt: "FluffNii Studio custom fursuit photo 3" },
-  { src: "/images/hero-04.webp", legende: "(004)", alt: "FluffNii Studio custom fursuit photo 4" },
-  { src: "/images/hero-05.webp", legende: "(005)", alt: "FluffNii Studio custom fursuit photo 5" },
-  { src: "/images/hero-06.webp", legende: "(006)", alt: "FluffNii Studio custom fursuit photo 6" },
-  { src: "/images/hero-07.webp", legende: "(007)", alt: "FluffNii Studio custom fursuit photo 7" },
-  { src: "/images/hero-08.webp", legende: "(008)", alt: "FluffNii Studio custom fursuit photo 8" },
-  { src: "/images/hero-09.webp", legende: "(009)", alt: "FluffNii Studio custom fursuit photo 9" },
-  { src: "/images/hero-10.webp", legende: "(010)", alt: "FluffNii Studio custom fursuit photo 10" },
-  { src: "/images/hero-11.webp", legende: "(011)", alt: "FluffNii Studio custom fursuit photo 11" },
-  { src: "/images/hero-12.webp", legende: "(012)", alt: "FluffNii Studio custom fursuit photo 12" },
-  { src: "/images/hero-13.webp", legende: "(013)", alt: "FluffNii Studio custom fursuit photo 13" },
-  { src: "/images/hero-14.webp", legende: "(014)", alt: "FluffNii Studio custom fursuit photo 14" },
-  { src: "/images/hero-15.webp", legende: "(015)", alt: "FluffNii Studio custom fursuit photo 15" },
 ];
 
 interface PolaroidCardProps {
@@ -67,28 +52,14 @@ function Polaroid({
 }: PolaroidCardProps) {
   return (
     <div
+      className="flex-none bg-white pt-2 px-2 pb-[30px] rounded-[3px] relative shadow-[0_20px_34px_-18px_rgba(30,53,87,0.48),0_2px_4px_rgba(30,53,87,0.12)]"
       style={{
-        flex: "none",
         width,
-        background: "#fff",
-        padding: "8px 8px 30px",
-        borderRadius: 3,
-        position: "relative",
         transform: rotate ? `rotate(${rotate}deg)` : undefined,
-        boxShadow:
-          "0 20px 34px -18px rgba(30,53,87,0.48), 0 2px 4px rgba(30,53,87,0.12)",
         ...style,
       }}
     >
-      <div
-        style={{
-          width: "100%",
-          aspectRatio: "1",
-          backgroundColor: "#e9eff7",
-          borderRadius: 2,
-          overflow: "hidden",
-        }}
-      >
+      <div className="w-full aspect-square bg-taupe rounded-[2px] overflow-hidden">
         <img
           src={src}
           alt={alt}
@@ -98,39 +69,18 @@ function Polaroid({
           decoding={priority ? "sync" : "async"}
           loading={priority ? "eager" : "lazy"}
           draggable={false}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center",
-            display: "block",
-          }}
+          className="w-full h-full object-cover object-center block"
         />
       </div>
-      <span
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 9,
-          textAlign: "center",
-          fontFamily: MONO,
-          fontSize: 10,
-          letterSpacing: "0.05em",
-          textTransform: "uppercase",
-          color: "#111622",
-          userSelect: "none",
-        }}
-      >
+      <span className="absolute left-0 right-0 bottom-[9px] text-center font-mono text-[10px] tracking-wider uppercase text-ink select-none">
         {cap}
       </span>
     </div>
   );
 }
 
-function usePreload(imgs: PolaroidSlide[], need = 3, timeout = 6000): boolean {
+function usePreload(imgs: PolaroidSlide[], need = 2, timeout = 6000): boolean {
   const [ready, setReady] = useState(false);
-  const cacheRef = useRef<HTMLImageElement[]>([]);
 
   useEffect(() => {
     if (typeof window === "undefined" || imgs.length === 0) {
@@ -140,48 +90,30 @@ function usePreload(imgs: PolaroidSlide[], need = 3, timeout = 6000): boolean {
 
     let cancelled = false;
     const target = Math.min(need, imgs.length);
+    if (target === 0) {
+      setReady(true);
+      return;
+    }
+
     const seen = new Set<number>();
-    let idleTimer: number | undefined;
-
-    const loadRemainingSequentially = (index: number) => {
-      if (cancelled || index >= imgs.length) return;
-      const img = new window.Image();
-      img.decoding = "async";
-      img.onload = () => {
-        if (!cancelled) loadRemainingSequentially(index + 1);
-      };
-      img.onerror = () => {
-        if (!cancelled) loadRemainingSequentially(index + 1);
-      };
-      img.src = imgs[index].src;
-      cacheRef.current.push(img);
-    };
-
-    const scheduleTail = () => {
-      if (cancelled || imgs.length <= target || idleTimer !== undefined) return;
-      idleTimer = window.setTimeout(() => {
-        loadRemainingSequentially(target);
-      }, 650);
-    };
 
     const markDone = (idx: number) => {
       if (seen.has(idx)) return;
       seen.add(idx);
       if (!cancelled && seen.size >= target) {
         setReady(true);
-        scheduleTail();
       }
     };
 
     const fallbackTimer = window.setTimeout(() => {
       if (!cancelled) {
         setReady(true);
-        scheduleTail();
       }
     }, timeout);
 
     const eagerImages = imgs.slice(0, target).map((item, idx) => {
       const img = new window.Image();
+      img.decoding = idx === 0 ? "sync" : "async";
       img.onload = () => markDone(idx);
       img.onerror = () => markDone(idx);
       img.src = item.src;
@@ -191,13 +123,10 @@ function usePreload(imgs: PolaroidSlide[], need = 3, timeout = 6000): boolean {
       return img;
     });
 
-    cacheRef.current = eagerImages;
-
     return () => {
       cancelled = true;
       window.clearTimeout(fallbackTimer);
-      if (idleTimer !== undefined) window.clearTimeout(idleTimer);
-      cacheRef.current.forEach((img) => {
+      eagerImages.forEach((img) => {
         img.onload = null;
         img.onerror = null;
       });
@@ -322,27 +251,19 @@ interface PileItem {
   slideIdx: number;
 }
 
-const CONTROL_BTN_CLASS =
-  "w-9 h-9 min-h-[36px] min-w-[36px] rounded-full border border-[#111622]/20 bg-[#f5f8fc]/90 hover:bg-[#111622] hover:text-[#f5f8fc] text-[#111622] transition-colors inline-flex items-center justify-center cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111622] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f5f8fc]";
-
 function Pile({ imgs, started, speed, reducedMotion }: ModeProps) {
   const { lang } = useLang();
   const containerRef = useRef<HTMLDivElement>(null);
   const active = useActive(containerRef);
-  const [paused, setPaused] = useState(false);
   const [stack, setStack] = useState<PileItem[]>([{ uid: 0, slideIdx: 0 }]);
   const uidRef = useRef(0);
   const autoStepsRef = useRef(0);
-
-  useEffect(() => {
-    if (reducedMotion) {
-      setPaused(true);
-    }
-  }, [reducedMotion]);
+  const prefetchedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     uidRef.current = 0;
     autoStepsRef.current = 0;
+    prefetchedRef.current.clear();
     setStack([{ uid: 0, slideIdx: 0 }]);
   }, [imgs]);
 
@@ -361,7 +282,7 @@ function Pile({ imgs, started, speed, reducedMotion }: ModeProps) {
   );
 
   useEffect(() => {
-    if (!started || !active || paused || imgs.length <= 1) return;
+    if (!started || !active || reducedMotion || imgs.length <= 1) return;
 
     let t: number | undefined;
     const safeSpeed = Math.max(0.1, speed);
@@ -379,22 +300,49 @@ function Pile({ imgs, started, speed, reducedMotion }: ModeProps) {
     return () => {
       if (t !== undefined) window.clearTimeout(t);
     };
-  }, [started, active, paused, imgs.length, speed, pushSlide]);
+  }, [started, active, reducedMotion, imgs.length, speed, pushSlide]);
+
+  const currentSlideIdx = stack[stack.length - 1]?.slideIdx ?? 0;
+
+  useEffect(() => {
+    if (!started || !active || imgs.length <= 2 || typeof window === "undefined") {
+      return;
+    }
+    if (reducedMotion && currentSlideIdx === 0) return;
+
+    const nextIdx = (currentSlideIdx + 1) % imgs.length;
+    if (currentSlideIdx === 0 && nextIdx < 2 && autoStepsRef.current === 0) {
+      return;
+    }
+
+    const nextSrc = imgs[nextIdx]?.src;
+    if (!nextSrc || prefetchedRef.current.has(nextSrc)) return;
+
+    let cancelled = false;
+    const img = new window.Image();
+    img.decoding = "async";
+    const clearListeners = () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+    img.onload = () => {
+      if (!cancelled) {
+        prefetchedRef.current.add(nextSrc);
+      }
+      clearListeners();
+    };
+    img.onerror = clearListeners;
+    img.src = nextSrc;
+
+    return () => {
+      cancelled = true;
+      clearListeners();
+    };
+  }, [started, active, reducedMotion, currentSlideIdx, imgs]);
 
   if (imgs.length === 0) return null;
 
-  const currentSlideIdx = stack[stack.length - 1]?.slideIdx ?? 0;
   const displayIndex = currentSlideIdx + 1;
-
-  const prevLabel = lang === "vi" ? "Ảnh trước" : "Previous photo";
-  const nextLabel = lang === "vi" ? "Ảnh tiếp theo" : "Next photo";
-  const pausePlayLabel = paused
-    ? lang === "vi"
-      ? "Tiếp tục chạy ảnh"
-      : "Play slideshow"
-    : lang === "vi"
-    ? "Tạm dừng chạy ảnh"
-    : "Pause slideshow";
 
   return (
     <div
@@ -472,66 +420,9 @@ function Pile({ imgs, started, speed, reducedMotion }: ModeProps) {
         })}
       </div>
 
-      {imgs.length > 1 && (
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            bottom: 0,
-            zIndex: 10,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => pushSlide(-1)}
-            aria-label={prevLabel}
-            className={CONTROL_BTN_CLASS}
-          >
-            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setPaused((p) => !p)}
-            aria-label={pausePlayLabel}
-            aria-pressed={paused}
-            className={CONTROL_BTN_CLASS}
-          >
-            {paused ? (
-              <Play className="w-3.5 h-3.5" aria-hidden="true" />
-            ) : (
-              <Pause className="w-3.5 h-3.5" aria-hidden="true" />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => pushSlide(1)}
-            aria-label={nextLabel}
-            className={CONTROL_BTN_CLASS}
-          >
-            <ChevronRight className="w-4 h-4" aria-hidden="true" />
-          </button>
-        </div>
-      )}
-
       <span
         aria-live="polite"
-        style={{
-          position: "absolute",
-          right: 0,
-          bottom: 4,
-          zIndex: 10,
-          fontFamily: MONO,
-          fontSize: 12,
-          letterSpacing: "0.06em",
-          color: "#111622",
-          background: "rgba(245,248,252,0.85)",
-          padding: "3px 8px",
-          borderRadius: 999,
-          pointerEvents: "none",
-        }}
+        className="absolute right-0 bottom-1 z-10 font-mono text-xs tracking-eyebrow text-ink bg-cream/85 border border-transparent dark:text-cream dark:bg-night-surface/90 dark:border-cream/15 px-2 py-[3px] rounded-full pointer-events-none"
       >
         {String(displayIndex).padStart(2, "0")} /{" "}
         {String(imgs.length).padStart(2, "0")}
@@ -705,7 +596,7 @@ export function PolaroidsDefile({
   }, [slides, images]);
 
   const started = useStart(delay);
-  const ready = usePreload(imgs, 3, 6000);
+  const ready = usePreload(imgs, 2, 6000);
   const reducedMotion = useReducedMotionPref();
   const go = started && ready;
 

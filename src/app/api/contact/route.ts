@@ -10,6 +10,10 @@ const EMAIL_REGEX = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]{2,}$/;
 const MAX_BODY_BYTES = 16384;
 const MIN_FORM_ELAPSED_MS = 2500;
 const RESEND_TIMEOUT_MS = 12000;
+const RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
+const RECAPTCHA_TIMEOUT_MS = 8000;
+const RECAPTCHA_EXPECTED_ACTION = "contact_quote";
+const DEFAULT_RECAPTCHA_MIN_SCORE = 0.5;
 
 type ContactLang = "en" | "vi";
 
@@ -20,6 +24,7 @@ type ContactErrorCode =
   | "MISSING_FIELDS"
   | "INVALID_EMAIL"
   | "MISSING_TYPES"
+  | "RECAPTCHA_FAILED"
   | "SERVICE_UNAVAILABLE"
   | "SEND_FAILED";
 
@@ -77,6 +82,50 @@ function formatCommissionList(types: string[]): string {
         : type
     )
     .join(", ");
+}
+
+async function verifyRecaptchaV3({
+  secretKey,
+  token,
+  remoteIp,
+  minScore,
+}: {
+  secretKey: string;
+  token: string;
+  remoteIp: string;
+  minScore: number;
+}): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const params = new URLSearchParams({
+      secret: secretKey,
+      response: token,
+    });
+    if (remoteIp) {
+      params.append("remoteip", remoteIp);
+    }
+    const res = await fetch(RECAPTCHA_VERIFY_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+      signal: AbortSignal.timeout(RECAPTCHA_TIMEOUT_MS),
+    });
+    const data = (await res.json()) as {
+      success?: boolean;
+      score?: number;
+      action?: string;
+    };
+    return Boolean(
+      res.ok &&
+        data?.success === true &&
+        (!data.action || data.action === RECAPTCHA_EXPECTED_ACTION) &&
+        (typeof data.score !== "number" || data.score >= minScore)
+    );
+  } catch {
+    return false;
+  }
 }
 
 function buildEmailContent(payload: ContactPayload, isWaitlist: boolean) {
@@ -306,6 +355,37 @@ export async function POST(request: Request) {
 
   if (commissionTypes.length === 0) {
     return errorResponse("MISSING_TYPES", 400);
+  }
+
+  const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY?.trim() || "";
+  const hasRecaptchaSecret = Boolean(
+    recaptchaSecret && !recaptchaSecret.startsWith("your_")
+  );
+  const parsedMinScore = Number(process.env.RECAPTCHA_MIN_SCORE);
+  const minScore =
+    Number.isFinite(parsedMinScore) &&
+    parsedMinScore >= 0.1 &&
+    parsedMinScore <= 0.9
+      ? parsedMinScore
+      : DEFAULT_RECAPTCHA_MIN_SCORE;
+
+  if (hasRecaptchaSecret) {
+    const recaptchaToken = cleanSingleLine(record.recaptchaToken, 4096);
+    const remoteIp = cleanSingleLine(
+      request.headers.get("cf-connecting-ip") ||
+        request.headers.get("x-forwarded-for")?.split(",")[0] ||
+        "",
+      100
+    );
+    const recaptchaOk = await verifyRecaptchaV3({
+      secretKey: recaptchaSecret,
+      token: recaptchaToken,
+      remoteIp,
+      minScore,
+    });
+    if (!recaptchaOk) {
+      return errorResponse("RECAPTCHA_FAILED", 400);
+    }
   }
 
   const payload: ContactPayload = {

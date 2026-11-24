@@ -95,33 +95,33 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
     eyebrow: "[Accessories & 3D gear]",
     headlineLines: ["Cooling fans,", "glasses & shells."],
     heroDesc:
-      "3D-printed cooling fans alongside oversized glasses and custom fan shells sized for fursuit heads. Pick what you need below, then attach your list to a suit quote or DM @CrossTalk_f directly.",
+      "3D-printed cooling fans alongside oversized glasses and custom shells sized for fursuit heads. Pick what you need below, then either attach your list to a suit quote or DM @CrossTalk_f.",
     partnerNote:
-      "@CrossTalk_f handles 3D printing and cooling gear for FluffNii Studio. Order pieces on their own by DMing @CrossTalk_f, or bundle your picks into a fursuit quote on the main page.",
+      "@CrossTalk_f runs 3D printing and cooling hardware for FluffNii Studio. Message @CrossTalk_f directly if you only want accessories, or bundle your picks into a fursuit quote on the main page.",
     workshopNotes: [
       {
         num: "(001)",
         title: "Made to order",
         detail:
-          "Each fan housing and shell is 3D-printed in small batches, sized for your head fit and colorway.",
+          "Each fan body and shell is 3D-printed in small batches, sized for your head fit and colorway.",
       },
       {
         num: "(002)",
         title: "Built for con wear",
         detail:
-          "USB-C power and soft TPU nozzles keep cooling comfortable, while wide glass bridges sit cleanly over thick faux fur.",
+          "USB-C power and soft TPU nozzles keep airflow easy to live with. Wide glass bridges also clear thick faux fur without pinching.",
       },
       {
         num: "(003)",
         title: "Bundle or direct DM",
         detail:
-          "Put together a quick list here, then attach it to a fursuit quote or DM @CrossTalk_f.",
+          "Put together a quick estimate list here first, then attach it to your suit quote or send it straight to @CrossTalk_f.",
       },
     ],
     catalogNum: "01",
     catalogTitle: "Fans & Custom 3D Gear",
     catalogSubtitle:
-      "Internal head fans and portable 3D-printed coolers, plus fursuit glasses and custom fan shells.",
+      "Internal head fans and portable 3D-printed coolers, alongside oversized fursuit glasses and custom shells.",
     estimatorLabel: "[Price estimator]",
     itemSingular: "item",
     itemPlural: "items",
@@ -161,9 +161,9 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
     contactEyebrow: "[Contact @CrossTalk_f]",
     contactTitle: "Ready to order?",
     contactDesc:
-      "Send your item list to @CrossTalk_f on any channel below. Include your head fit or preferred shell colors if you already have them in mind.",
+      "Send your item list to @CrossTalk_f through any channel below. Mention your head fit or preferred shell colors if you already picked them.",
     contactPartnerNote:
-      "@CrossTalk_f prints and builds cooling fans and accessories separately for FluffNii Studio. Want to include these with a full suit build instead? Use Bundle with Fursuit Quote or email us below.",
+      "@CrossTalk_f builds and ships fans and 3D-printed gear separately for FluffNii Studio. If you would rather include these parts with a full suit build, use Bundle with Fursuit Quote or email us below.",
     readyForDm: (count) =>
       `[Ready to paste in DM · ${count} ${count === 1 ? "item" : "items"}]`,
     copiedShort: "Copied",
@@ -206,7 +206,7 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imageAlt:
           "Sky-blue horned Kemono fursuit head preview for custom internal fan fitting",
         description:
-          "Custom internal cooling fan sized to sit neatly inside a fursuit head, powered via USB-C for quiet, steady airflow during long wear.",
+          "Internal cooling fan sized to tuck inside a fursuit head. Runs off USB-C for quiet airflow during long wears.",
       },
       {
         id: "fursuit-fan-std",
@@ -232,7 +232,7 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imageAlt:
           "Sy Tray and Minny Minnie Kemono fursuits preview for Fursuit Fan STD Edition",
         description:
-          "Fully 3D-printed hard plastic body paired with a soft TPU air nozzle, variable speed control, and 15W Quick Charge over USB-C.",
+          "Compact 3D-printed hard plastic shell with a soft TPU air nozzle. Built with variable speed control plus 15W Quick Charge over USB-C.",
       },
       {
         id: "fursuit-fan-plus",
@@ -257,7 +257,7 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imageAlt:
           "White cat fursuit partial preview for upcoming Fursuit Fan PLUS Edition",
         description:
-          "Our upcoming high-output version using the same 3D-printed hard plastic shell and soft TPU nozzle, tuned for even stronger top air speed.",
+          "Upcoming high-output model keeping the same 3D-printed hard plastic body and soft TPU nozzle, tuned for stronger peak air speed.",
       },
       {
         id: "fursuit-accessories-tbd",
@@ -281,7 +281,7 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imageAlt:
           "Cyan fursuit head wearing oversized matte white round fursuit glasses",
         description:
-          "Oversized fursuit glasses plus custom 3D-printed fan shells and colorways. Final color options and custom details are TBD, so DM to ask.",
+          "Oversized fursuit glasses alongside custom 3D-printed fan shells and color swaps. Final options are still TBD, so DM to ask what is open.",
       },
     ],
   },
@@ -289,33 +289,33 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
     eyebrow: "[Phụ kiện & Quạt in 3D]",
     headlineLines: ["Quạt tản nhiệt,", "kính & vỏ custom."],
     heroDesc:
-      "Quạt làm mát in 3D cùng kính gọng lớn và vỏ quạt phối màu làm riêng cho đầu fursuit. Bạn cứ chọn món mình quan tâm bên dưới, rồi gửi kèm đơn đặt suit hoặc nhắn thẳng cho @CrossTalk_f.",
+      "Quạt tản nhiệt in 3D, kính gọng lớn và vỏ quạt phối màu làm vừa vặn cho đầu fursuit. Chọn những món bạn cần bên dưới để ghép chung đơn suit hoặc nhắn thẳng cho @CrossTalk_f.",
     partnerNote:
-      "@CrossTalk_f là bên phụ trách in 3D và làm quạt tản nhiệt cho xưởng mình. Nếu chỉ mua lẻ phụ kiện, bạn nhắn trực tiếp cho @CrossTalk_f, còn đặt chung với suit thì cứ ghép thẳng vào form báo giá ở trang chủ.",
+      "@CrossTalk_f phụ trách mảng in 3D và quạt tản nhiệt cho FluffNii Studio. Muốn đặt lẻ phụ kiện thì bạn nhắn trực tiếp cho @CrossTalk_f, còn đặt kèm suit thì bấm ghép vào form báo giá ở trang chủ.",
     workshopNotes: [
       {
         num: "(001)",
         title: "In theo từng đơn",
         detail:
-          "Vỏ quạt và phụ kiện đều in 3D từng đợt nhỏ, chỉnh gọn theo kích thước Head và màu bạn chọn.",
+          "Mỗi thân quạt và vỏ đều được in 3D theo từng đợt nhỏ, chỉnh theo cỡ Head và màu bạn muốn.",
       },
       {
         num: "(002)",
         title: "Đeo mát đi fes",
         detail:
-          "Quạt chạy nguồn USB-C với đầu thổi TPU mềm, còn gọng kính mở rộng để đeo êm qua lớp lông dày cả ngày dài.",
+          "Quạt dùng nguồn USB-C với đầu thổi TPU mềm nên đội lâu vẫn dễ chịu. Gọng kính cũng mở rộng để đeo qua lớp lông dày không bị cấn.",
       },
       {
         num: "(003)",
         title: "Mua lẻ hay ghép đơn đều được",
         detail:
-          "Chọn nhanh vài món vào bảng tạm tính, rồi gửi kèm form báo giá Fursuit hoặc nhắn thẳng cho @CrossTalk_f.",
+          "Lên nhanh danh sách ở bảng tạm tính rồi gửi kèm form đặt suit, hoặc copy gửi thẳng cho @CrossTalk_f.",
       },
     ],
     catalogNum: "01",
     catalogTitle: "Quạt tản nhiệt & Đồ in 3D",
     catalogSubtitle:
-      "Quạt gắn trong Head và quạt cầm tay in 3D, cùng kính fursuit và vỏ quạt phối màu làm riêng.",
+      "Quạt gắn trong Head và quạt cầm tay in 3D, cùng kính fursuit gọng lớn và vỏ quạt phối màu riêng.",
     estimatorLabel: "[Bảng tạm tính]",
     itemSingular: "món",
     itemPlural: "món",
@@ -355,9 +355,9 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
     contactEyebrow: "[Liên hệ @CrossTalk_f]",
     contactTitle: "Đặt phụ kiện ngay?",
     contactDesc:
-      "Nhắn trực tiếp cho @CrossTalk_f qua một trong các kênh bên dưới kèm danh sách đã chọn. Nếu có sẵn cỡ Head hay màu vỏ muốn đặt, bạn gửi luôn để xưởng mình báo giá nhanh hơn.",
+      "Nhắn thẳng cho @CrossTalk_f qua các kênh bên dưới kèm danh sách món bạn đã chọn. Nếu có sẵn cỡ Head hay màu vỏ ưng ý thì gửi luôn để báo giá nhanh hơn.",
     contactPartnerNote:
-      "@CrossTalk_f là đối tác làm quạt tản nhiệt và phụ kiện in 3D của xưởng mình. Nếu muốn gộp chung với đơn làm suit thì bấm Gửi kèm form báo giá Fursuit, hoặc gửi mail bên dưới.",
+      "@CrossTalk_f trực tiếp làm và giao quạt tản nhiệt cùng đồ in 3D cho xưởng mình. Nếu bạn muốn gộp chung vào đơn làm suit từ đầu thì bấm Gửi kèm form báo giá Fursuit hoặc gửi email bên dưới.",
     readyForDm: (count) => `[Sẵn sàng gửi DM · ${count} món]`,
     copiedShort: "Đã copy",
     emailFallbackLabel: "Muốn gửi email thì nhắn tới",
@@ -398,7 +398,7 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         blueprint: "internal-fan",
         imageAlt: "Ảnh minh họa Head fursuit Kemono xanh cho quạt gắn trong Head",
         description:
-          "Quạt tản nhiệt gắn gọn bên trong Head fursuit, chạy nguồn USB-C êm ái và đủ mát để bạn đội thoải mái suốt nhiều giờ.",
+          "Quạt tản nhiệt gắn gọn bên trong Head fursuit. Cấp nguồn qua cổng USB-C, chạy êm và mát đều khi bạn đội liên tục nhiều giờ.",
       },
       {
         id: "fursuit-fan-std",
@@ -424,7 +424,7 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imageAlt:
           "Ảnh minh họa fursuit Sy Tray và Minny Minnie cho Fursuit Fan STD Edition",
         description:
-          "Thân quạt in 3D nguyên khối từ nhựa cứng kèm đầu thổi gió TPU mềm, chỉnh tốc độ gió linh hoạt và hỗ trợ sạc nhanh 15W.",
+          "Thân quạt nhựa cứng in 3D đi kèm đầu thổi gió TPU mềm. Hỗ trợ chỉnh tốc độ gió linh hoạt và sạc nhanh 15W qua cổng USB-C.",
       },
       {
         id: "fursuit-fan-plus",
@@ -449,7 +449,7 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imageAlt:
           "Ảnh minh họa fursuit mèo trắng cho Fursuit Fan PLUS Edition sắp ra mắt",
         description:
-          "Bản nâng cấp sắp ra mắt vẫn giữ vỏ nhựa cứng in 3D kèm đầu thổi TPU mềm, nhưng đẩy tốc độ gió tối đa mạnh hơn bản STD.",
+          "Phiên bản nâng cấp sắp ra mắt vẫn giữ thân nhựa cứng in 3D và đầu thổi TPU mềm, nhưng đẩy lực gió tối đa mạnh hơn bản STD.",
       },
       {
         id: "fursuit-accessories-tbd",
@@ -472,7 +472,7 @@ export const ACCESSORIES_COPY: Record<Lang, AccessoriesLocaleCopy> = {
         imagePosition: "center 22%",
         imageAlt: "Head fursuit xanh dương đeo kính tròn trắng ngoại cỡ",
         description:
-          "Kính gọng lớn cho fursuit cùng vỏ quạt in 3D và phối màu làm riêng. Các lựa chọn màu sắc và chi tiết custom đang cập nhật (TBD), cứ nhắn mình để hỏi trước.",
+          "Kính gọng lớn cho fursuit, vỏ quạt in 3D và các lựa chọn phối màu riêng. Bảng màu chi tiết vẫn đang cập nhật (TBD), cứ nhắn mình để hỏi trước.",
       },
     ],
   },

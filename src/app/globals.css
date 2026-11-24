@@ -136,96 +136,262 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-:root {
-  --font-dm-sans: "DM Sans";
-  --font-space-mono: "Space Mono";
-  --font-display: "Stagheiz";
-  --bg-cream: #f5f8fc;
-  --bg-butter: #fff0a6;
-  --bg-taupe: #dce8f5;
-  --bg-espresso: #1e3557;
-  --ink: #111622;
-  --ink-muted: rgba(17, 22, 34, 0.62);
-  --border-light: rgba(17, 22, 34, 0.16);
-  --cream-muted: rgba(245, 248, 252, 0.7);
-  --cream-border: rgba(245, 248, 252, 0.2);
-}
+@layer base {
+  /* Layer 1: Primitive Design Tokens */
+  :root {
+    --font-dm-sans: "DM Sans";
+    --font-space-mono: "Space Mono";
+    --font-display: "Stagheiz";
 
-html[data-lang="vi"] {
-  --font-dm-sans: "Plus Jakarta Sans";
-  --font-display: "Be Vietnam Pro";
-}
+    --primitive-cream-rgb: 245 248 252;
+    --primitive-butter-rgb: 255 240 166;
+    --primitive-taupe-rgb: 220 232 245;
+    --primitive-espresso-rgb: 30 53 87;
+    --primitive-ink-rgb: 17 22 34;
+    --primitive-night-rgb: 11 15 23;
+    --primitive-night-surface-rgb: 20 27 40;
+    --primitive-night-elevated-rgb: 26 36 54;
+    --primitive-night-hover-rgb: 35 48 71;
+    --primitive-coral-rgb: 255 180 162;
 
-html {
-  scroll-behavior: smooth;
-  background-color: #f5f8fc;
-  color: #111622;
-  overflow-x: clip;
-}
+    --studio-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --studio-curtain-ease: cubic-bezier(0.65, 0, 0.35, 1);
 
-body {
-  font-family: var(--font-dm-sans), "Plus Jakarta Sans", "DM Sans", sans-serif;
-  background-color: #f5f8fc;
-  color: #111622;
-  overflow-x: clip;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.font-stagheiz {
-  font-family: var(--font-display), "Be Vietnam Pro", sans-serif;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.01em;
-}
-
-html[data-lang="vi"] .font-stagheiz {
-  letter-spacing: -0.02em;
-  line-height: 1.14;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-@keyframes marqueeLeft {
-  0% {
-    transform: translate3d(0, 0, 0);
+    /* Layer 2: Semantic Surface & Text Tokens (Light default) */
+    --color-canvas: var(--primitive-cream-rgb);
+    --color-surface: var(--primitive-cream-rgb);
+    --color-surface-alt: var(--primitive-taupe-rgb);
+    --color-surface-hover: var(--primitive-taupe-rgb);
+    --color-fg: var(--primitive-ink-rgb);
+    --color-fg-muted: 71 84 106;
+    --color-accent: var(--primitive-espresso-rgb);
+    --color-hairline: var(--primitive-ink-rgb);
+    --studio-hairline-alpha: 0.11;
+    --studio-hairline-strong-alpha: 0.2;
+    --studio-grid-rgb: 17 22 34;
+    --studio-grid-alpha: 0.045;
+    --studio-curtain-rim: rgba(255, 240, 166, 0.52);
+    --studio-curtain-glow: rgba(255, 180, 162, 0.18);
   }
-  100% {
-    transform: translate3d(-50%, 0, 0);
+
+  :root[data-theme="light"],
+  .theme-butter-card {
+    --color-canvas: var(--primitive-cream-rgb);
+    --color-surface: var(--primitive-cream-rgb);
+    --color-surface-alt: var(--primitive-taupe-rgb);
+    --color-surface-hover: var(--primitive-taupe-rgb);
+    --color-fg: var(--primitive-ink-rgb);
+    --color-fg-muted: 71 84 106;
+    --color-accent: var(--primitive-espresso-rgb);
+    --color-hairline: var(--primitive-ink-rgb);
+    --studio-hairline-alpha: 0.11;
+    --studio-hairline-strong-alpha: 0.2;
+    --studio-grid-rgb: 17 22 34;
+    --studio-grid-alpha: 0.045;
+  }
+
+  html[data-lang="vi"] {
+    --font-dm-sans: "Plus Jakarta Sans";
+    --font-display: "Be Vietnam Pro";
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: #f5f8fc;
+    color: #111622;
+    overflow-x: clip;
+  }
+
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
+  .lenis.lenis-smooth iframe {
+    pointer-events: none;
+  }
+
+  body {
+    font-family: var(--font-dm-sans), "Plus Jakarta Sans", "DM Sans", sans-serif;
+    background-color: #f5f8fc;
+    color: #111622;
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html[data-theme="dark"] {
+    --color-canvas: var(--primitive-night-rgb);
+    --color-surface: var(--primitive-night-surface-rgb);
+    --color-surface-alt: var(--primitive-night-elevated-rgb);
+    --color-surface-hover: var(--primitive-night-hover-rgb);
+    --color-fg: var(--primitive-cream-rgb);
+    --color-fg-muted: 186 198 219;
+    --color-accent: var(--primitive-butter-rgb);
+    --color-hairline: var(--primitive-cream-rgb);
+    --studio-hairline-alpha: 0.14;
+    --studio-hairline-strong-alpha: 0.24;
+    --studio-grid-rgb: 245 248 252;
+    --studio-grid-alpha: 0.04;
+    --studio-curtain-rim: rgba(255, 240, 166, 0.58);
+    --studio-curtain-glow: rgba(255, 180, 162, 0.22);
+    background-color: #0b0f17;
+    color: #f5f8fc;
+  }
+
+  html[data-theme="dark"] body {
+    background-color: #0b0f17;
+    color: #f5f8fc;
   }
 }
 
-@keyframes marqueeRight {
-  0% {
-    transform: translate3d(-50%, 0, 0);
+@layer components {
+  /* Layer 3: Component & Editorial Pattern Tokens */
+  :where(.font-stagheiz) {
+    font-family: var(--font-display), "Be Vietnam Pro", sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
   }
-  100% {
-    transform: translate3d(0, 0, 0);
+
+  :where(html[data-lang="vi"] .font-stagheiz) {
+    letter-spacing: -0.015em;
+    line-height: 1.18;
+    padding-block: 0.06em;
+  }
+
+  .text-studio-hero {
+    font-size: clamp(2.75rem, 6.8vw, 6.5625rem);
+    line-height: 0.94;
+    letter-spacing: -0.02em;
+  }
+
+  html[data-lang="vi"] .text-studio-hero {
+    font-size: clamp(2.35rem, 6vw, 5.75rem);
+    line-height: 1.18;
+    letter-spacing: -0.015em;
+    padding-block: 0.08em;
+  }
+
+  .text-studio-section {
+    font-size: clamp(2rem, 4.6vw, 4.25rem);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+  }
+
+  html[data-lang="vi"] .text-studio-section {
+    font-size: clamp(1.8rem, 4.2vw, 3.75rem);
+    line-height: 1.18;
+    letter-spacing: -0.015em;
+    padding-block: 0.08em;
+  }
+
+  .studio-word-mask {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    padding-block: 0.12em;
+    margin-block: -0.12em;
+    padding-inline: 0.03em;
+    margin-inline: -0.03em;
+  }
+
+  html[data-lang="vi"] .studio-word-mask {
+    padding-block: 0.16em;
+    margin-block: -0.16em;
+  }
+
+  .studio-word-inner {
+    display: inline-block;
+  }
+
+  .studio-hairline {
+    border-color: rgb(var(--color-hairline) / var(--studio-hairline-alpha));
+  }
+
+  .studio-hairline-strong {
+    border-color: rgb(var(--color-hairline) / var(--studio-hairline-strong-alpha));
+  }
+
+  .studio-divider-x {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(var(--color-hairline) / var(--studio-hairline-strong-alpha)) 18%,
+      rgb(var(--color-hairline) / var(--studio-hairline-strong-alpha)) 82%,
+      transparent 100%
+    );
+  }
+
+  .studio-grid-bg {
+    background-image:
+      linear-gradient(rgb(var(--studio-grid-rgb) / var(--studio-grid-alpha)) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--studio-grid-rgb) / var(--studio-grid-alpha)) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 74% 58% at 50% 48%, #000 22%, transparent 82%);
+    mask-image: radial-gradient(ellipse 74% 58% at 50% 48%, #000 22%, transparent 82%);
+  }
+
+  .studio-ledger-bg {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 35px,
+      rgb(var(--studio-grid-rgb) / var(--studio-grid-alpha)) 35px 36px
+    );
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 84%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 84%, transparent);
+  }
+
+  .studio-grain {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.5 0 0 0 0 0.58 0 0 0 -1.55 0.92'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
+    opacity: 0.22;
+    pointer-events: none;
+  }
+
+  .studio-curtain-arch {
+    border-top-left-radius: clamp(32px, 4.5vw, 68px);
+    border-top-right-radius: clamp(32px, 4.5vw, 68px);
+    background:
+      radial-gradient(62% 32% at 50% 5%, var(--studio-curtain-glow), transparent 72%),
+      radial-gradient(48% 28% at 50% 56%, rgba(30, 53, 87, 0.44), transparent 76%),
+      linear-gradient(180deg, #1e3557 0%, #14233b 28%, #111622 62%, #0b0f17 100%);
+    box-shadow:
+      0 -26px 84px -22px rgba(30, 53, 87, 0.48),
+      inset 0 1.5px 0 var(--studio-curtain-rim);
+  }
+
+  .section-shell {
+    @apply max-w-site mx-auto px-5 md:px-10 lg:px-14;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-cream dark:focus-visible:ring-butter dark:focus-visible:ring-offset-night butter:focus-visible:ring-ink butter:focus-visible:ring-offset-butter;
   }
 }
 
-.animate-marquee-left {
-  display: flex;
-  width: max-content;
-  animation: marqueeLeft 42s linear infinite;
-}
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 
-.animate-marquee-right {
-  display: flex;
-  width: max-content;
-  animation: marqueeRight 42s linear infinite;
-}
-
-.animate-marquee-text {
-  display: flex;
-  width: max-content;
-  animation: marqueeLeft 28s linear infinite;
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 #contact input,
@@ -263,15 +429,12 @@ html[data-lang="vi"] .font-stagheiz {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
+  html,
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
   }
+}
 
-  .animate-marquee,
-  .animate-marquee-reverse,
-  .animate-marquee-left,
-  .animate-marquee-right,
-  .animate-marquee-text {
-    animation: none;
-  }
+.grecaptcha-badge {
+  visibility: hidden !important;
 }

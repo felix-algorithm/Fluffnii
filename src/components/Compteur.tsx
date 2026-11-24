@@ -17,7 +17,7 @@ export default function Compteur({
   prefixe = "+",
   suffixe = "",
   duree = 1.8,
-  couleur = "#111622",
+  couleur,
   taille = 72,
 }: CompteurProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -37,12 +37,12 @@ export default function Compteur({
   return (
     <div
       ref={ref}
-      className="font-sans font-medium select-none"
+      className="font-sans font-medium select-none text-fg"
       style={{
         fontSize: `clamp(${Math.max(48, Math.round(taille * 0.67))}px, 5.2vw, ${taille}px)`,
         lineHeight: 1,
         letterSpacing: "-0.04em",
-        color: couleur,
+        ...(couleur ? { color: couleur } : {}),
         fontVariantNumeric: "tabular-nums lining-nums",
       }}
     >

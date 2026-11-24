@@ -2,8 +2,14 @@
 
 import React from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { useTheme } from "./CircularRevealToggle";
+import { cn } from "@/lib/cn";
+import {
+  extractHomeSection,
+  isModifiedClick,
+  navigateToHomeSection,
+} from "@/lib/sectionScroll";
 
 export interface BoutonProps {
   title?: string;
@@ -26,16 +32,15 @@ export default function Bouton({
   type = "button",
   fullWidth = false,
 }: BoutonProps) {
-  const { isDark } = useTheme();
+  const pathname = usePathname();
+  const router = useRouter();
   const variantClasses = {
-    primary: isDark
-      ? "bg-[#f5f8fc] text-[#111622] border-[#f5f8fc] hover:bg-[#fff0a6] hover:border-[#fff0a6] hover:!text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#0b0f17] [.theme-butter-card_&]:!bg-[#111622] [.theme-butter-card_&]:!text-[#f5f8fc] [.theme-butter-card_&]:!border-[#111622] [.theme-butter-card_&]:hover:!bg-[#1e3557] [.theme-butter-card_&]:hover:!border-[#1e3557] [.theme-butter-card_&]:hover:!text-[#f5f8fc] [.theme-butter-card_&]:focus-visible:!ring-[#111622] [.theme-butter-card_&]:focus-visible:!ring-offset-[#fff0a6]"
-      : "bg-[#111622] text-[#f5f8fc] border-[#111622] hover:bg-[#1e3557] hover:border-[#1e3557] focus-visible:ring-[#111622] focus-visible:ring-offset-[#f5f8fc]",
-    secondary: isDark
-      ? "bg-transparent text-[#f5f8fc] border-[#f5f8fc] hover:bg-[#f5f8fc] hover:!text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#0b0f17] [.theme-butter-card_&]:!border-[#111622] [.theme-butter-card_&]:!text-[#111622] [.theme-butter-card_&]:hover:!bg-[#111622] [.theme-butter-card_&]:hover:!text-[#f5f8fc] [.theme-butter-card_&]:focus-visible:!ring-[#111622] [.theme-butter-card_&]:focus-visible:!ring-offset-[#fff0a6]"
-      : "bg-transparent text-[#111622] border-[#111622] hover:bg-[#111622] hover:text-[#f5f8fc] focus-visible:ring-[#111622] focus-visible:ring-offset-[#f5f8fc]",
+    primary:
+      "bg-ink text-cream border-ink hover:bg-espresso hover:border-espresso focus-visible:ring-ink focus-visible:ring-offset-cream dark:bg-cream dark:text-ink dark:border-cream dark:hover:bg-butter dark:hover:border-butter dark:hover:text-ink dark:focus-visible:ring-butter dark:focus-visible:ring-offset-night butter:bg-ink butter:text-cream butter:border-ink butter:hover:bg-espresso butter:hover:border-espresso butter:hover:text-cream butter:focus-visible:ring-ink butter:focus-visible:ring-offset-butter",
+    secondary:
+      "bg-transparent text-ink border-ink hover:bg-ink hover:text-cream focus-visible:ring-ink focus-visible:ring-offset-cream dark:text-cream dark:border-cream dark:hover:bg-cream dark:hover:text-ink dark:focus-visible:ring-butter dark:focus-visible:ring-offset-night butter:border-ink butter:text-ink butter:hover:bg-ink butter:hover:text-cream butter:focus-visible:ring-ink butter:focus-visible:ring-offset-butter",
     light:
-      "bg-[#f5f8fc] text-[#111622] border-[#f5f8fc] hover:bg-[#fff0a6] hover:border-[#fff0a6] hover:!text-[#111622] focus-visible:ring-[#fff0a6] focus-visible:ring-offset-[#111622]",
+      "bg-cream text-ink border-cream hover:bg-butter hover:border-butter hover:text-ink focus-visible:ring-butter focus-visible:ring-offset-ink",
   }[variant];
 
   const content = (
@@ -48,7 +53,7 @@ export default function Bouton({
           aria-hidden="true"
           className="relative flex items-center justify-end w-[18px] h-[18px] overflow-hidden shrink-0"
         >
-          <span className="flex items-center gap-[16px] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] translate-x-0 group-hover:translate-x-[34px]">
+          <span className="flex items-center gap-4 transition-transform duration-500 ease-studio translate-x-0 group-hover:translate-x-[34px]">
             <ArrowRight className="w-[18px] h-[18px] stroke-[1.75] shrink-0" />
             <ArrowRight className="w-[18px] h-[18px] stroke-[1.75] shrink-0" />
           </span>
@@ -57,9 +62,12 @@ export default function Bouton({
     </>
   );
 
-  const baseClass = `group inline-flex items-center justify-center gap-[12px] px-[24px] py-[17px] rounded-full border-[1.5px] transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-    fullWidth ? "w-full" : "w-fit"
-  } ${variantClasses} ${className}`;
+  const baseClass = cn(
+    "group inline-flex items-center justify-center gap-3 px-6 py-[17px] rounded-full border-[1.5px] transition-colors duration-500 ease-studio cursor-pointer no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+    fullWidth ? "w-full" : "w-fit",
+    variantClasses,
+    className
+  );
 
   if (href) {
     const isExternal = href.startsWith("http") || href.startsWith("mailto:");
@@ -74,6 +82,24 @@ export default function Bouton({
         >
           {content}
         </a>
+      );
+    }
+    const sectionId = extractHomeSection(href);
+    if (sectionId) {
+      return (
+        <Link
+          href="/"
+          className={baseClass}
+          onClick={(e) => {
+            onClick?.(e);
+            if (!e.defaultPrevented && !isModifiedClick(e)) {
+              e.preventDefault();
+              navigateToHomeSection(sectionId, pathname, router);
+            }
+          }}
+        >
+          {content}
+        </Link>
       );
     }
     return (
